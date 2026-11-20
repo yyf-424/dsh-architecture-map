@@ -94,8 +94,17 @@ Architecture map 在 workspace 里维护一份**架构专用档案**，由插件
 尚未发布。v0.1 发布后：
 
 1. 通过 **Plugins → Add plugin**（本地目录）或插件管理器安装 bundle。
-2. 新会话里让 agent 生成架构图，在右侧栏打开 **Architecture map** tab。
-3. 可选但推荐：单独安装 `dsh-plugin-codegraph`（`dsh plugin add dsh-plugin-codegraph`）。它**不随本插件打包，也不会自动安装**。
+2. 安装后**重启一次 DSH**，让 Client 半进入浏览器 boot graph。
+3. 打开一个会话。
+4. 可选但推荐：单独安装 `dsh-plugin-codegraph`（`dsh plugin add dsh-plugin-codegraph`）。它**不随本插件打包，也不会自动安装**。
+
+### 在哪里打开
+
+它没有独立的“启动”按钮，也没有左侧栏图标；入口是右侧栏面板和斜杠命令：
+
+- 打开右侧栏，点 **+**（添加 tab）→ **Architecture map**。
+- 或者在输入框输入 `/arch`，选 **Architecture map**。
+- 想单独验证 Host 半，让 agent 调用 `arch_hello`。
 
 ## 要求
 

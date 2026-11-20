@@ -1,0 +1,9 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="64" height="64" viewBox="0 0 64 64" role="img" aria-label="Architecture map">
+  <rect width="64" height="64" rx="14" fill="#0f1b2d"/>
+  <path d="M17 20 L32 32 L47 20 M32 32 L17 46 M32 32 L47 46" fill="none" stroke="#6ea8fe" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" opacity="0.85"/>
+  <rect x="10" y="13" width="14" height="11" rx="3" fill="#6ea8fe"/>
+  <rect x="40" y="13" width="14" height="11" rx="3" fill="#3f74c9"/>
+  <rect x="25" y="27" width="14" height="11" rx="3" fill="#8bbcff"/>
+  <rect x="10" y="40" width="14" height="11" rx="3" fill="#3f74c9"/>
+  <rect x="40" y="40" width="14" height="11" rx="3" fill="#6ea8fe"/>
+</svg>

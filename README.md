@@ -94,8 +94,17 @@ Architecture map keeps an architecture-specific dossier in the workspace, manage
 Not available yet. When v0.1 ships:
 
 1. Install the bundle via **Plugins → Add plugin** (local directory) or the plugin manager.
-2. Open a new session, ask for the architecture diagram, and open the **Architecture map** tab in the right sidebar.
-3. Optional but recommended: install `dsh-plugin-codegraph` separately (`dsh plugin add dsh-plugin-codegraph`). It is **not bundled and not installed automatically**.
+2. Restart DSH once after installing so the client half joins the browser boot graph.
+3. Open a conversation.
+4. Optional but recommended: install `dsh-plugin-codegraph` separately (`dsh plugin add dsh-plugin-codegraph`). It is **not bundled and not installed automatically**.
+
+### Where to find it
+
+There is no separate "start" button or left-sidebar icon. The plugin adds a right-sidebar panel and a slash command:
+
+- Open the right sidebar and click **+** (add tab) → **Architecture map**.
+- Or type `/arch` in the composer and pick **Architecture map**.
+- To check the Host half, ask the agent to call `arch_hello`.
 
 ## Requirements
 
