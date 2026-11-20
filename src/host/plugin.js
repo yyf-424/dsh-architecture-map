@@ -6,11 +6,76 @@
  * `.archmap/graph.json` with a revision, validation, and atomic writes.
  */
 import { createGraphStore, workspaceOf } from './graph.js'
+import { createMemoryStore } from './memory.js'
 
 export const name = 'architecture-map'
 
 /** Services this plugin needs before it activates. */
 export const inject = ['tools', 'commands']
+
+const SYNC_OUTPUT = {
+  schema: {
+    type: 'object',
+    additionalProperties: false,
+    properties: {
+      text: { type: 'string' },
+      counts: {
+        type: 'object',
+        additionalProperties: false,
+        properties: {
+          scanned: { type: 'integer' },
+          added: { type: 'integer' },
+          changed: { type: 'integer' },
+          deleted: { type: 'integer' },
+          affected: { type: 'integer' },
+        },
+        required: ['scanned', 'added', 'changed', 'deleted', 'affected'],
+      },
+    },
+    required: ['text', 'counts'],
+  },
+  render: (_args, value) => [{ type: 'text', text: value.text }],
+}
+
+const COMMIT_OUTPUT = {
+  schema: {
+    type: 'object',
+    additionalProperties: false,
+    properties: {
+      text: { type: 'string' },
+      committed: { type: 'integer' },
+      removed: { type: 'integer' },
+    },
+    required: ['text', 'committed', 'removed'],
+  },
+  render: (_args, value) => [{ type: 'text', text: value.text }],
+}
+
+const DOC_GET_OUTPUT = {
+  schema: {
+    type: 'object',
+    additionalProperties: false,
+    properties: {
+      text: { type: 'string' },
+      found: { type: 'boolean' },
+    },
+    required: ['text', 'found'],
+  },
+  render: (_args, value) => [{ type: 'text', text: value.text }],
+}
+
+const DOC_PUT_OUTPUT = {
+  schema: {
+    type: 'object',
+    additionalProperties: false,
+    properties: {
+      text: { type: 'string' },
+      bytes: { type: 'integer' },
+    },
+    required: ['text', 'bytes'],
+  },
+  render: (_args, value) => [{ type: 'text', text: value.text }],
+}
 
 const GRAPH_OUTPUT = {
   schema: {
@@ -43,6 +108,7 @@ const GRAPH_OUTPUT = {
  */
 export function apply(ctx, config = {}) {
   const store = createGraphStore(config)
+  const memory = createMemoryStore(config, { readGraph: store.readGraph })
 
   ctx.tools.register({
     name: 'arch_hello',
@@ -144,6 +210,124 @@ export function apply(ctx, config = {}) {
     output: GRAPH_OUTPUT,
     async execute(args, exec) {
       return store.patch(workspaceOf(args, exec), args)
+    },
+  })
+
+  ctx.tools.register({
+    name: 'arch_sync',
+    description:
+      'Compare the workspace against .archmap/manifest.json. Use full:true when no manifest exists. '
+      + 'Returns only added/changed/deleted workspace-relative files and the graph nodes whose anchors they affect. '
+      + 'This tool does not write the manifest; after analysis call arch_manifest_commit.',
+    parameters: {
+      type: 'object',
+      additionalProperties: false,
+      properties: {
+        full: {
+          type: 'boolean',
+          description: 'Ignore the manifest and list every scannable file; use for the first pass.',
+        },
+        paths: {
+          type: 'array',
+          items: { type: 'string' },
+          description: 'Optional workspace-relative files to limit the comparison to.',
+        },
+        workspace: {
+          type: 'string',
+          description: 'Absolute workspace root; defaults to the session working directory.',
+        },
+      },
+    },
+    output: SYNC_OUTPUT,
+    async execute(args, exec) {
+      return memory.sync(workspaceOf(args, exec), args)
+    },
+  })
+
+  ctx.tools.register({
+    name: 'arch_manifest_commit',
+    description:
+      'Record workspace-relative files as analyzed in .archmap/manifest.json. Call after reading them and updating '
+      + 'their dossier documents. Missing or unreadable files are removed from the manifest.',
+    parameters: {
+      type: 'object',
+      additionalProperties: false,
+      properties: {
+        paths: {
+          type: 'array',
+          items: { type: 'string' },
+          description: 'Workspace-relative files that have been analyzed.',
+        },
+        workspace: {
+          type: 'string',
+          description: 'Absolute workspace root; defaults to the session working directory.',
+        },
+      },
+      required: ['paths'],
+    },
+    output: COMMIT_OUTPUT,
+    async execute(args, exec) {
+      return memory.commit(workspaceOf(args, exec), args)
+    },
+  })
+
+  ctx.tools.register({
+    name: 'arch_doc_get',
+    description:
+      'Read one architecture dossier document. Valid ids: overview, modules/<id>, notes/<id>.',
+    parameters: {
+      type: 'object',
+      additionalProperties: false,
+      properties: {
+        id: {
+          type: 'string',
+          description: 'overview | modules/<id> | notes/<id>',
+        },
+        workspace: {
+          type: 'string',
+          description: 'Absolute workspace root; defaults to the session working directory.',
+        },
+      },
+      required: ['id'],
+    },
+    output: DOC_GET_OUTPUT,
+    async execute(args, exec) {
+      return memory.getDoc(workspaceOf(args, exec), args.id)
+    },
+  })
+
+  ctx.tools.register({
+    name: 'arch_doc_put',
+    description:
+      'Write an architecture dossier document. Valid ids: overview, modules/<id>, notes/<id>. '
+      + 'Use mode:append for node notes; overwrite is the default.',
+    parameters: {
+      type: 'object',
+      additionalProperties: false,
+      properties: {
+        id: {
+          type: 'string',
+          description: 'overview | modules/<id> | notes/<id>',
+        },
+        content: {
+          type: 'string',
+          description: 'Markdown content. The document is capped at 32 KiB.',
+        },
+        mode: {
+          type: 'string',
+          enum: ['overwrite', 'append'],
+          description: 'append adds a blank line plus the content; default overwrite.',
+        },
+        workspace: {
+          type: 'string',
+          description: 'Absolute workspace root; defaults to the session working directory.',
+        },
+      },
+      required: ['id', 'content'],
+    },
+    output: DOC_PUT_OUTPUT,
+    async execute(args, exec) {
+      return memory.putDoc(workspaceOf(args, exec), args)
     },
   })
 
