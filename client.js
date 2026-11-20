@@ -68,11 +68,20 @@ window.__ModuleLoader__.load({
         marginBottom: '12px',
         opacity: 0.85,
       },
+      toolbar: {
+        display: 'flex',
+        alignItems: 'center',
+        gap: '8px',
+        marginBottom: '8px',
+      },
       canvas: {
         width: '100%',
         height: 'auto',
         display: 'block',
         overflow: 'visible',
+        touchAction: 'none',
+        cursor: 'grab',
+        userSelect: 'none',
       },
       detail: {
         marginTop: '14px',
@@ -163,7 +172,7 @@ window.__ModuleLoader__.load({
         : 'var(--dsw-alias-border-secondary, rgba(127,127,127,0.35))'
       return h(
         'g',
-        { onClick: () => onSelect(node.id), style: { cursor: 'pointer' } },
+        { onClick: () => onSelect(node.id), onPointerDown: event => event.stopPropagation(), style: { cursor: 'pointer' } },
         h('rect', {
           x, y, width: box.w, height: box.h, rx: 8,
           fill, stroke, strokeWidth: selected ? 2 : 1,
@@ -190,6 +199,10 @@ window.__ModuleLoader__.load({
         const [state, setState] = React.useState({ status: 'loading', graph: null, error: null })
         const [selectedId, setSelectedId] = React.useState(null)
         const [tick, setTick] = React.useState(0)
+        const [view, setView] = React.useState({ zoom: 1, x: 0, y: 0 })
+        const svgRef = React.useRef(null)
+        const panRef = React.useRef(null)
+        const fittedRef = React.useRef(false)
 
         React.useEffect(() => {
           if (!sessionId) {
@@ -231,7 +244,102 @@ window.__ModuleLoader__.load({
         const selectedEdges = selected
           ? edges.filter(edge => edge.from === selected.id || edge.to === selected.id)
           : []
-        const view = layout(graph)
+        const layoutView = layout(graph)
+
+        const fitGraph = target => {
+          const boxes = [...layout(target).positions.values()]
+          if (boxes.length === 0) return
+          const minX = Math.min(...boxes.map(box => box.x))
+          const maxX = Math.max(...boxes.map(box => box.x + box.w))
+          const minY = Math.min(...boxes.map(box => box.y))
+          const maxY = Math.max(...boxes.map(box => box.y + box.h))
+          const pad = 60
+          const zoom = Math.min(1000 / (maxX - minX + pad), 700 / (maxY - minY + pad), 1.4)
+          setView({
+            zoom,
+            x: (1000 - (maxX - minX) * zoom) / 2 - minX * zoom,
+            y: (700 - (maxY - minY) * zoom) / 2 - minY * zoom,
+          })
+        }
+
+        React.useEffect(() => {
+          if (!graph || fittedRef.current) return
+          fittedRef.current = true
+          fitGraph(graph)
+        }, [graph?.rev])
+
+        const viewPoint = event => {
+          const svg = svgRef.current
+          if (!svg) return undefined
+          const ctm = svg.getScreenCTM()
+          if (!ctm) return undefined
+          const point = svg.createSVGPoint()
+          point.x = event.clientX
+          point.y = event.clientY
+          return point.matrixTransform(ctm.inverse())
+        }
+
+        const onWheel = event => {
+          event.preventDefault()
+          // Normalize line/page deltas, and ignore zero/tiny events. Some
+          // trackpads/mice emit a deltaY=0 or a tiny settle event after a
+          // notch; treating every event as a full 12% step made the zoom jump
+          // 140% -> 157% -> 140% without any further user action.
+          const raw = event.deltaMode === 1
+            ? event.deltaY * 16
+            : event.deltaMode === 2
+              ? event.deltaY * 400
+              : event.deltaY
+          if (!Number.isFinite(raw) || Math.abs(raw) < 1) return
+          const vb = viewPoint(event)
+          if (!vb) return
+          const clamped = Math.max(-160, Math.min(160, raw))
+          const factor = Math.exp(-clamped * 0.0015)
+          setView(current => {
+            const zoom = Math.min(2.5, Math.max(0.35, current.zoom * factor))
+            if (zoom === current.zoom) return current
+            const worldX = (vb.x - current.x) / current.zoom
+            const worldY = (vb.y - current.y) / current.zoom
+            return {
+              zoom,
+              x: vb.x - worldX * zoom,
+              y: vb.y - worldY * zoom,
+            }
+          })
+        }
+
+        React.useEffect(() => {
+          const svg = svgRef.current
+          if (!svg) return undefined
+          const handler = event => onWheel(event)
+          svg.addEventListener('wheel', handler, { passive: false })
+          return () => svg.removeEventListener('wheel', handler)
+        }, [graph])
+
+        const onPointerDown = event => {
+          if (event.button !== 0) return
+          const vb = viewPoint(event)
+          if (!vb) return
+          panRef.current = { startX: vb.x, startY: vb.y, originX: view.x, originY: view.y }
+          event.currentTarget.setPointerCapture?.(event.pointerId)
+          event.preventDefault()
+        }
+
+        const onPointerMove = event => {
+          const pan = panRef.current
+          if (!pan) return
+          const vb = viewPoint(event)
+          if (!vb) return
+          setView(current => ({
+            ...current,
+            x: pan.originX + (vb.x - pan.startX),
+            y: pan.originY + (vb.y - pan.startY),
+          }))
+        }
+
+        const onPointerUp = () => {
+          panRef.current = null
+        }
 
         const header = h(
           'div',
@@ -252,6 +360,17 @@ window.__ModuleLoader__.load({
           ),
         )
 
+        const toolbar = nodes.length === 0
+          ? null
+          : h('div', { style: styles.toolbar },
+            h('button', {
+              type: 'button',
+              style: styles.button,
+              onClick: () => fitGraph(graph),
+            }, 'Fit'),
+            h('span', { style: styles.meta }, `${Math.round(view.zoom * 100)}%`),
+            h('span', { style: { ...styles.meta, opacity: 0.55 } }, 'drag to pan · wheel to zoom'))
+
         const canvas = nodes.length === 0
           ? h('div', { style: styles.empty },
             h('div', { style: { fontWeight: 600, marginBottom: '6px' } }, 'No graph yet'),
@@ -261,10 +380,16 @@ window.__ModuleLoader__.load({
           : h(
             'svg',
             {
-              viewBox: `0 0 ${view.width} ${view.height}`,
+              ref: svgRef,
+              viewBox: '0 0 1000 700',
+              preserveAspectRatio: 'xMidYMid meet',
               style: styles.canvas,
               role: 'img',
               'aria-label': 'Architecture graph',
+              onPointerDown,
+              onPointerMove,
+              onPointerUp,
+              onPointerCancel: onPointerUp,
             },
             h('defs', null,
               h('marker', {
@@ -276,30 +401,32 @@ window.__ModuleLoader__.load({
                 markerHeight: '6',
                 orient: 'auto-start-reverse',
               }, h('path', { d: 'M 0 0 L 10 5 L 0 10 z', fill: 'var(--dsw-alias-text-secondary, #888)' }))),
-            edges.map(edge => {
-              const from = view.positions.get(edge.from)
-              const to = view.positions.get(edge.to)
-              if (!from || !to) return null
-              return h('line', {
-                key: `edge:${edge.id}`,
-                x1: from.x + from.w, y1: from.y + from.h / 2,
-                x2: to.x, y2: to.y + to.h / 2,
-                stroke: 'var(--dsw-alias-text-secondary, #888)',
-                strokeWidth: 1.2,
-                strokeOpacity: 0.6,
-                markerEnd: 'url(#archmap-arrow)',
-              })
-            }),
-            nodes.map(node => {
-              const box = view.positions.get(node.id)
-              return box
-                ? h(NodeShape, {
-                  key: node.id, node, box,
-                  selected: node.id === selectedId,
-                  onSelect: setSelectedId,
+            h('g', { transform: `translate(${view.x} ${view.y}) scale(${view.zoom})` },
+              edges.map(edge => {
+                const from = layoutView.positions.get(edge.from)
+                const to = layoutView.positions.get(edge.to)
+                if (!from || !to) return null
+                return h('line', {
+                  key: `edge:${edge.id}`,
+                  x1: from.x + from.w, y1: from.y + from.h / 2,
+                  x2: to.x, y2: to.y + to.h / 2,
+                  stroke: 'var(--dsw-alias-text-secondary, #888)',
+                  strokeWidth: 1.2,
+                  strokeOpacity: 0.6,
+                  markerEnd: 'url(#archmap-arrow)',
                 })
-                : null
-            }),
+              }),
+              nodes.map(node => {
+                const box = layoutView.positions.get(node.id)
+                return box
+                  ? h(NodeShape, {
+                    key: node.id, node, box,
+                    selected: node.id === selectedId,
+                    onSelect: setSelectedId,
+                  })
+                  : null
+              }),
+            ),
           )
 
         const detail = selected
@@ -320,6 +447,7 @@ window.__ModuleLoader__.load({
           state.status === 'error' && state.error
             ? h('div', { style: styles.error }, `Graph unavailable: ${state.error}`)
             : null,
+          toolbar,
           canvas,
           nodes.length > 0 ? detail : null,
         )
