@@ -26,10 +26,12 @@ const SYNC_OUTPUT = {
           scanned: { type: 'integer' },
           added: { type: 'integer' },
           changed: { type: 'integer' },
+          cosmetic: { type: 'integer' },
           deleted: { type: 'integer' },
           affected: { type: 'integer' },
+          marked: { type: 'integer' },
         },
-        required: ['scanned', 'added', 'changed', 'deleted', 'affected'],
+        required: ['scanned', 'added', 'changed', 'cosmetic', 'deleted', 'affected', 'marked'],
       },
     },
     required: ['text', 'counts'],
@@ -77,6 +79,21 @@ const DOC_PUT_OUTPUT = {
   render: (_args, value) => [{ type: 'text', text: value.text }],
 }
 
+const DISCUSS_OUTPUT = {
+  schema: {
+    type: 'object',
+    additionalProperties: false,
+    properties: {
+      text: { type: 'string' },
+      name: { type: 'string' },
+      mode: { type: 'string' },
+      target: { type: 'string' },
+    },
+    required: ['text', 'name', 'mode', 'target'],
+  },
+  render: (_args, value) => [{ type: 'text', text: value.text }],
+}
+
 const GRAPH_OUTPUT = {
   schema: {
     type: 'object',
@@ -108,7 +125,24 @@ const GRAPH_OUTPUT = {
  */
 export function apply(ctx, config = {}) {
   const store = createGraphStore(config)
-  const memory = createMemoryStore(config, { readGraph: store.readGraph })
+  const markStaleNodes = async (workspace, ids) => {
+    for (let attempt = 0; attempt < 3; attempt += 1) {
+      const graph = await store.readGraph(workspace)
+      const wanted = [...new Set(ids)].filter(id => graph.nodes.some(node => node.id === id && node.status !== 'stale'))
+      if (wanted.length === 0) return { marked: [], rev: graph.rev }
+      try {
+        const result = await store.patch(workspace, {
+          baseRev: graph.rev,
+          ops: wanted.map(id => ({ op: 'update_node', id, patch: { status: 'stale' } })),
+        })
+        return { marked: wanted, rev: result.rev }
+      } catch (error) {
+        if (!String(error?.message).includes('STALE_REV') || attempt === 2) throw error
+      }
+    }
+    return { marked: [], rev: 0 }
+  }
+  const memory = createMemoryStore(config, { readGraph: store.readGraph, markStale: markStaleNodes })
 
   ctx.tools.register({
     name: 'arch_hello',
@@ -218,7 +252,9 @@ export function apply(ctx, config = {}) {
     description:
       'Compare the workspace against .archmap/manifest.json. Use full:true when no manifest exists. '
       + 'Returns only added/changed/deleted workspace-relative files and the graph nodes whose anchors they affect. '
-      + 'This tool does not write the manifest; after analysis call arch_manifest_commit.',
+      + 'Changed files are classified as code or format/comment-only via a normalized signature; only code changes '
+      + 'affect nodes. By default this tool writes nothing; markStale:true marks affected nodes stale. '
+      + 'It never writes the manifest; call arch_manifest_commit after analysis.',
     parameters: {
       type: 'object',
       additionalProperties: false,
@@ -231,6 +267,10 @@ export function apply(ctx, config = {}) {
           type: 'array',
           items: { type: 'string' },
           description: 'Optional workspace-relative files to limit the comparison to.',
+        },
+        markStale: {
+          type: 'boolean',
+          description: 'When true, mark affected nodes stale (writes the graph and bumps its rev). Default false: report only.',
         },
         workspace: {
           type: 'string',
@@ -329,6 +369,93 @@ export function apply(ctx, config = {}) {
     async execute(args, exec) {
       return memory.putDoc(workspaceOf(args, exec), args)
     },
+  })
+
+  // Per-node side conversations are optional: a minimal profile may not
+  // compose the subagent service. When it is present, register the tool.
+  ctx.inject(['subagents'], scope => {
+    const discuss = async (args, exec) => {
+      if (!exec.agent) throw new Error('arch_discuss requires an owning agent session')
+      const workspace = workspaceOf(args, exec)
+      const graph = await store.readGraph(workspace)
+      const target = String(args.target ?? '')
+      const match = /^(node|edge):(.+)$/.exec(target)
+      if (!match) throw new Error('target must be node:<id> or edge:<id>')
+      const [, kind, id] = match
+      const node = kind === 'node' ? graph.nodes.find(item => item.id === id) : undefined
+      const edge = kind === 'edge' ? graph.edges.find(item => item.id === id) : undefined
+      if (!node && !edge) throw new Error(`${kind} "${id}" does not exist in ${workspace}`)
+      const mode = args.mode === 'lite' ? 'lite' : 'fork'
+      const name = `${kind === 'node' ? 'node' : 'edge'}-${id}`
+      const label = `Discuss ${kind} ${id}`
+      const title = node ? node.title : edge.label ?? `${edge.from} -> ${edge.to}`
+      const prompt = [
+        `You are the discussion agent for architecture ${kind} ${id}${title ? ` ("${title}")` : ''} in workspace ${workspace}.`,
+        '',
+        `Start by calling arch_graph_get({ workspace: ${JSON.stringify(workspace)}, target: ${JSON.stringify(target)}, include: ["summary", "anchors", "edges"] }) and arch_doc_get({ workspace: ${JSON.stringify(workspace)}, id: "modules/${id}" }) if it exists.`,
+        '',
+        'Rules:',
+        `- Discuss ${id} and its edges only; ask before touching other nodes.`,
+        '- Do not edit source code. Graph edits go through arch_graph_patch with the latest rev; prefer apply:false until the user says apply.',
+        '- Do not message the parent agent. Write conclusions to notes/' + id + ' via arch_doc_put with mode "append".',
+        '- If an anchor looks stale, call arch_sync and say so before concluding.',
+        mode === 'lite' ? '- You do not inherit the parent conversation; rely on the graph and the dossier.' : '',
+        typeof args.question === 'string' && args.question.trim() !== '' ? `\nThe user's initial question: ${args.question.trim()}` : '',
+      ].filter(Boolean).join('\n')
+      const activation = await scope.subagents.startActivation({
+        provider: mode === 'fork' ? 'fork' : 'spawn',
+        label,
+        name,
+        prompt: [{ type: 'text', text: prompt }],
+        parent: exec.agent,
+        signal: exec.signal,
+        delivery: 'caller',
+      })
+      // The child runs in the background; the caller does not await its result.
+      void activation.result.catch(() => {})
+      return {
+        text: `started ${activation.name} (${mode}) — open it from the subagent catalog in the session header.`,
+        name: activation.name,
+        mode,
+        target,
+      }
+    }
+
+    scope.tools.register({
+      name: 'arch_discuss',
+      description:
+        'Start a side conversation about one architecture node or edge. mode:fork inherits the main conversation\'s '
+        + 'completed turns; mode:lite starts fresh with the graph and dossier. The child gets arch_* tools and runs in '
+        + 'its own session; open it from the subagent catalog.',
+      parameters: {
+        type: 'object',
+        additionalProperties: false,
+        properties: {
+          target: {
+            type: 'string',
+            description: 'node:<id> or edge:<id>',
+          },
+          mode: {
+            type: 'string',
+            enum: ['fork', 'lite'],
+            description: 'fork inherits the main conversation (higher cost); lite starts fresh with the dossier. Default fork.',
+          },
+          question: {
+            type: 'string',
+            description: 'Optional opening question or focus for the discussion.',
+          },
+          workspace: {
+            type: 'string',
+            description: 'Absolute workspace root; defaults to the session working directory.',
+          },
+        },
+        required: ['target'],
+      },
+      output: DISCUSS_OUTPUT,
+      async execute(args, exec) {
+        return discuss(args, exec)
+      },
+    })
   })
 
   // The host command supplies the catalog row and the composer's command chip.

@@ -55,6 +55,35 @@ function hashBuffer(buffer) {
   return createHash('sha256').update(buffer).digest('hex')
 }
 
+const CODE_EXTS = new Set([
+  '.ts', '.tsx', '.js', '.jsx', '.mjs', '.cjs', '.py', '.go', '.rs', '.java',
+  '.kt', '.kts', '.cs', '.rb', '.php', '.swift', '.c', '.h', '.cc', '.cpp',
+  '.hpp', '.m', '.mm', '.sh', '.bash', '.zsh',
+])
+
+/**
+ * Normalized code signature for cosmetic-change detection: comments and
+ * whitespace are removed, so a comment/format-only edit keeps the same
+ * signature while an implementation edit changes it. This is a heuristic:
+ * comment markers inside string literals can be stripped too.
+ */
+function signatureOf(relativePath, buffer) {
+  const ext = path.extname(relativePath).toLowerCase()
+  const text = buffer.toString('utf8')
+  if (!CODE_EXTS.has(ext)) {
+    return hashBuffer(Buffer.from(text.replace(/\s+/g, ' ').trim()))
+  }
+  let normalized = text.replace(/\r\n?/g, '\n')
+  normalized = normalized.replace(/\/\*[\s\S]*?\*\//g, ' ')
+  normalized = normalized.replace(/(^|[^:])\/\/[^\n]*/g, '$1 ')
+  if (['.py', '.sh', '.bash', '.zsh', '.rb'].includes(ext)) {
+    normalized = normalized.replace(/(^|\s)#[^\n]*/g, '$1 ')
+  }
+  normalized = normalized.replace(/<!--[\s\S]*?-->/g, ' ')
+  normalized = normalized.replace(/\s+/g, ' ').trim()
+  return hashBuffer(Buffer.from(normalized))
+}
+
 async function resolveRoot(raw, dir) {
   if (typeof raw !== 'string' || raw.trim() === '') {
     fail('WORKSPACE_REQUIRED', 'pass a workspace path or open a session with a working directory')
@@ -152,7 +181,7 @@ export function createMemoryStore(config = {}, deps = {}) {
           continue
         }
         const rel = path.relative(root, abs).split(path.sep).join('/')
-        files.set(rel, { sha256: hashBuffer(buffer), size: stat.size })
+        files.set(rel, { sha256: hashBuffer(buffer), size: stat.size, signature: signatureOf(rel, buffer) })
       }
     }
 
@@ -221,14 +250,21 @@ export function createMemoryStore(config = {}, deps = {}) {
     const mode = !manifest || input.full === true ? 'full' : 'incremental'
     const added = []
     const changed = []
+    const cosmetic = []
     const deleted = []
     if (mode === 'full') {
       added.push(...scannedFiles.keys())
     } else {
       for (const [file, info] of scannedFiles) {
         const previous = baseFiles[file]
-        if (!previous) added.push(file)
-        else if (previous.sha256 !== info.sha256 || previous.size !== info.size) changed.push(file)
+        if (!previous) {
+          added.push(file)
+        } else if (previous.sha256 !== info.sha256 || previous.size !== info.size) {
+          changed.push(file)
+          if (previous.signature !== undefined && previous.signature === info.signature) {
+            cosmetic.push(file)
+          }
+        }
       }
       for (const file of Object.keys(baseFiles)) {
         if (!scannedFiles.has(file)) deleted.push(file)
@@ -237,12 +273,18 @@ export function createMemoryStore(config = {}, deps = {}) {
 
     added.sort()
     changed.sort()
+    cosmetic.sort()
     deleted.sort()
-    const affected = await affectedNodes(scanned.root, new Set([...added, ...changed, ...deleted]))
+    const cosmeticSet = new Set(cosmetic)
+    const changedCode = changed.filter(file => !cosmeticSet.has(file))
+    const affected = await affectedNodes(scanned.root, new Set([...added, ...changedCode, ...deleted]))
+
+    let marked = []
+    let graphRev = null
     const lines = [
       `workspace: ${scanned.root}`,
       `mode: ${mode}${manifest ? '' : ' (no manifest yet)'}`,
-      `${scanned.files.size} scanned · ${added.length} added · ${changed.length} changed · ${deleted.length} deleted`,
+      `${scanned.files.size} scanned · ${added.length} added · ${changed.length} changed (${changedCode.length} code, ${cosmetic.length} cosmetic) · ${deleted.length} deleted`,
     ]
     if (mode === 'full' && manifest) lines.push('full:true ignores the manifest and lists every scannable file.')
     const section = (title, values) => {
@@ -252,7 +294,8 @@ export function createMemoryStore(config = {}, deps = {}) {
       if (values.length > 100) lines.push(`  … ${values.length - 100} more ${title}`)
     }
     section('added', added)
-    section('changed', changed)
+    section('changed (code)', changedCode)
+    section('changed (format/comment-only)', cosmetic)
     section('deleted', deleted)
     if (affected.length > 0) {
       lines.push('affected nodes:')
@@ -265,14 +308,30 @@ export function createMemoryStore(config = {}, deps = {}) {
     if (mode === 'full' || !manifest) {
       lines.push('after analysis, call arch_manifest_commit with the files you actually read.')
     }
+    if (input.markStale === true) {
+      if (mode === 'full') {
+        lines.push('markStale is ignored in full mode; use an incremental sync first.')
+      } else if (affected.length === 0) {
+        lines.push('markStale: no affected nodes to mark.')
+      } else if (typeof deps.markStale !== 'function') {
+        lines.push('markStale: graph writer unavailable; nodes were not marked.')
+      } else {
+        const result = await deps.markStale(scanned.root, affected.map(node => node.id))
+        marked = Array.isArray(result?.marked) ? result.marked : []
+        graphRev = Number.isInteger(result?.rev) ? result.rev : null
+        lines.push(`marked ${marked.length} node(s) stale${graphRev === null ? '' : ` (graph rev ${graphRev})`}`)
+      }
+    }
     return {
       text: lines.join('\n'),
       counts: {
         scanned: scanned.files.size,
         added: added.length,
         changed: changed.length,
+        cosmetic: cosmetic.length,
         deleted: deleted.length,
         affected: affected.length,
+        marked: marked.length,
       },
     }
   }
@@ -307,7 +366,7 @@ export function createMemoryStore(config = {}, deps = {}) {
           removed += 1
           continue
         }
-        files[rel] = { sha256: hashBuffer(buffer), size: stat.size }
+        files[rel] = { sha256: hashBuffer(buffer), size: stat.size, signature: signatureOf(rel, buffer) }
         committed += 1
       } catch {
         if (rel in files) {
