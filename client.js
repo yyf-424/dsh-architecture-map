@@ -15,6 +15,7 @@ window.__ModuleLoader__.load({
     const TYPE_ID = 'dsh-architecture-map/graph'
     const GRAPH_PATH = '.archmap/graph.json'
     const POLL_MS = 2000
+    const POSITIONS_KEY = 'dsh-architecture-map:positions:'
 
     const styles = {
       root: {
@@ -111,6 +112,41 @@ window.__ModuleLoader__.load({
       return value.length <= max ? value : `${value.slice(0, max - 1)}…`
     }
 
+    function readSavedPositions(key) {
+      if (!key) return {}
+      try {
+        const raw = window.localStorage.getItem(key)
+        if (!raw) return {}
+        const parsed = JSON.parse(raw)
+        if (!parsed || typeof parsed !== 'object') return {}
+        const result = {}
+        for (const [id, value] of Object.entries(parsed)) {
+          if (value && Number.isFinite(value.x) && Number.isFinite(value.y)) result[id] = { x: value.x, y: value.y }
+        }
+        return result
+      } catch {
+        return {}
+      }
+    }
+
+    function writeSavedPositions(key, value) {
+      if (!key) return
+      try {
+        window.localStorage.setItem(key, JSON.stringify(value))
+      } catch {
+        // Local storage can be unavailable in private contexts; positions are a view preference.
+      }
+    }
+
+    function clearSavedPositions(key) {
+      if (!key) return
+      try {
+        window.localStorage.removeItem(key)
+      } catch {
+        // Ignore: the in-memory layout still resets.
+      }
+    }
+
     function layout(graph) {
       const nodes = Array.isArray(graph?.nodes) ? graph.nodes : []
       const count = Math.max(nodes.length, 1)
@@ -161,7 +197,7 @@ window.__ModuleLoader__.load({
     }
 
     function NodeShape(props) {
-      const { node, box, selected, onSelect } = props
+      const { node, box, selected, onPointerDown } = props
       const x = box.x
       const y = box.y
       const fill = selected
@@ -172,7 +208,7 @@ window.__ModuleLoader__.load({
         : 'var(--dsw-alias-border-secondary, rgba(127,127,127,0.35))'
       return h(
         'g',
-        { onClick: () => onSelect(node.id), onPointerDown: event => event.stopPropagation(), style: { cursor: 'pointer' } },
+        { onPointerDown: onPointerDown, style: { cursor: 'grab' } },
         h('rect', {
           x, y, width: box.w, height: box.h, rx: 8,
           fill, stroke, strokeWidth: selected ? 2 : 1,
@@ -196,10 +232,12 @@ window.__ModuleLoader__.load({
       return function GraphTab(props) {
         const sessionId = props?.sessionId
         const cwd = props.useSessions(sessions => sessions.byId[sessionId]?.cwd)
+        const storageKey = cwd ? POSITIONS_KEY + cwd : undefined
         const [state, setState] = React.useState({ status: 'loading', graph: null, error: null })
         const [selectedId, setSelectedId] = React.useState(null)
         const [tick, setTick] = React.useState(0)
         const [view, setView] = React.useState({ zoom: 1, x: 0, y: 0 })
+        const [positions, setPositions] = React.useState({})
         const svgRef = React.useRef(null)
         const panRef = React.useRef(null)
         const fittedRef = React.useRef(false)
@@ -245,9 +283,9 @@ window.__ModuleLoader__.load({
           ? edges.filter(edge => edge.from === selected.id || edge.to === selected.id)
           : []
         const layoutView = layout(graph)
+        const positionOf = id => positions[id] ?? layoutView.positions.get(id)
 
-        const fitGraph = target => {
-          const boxes = [...layout(target).positions.values()]
+        const fitBoxes = boxes => {
           if (boxes.length === 0) return
           const minX = Math.min(...boxes.map(box => box.x))
           const maxX = Math.max(...boxes.map(box => box.x + box.w))
@@ -262,11 +300,83 @@ window.__ModuleLoader__.load({
           })
         }
 
+        const fitGraph = target => {
+          const current = Object.values(positions)
+          fitBoxes(current.length > 0 ? current : [...layout(target).positions.values()])
+        }
+
+        const resetLayout = () => {
+          if (!graph) return
+          const base = layout(graph)
+          setPositions(Object.fromEntries(base.positions))
+          clearSavedPositions(storageKey)
+          fitBoxes([...base.positions.values()])
+        }
+
+        React.useEffect(() => {
+          if (!graph || !storageKey) return
+          const base = layout(graph)
+          const saved = readSavedPositions(storageKey)
+          setPositions(previous => {
+            const next = {}
+            for (const [id, box] of base.positions) {
+              const old = previous[id] ?? saved[id]
+              next[id] = old ? { ...box, x: old.x, y: old.y } : box
+            }
+            return next
+          })
+        }, [graph?.rev, storageKey])
+
         React.useEffect(() => {
           if (!graph || fittedRef.current) return
           fittedRef.current = true
           fitGraph(graph)
         }, [graph?.rev])
+
+        const onNodePointerDown = (event, id) => {
+          event.stopPropagation()
+          if (event.button !== 0) return
+          const box = positionOf(id)
+          if (!box) return
+          const startX = event.clientX
+          const startY = event.clientY
+          const originX = box.x
+          const originY = box.y
+          let moved = false
+          let last = null
+          const move = moveEvent => {
+            if (!moved && Math.abs(moveEvent.clientX - startX) + Math.abs(moveEvent.clientY - startY) > 3) {
+              moved = true
+            }
+            if (!moved) return
+            const dx = (moveEvent.clientX - startX) / view.zoom
+            const dy = (moveEvent.clientY - startY) / view.zoom
+            last = { x: originX + dx, y: originY + dy }
+            setPositions(previous => {
+              const current = previous[id] ?? box
+              return {
+                ...previous,
+                [id]: { ...current, ...last },
+              }
+            })
+          }
+          const up = () => {
+            window.removeEventListener('pointermove', move)
+            window.removeEventListener('pointerup', up)
+            if (!moved) {
+              setSelectedId(id)
+              return
+            }
+            if (last && storageKey) {
+              const saved = readSavedPositions(storageKey)
+              saved[id] = last
+              writeSavedPositions(storageKey, saved)
+            }
+          }
+          window.addEventListener('pointermove', move)
+          window.addEventListener('pointerup', up, { once: true })
+          event.preventDefault()
+        }
 
         const viewPoint = event => {
           const svg = svgRef.current
@@ -368,6 +478,12 @@ window.__ModuleLoader__.load({
               style: styles.button,
               onClick: () => fitGraph(graph),
             }, 'Fit'),
+            h('button', {
+              type: 'button',
+              style: styles.button,
+              onClick: resetLayout,
+              title: 'Reset node positions to the automatic layout',
+            }, 'Reset layout'),
             h('span', { style: styles.meta }, `${Math.round(view.zoom * 100)}%`),
             h('span', { style: { ...styles.meta, opacity: 0.55 } }, 'drag to pan · wheel to zoom'))
 
@@ -403,8 +519,8 @@ window.__ModuleLoader__.load({
               }, h('path', { d: 'M 0 0 L 10 5 L 0 10 z', fill: 'var(--dsw-alias-text-secondary, #888)' }))),
             h('g', { transform: `translate(${view.x} ${view.y}) scale(${view.zoom})` },
               edges.map(edge => {
-                const from = layoutView.positions.get(edge.from)
-                const to = layoutView.positions.get(edge.to)
+                const from = positionOf(edge.from)
+                const to = positionOf(edge.to)
                 if (!from || !to) return null
                 return h('line', {
                   key: `edge:${edge.id}`,
@@ -417,12 +533,12 @@ window.__ModuleLoader__.load({
                 })
               }),
               nodes.map(node => {
-                const box = layoutView.positions.get(node.id)
+                const box = positionOf(node.id)
                 return box
                   ? h(NodeShape, {
                     key: node.id, node, box,
                     selected: node.id === selectedId,
-                    onSelect: setSelectedId,
+                    onPointerDown: event => onNodePointerDown(event, node.id),
                   })
                   : null
               }),
