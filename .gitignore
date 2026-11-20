@@ -1,0 +1,17 @@
+# Local design notes (not part of the public repository)
+docs/DESIGN.md
+docs/PLAN.md
+docs/M0-FINDINGS.md
+
+# Plugin runtime data
+.archmap/
+.codegraph/
+
+# Dependencies and build output
+node_modules/
+.build/
+coverage/
+
+# OS / editor noise
+.DS_Store
+*.log
