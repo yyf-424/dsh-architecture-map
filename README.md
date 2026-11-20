@@ -44,13 +44,13 @@ Architecture map makes the architecture a **first-class, addressable object** in
 - **Canonical architecture graph** — `.archmap/graph.json` with a revision number, schema validation, atomic writes and a one-step backup. The model reads and edits it through `arch_graph_get` / `arch_graph_patch`; `apply:false` previews without writing.
 - **Right-sidebar canvas** — reads the graph from the session workspace, renders nodes/edges as SVG, supports pan, wheel zoom, `Fit`, node dragging and `Reset layout`, and shows node details on click.
 - **Local layout memory** — dragged node positions are kept per workspace in browser storage, so a refresh or a new session on the same machine keeps the layout. `Reset layout` clears it. Shared positions are planned.
-- **Incremental architecture memory** — `.archmap/manifest.json` records content hashes; `arch_sync` reports only added/changed/deleted files and the graph nodes their anchors affect. `arch_manifest_commit` records analyzed files, and `arch_doc_get` / `arch_doc_put` read and write `overview`, `modules/<id>` and `notes/<id>`.
+- **Incremental architecture memory with cosmetic detection** — `.archmap/manifest.json` records content hashes plus a normalized code signature; `arch_sync` reports only added/changed/deleted files, distinguishes code changes from format/comment-only changes, and lists the nodes whose anchors are affected. `markStale:true` marks those nodes stale (and bumps the graph rev); the default is report-only. `arch_manifest_commit` records analyzed files, and `arch_doc_get` / `arch_doc_put` read and write `overview`, `modules/<id>` and `notes/<id>`.
+- **Per-node side conversations** — `arch_discuss` starts a child for `node:<id>` or `edge:<id>`: `fork` inherits the main conversation's completed turns; `lite` starts fresh with the graph and dossier. Delivery is caller-only, so the main conversation is not polluted; conclusions go to `notes/<id>`.
 
 ## Planned next
 
-- Per-node side conversations (`fork` inherits the main conversation's completed turns; `lite` uses a dossier digest).
 - Built-in Mermaid rendering, so ` ```mermaid ` blocks render without another plugin.
-- Mermaid / SVG / Markdown export, a direct node→discussion bridge, and persisted/shared positions.
+- A direct node→discussion button in the sidebar, Mermaid / SVG / Markdown export, and persisted/shared positions.
 
 ## What it is not
 
@@ -67,7 +67,8 @@ No runtime plugin dependencies beyond DSH itself:
 | Canvas, graph storage, local positions | No — implemented in this bundle |
 | Architecture memory (`arch_sync` + dossier) | No — workspace files managed by this plugin |
 | Mermaid rendering | Planned — not implemented yet |
-| Side conversations | Planned — will use DSH's native subagent UI |
+| Side conversations | No — `arch_discuss` uses DSH's native subagent UI |
+| Stale detection | No — `arch_sync` with `markStale:true` |
 | Export (Mermaid/SVG/Markdown) | Planned — not implemented yet |
 | Sharper call/impact edges | Optional: `dsh-plugin-codegraph` (recommended, **not installed automatically**) |
 
@@ -119,8 +120,8 @@ There is no separate "start" button or left-sidebar icon. The plugin adds a righ
 
 | Version | Scope |
 |---|---|
-| 0.1 | graph core and tools, sidebar canvas, node dragging, local position memory, `arch_sync` + manifest + dossier docs |
-| 0.2 | per-node side conversations, built-in Mermaid rendering, Mermaid/SVG/Markdown export |
+| 0.1 | graph core and tools, sidebar canvas, node dragging, local position memory, `arch_sync` + manifest + dossier docs, cosmetic diff + stale marking, `arch_discuss` |
+| 0.2 | direct node→discussion button, built-in Mermaid rendering, Mermaid/SVG/Markdown export |
 | 0.3 | direct node→discussion bridge, shared/persisted positions, proposals, graph diff |
 | 0.4 | edge discussions, group collapse, Mermaid import, Office export |
 | 0.5 | multiple graphs, PR links, shared team maps |
