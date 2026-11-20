@@ -4,7 +4,7 @@ English | [中文](README.zh.md)
 
 **中文名：架构地图** · An architecture workbench for DeepSeek Harness: a live semantic architecture graph, per-node side conversations, and incremental architecture memory.
 
-> Status: **design / pre-alpha.** No code yet. Design and construction notes are kept locally and intentionally not tracked in this repository.
+> Status: **pre-alpha, working skeleton.** The Host tools, sidebar canvas, local node positions and architecture memory work today. Per-node side conversations, built-in Mermaid rendering and export are planned next. Design notes are kept locally and intentionally not tracked.
 
 ---
 
@@ -39,14 +39,18 @@ Architecture map makes the architecture a **first-class, addressable object** in
 └───────────────────────────────────────────────────┴───────────────────────────────┘
 ```
 
-## Features
+## Features (implemented today)
 
-- **Semantic graph, deterministic rendering** — the model writes nodes/edges/anchors; the client computes layout. No model-generated coordinates, no drift.
-- **One canonical graph per workspace** — `.archmap/graph.json` with a revision number. Child sessions, the main session, and the UI read the same file; writes are serialized and conflict-checked.
-- **Per-node side conversations** — `fork` inherits the main conversation's completed turns (true memory, higher cost); `lite` spawns with a dossier digest (cheap, no memory). Contexts are isolated; conclusions are shared through node notes.
-- **Incremental memory** — `.archmap/manifest.json` records content hashes of analyzed files; `arch_sync` returns only what changed and which nodes went stale.
-- **Built-in Mermaid rendering** — ` ```mermaid ` blocks in chat render out of the box. You do **not** need `dsh-mermaid-plus` or any other plugin.
-- **Self-contained by default** — canvas, Mermaid, export, and discussion entry ship in one bundle. Optional companions are recommendations, never dependencies.
+- **Canonical architecture graph** — `.archmap/graph.json` with a revision number, schema validation, atomic writes and a one-step backup. The model reads and edits it through `arch_graph_get` / `arch_graph_patch`; `apply:false` previews without writing.
+- **Right-sidebar canvas** — reads the graph from the session workspace, renders nodes/edges as SVG, supports pan, wheel zoom, `Fit`, node dragging and `Reset layout`, and shows node details on click.
+- **Local layout memory** — dragged node positions are kept per workspace in browser storage, so a refresh or a new session on the same machine keeps the layout. `Reset layout` clears it. Shared positions are planned.
+- **Incremental architecture memory** — `.archmap/manifest.json` records content hashes; `arch_sync` reports only added/changed/deleted files and the graph nodes their anchors affect. `arch_manifest_commit` records analyzed files, and `arch_doc_get` / `arch_doc_put` read and write `overview`, `modules/<id>` and `notes/<id>`.
+
+## Planned next
+
+- Per-node side conversations (`fork` inherits the main conversation's completed turns; `lite` uses a dossier digest).
+- Built-in Mermaid rendering, so ` ```mermaid ` blocks render without another plugin.
+- Mermaid / SVG / Markdown export, a direct node→discussion bridge, and persisted/shared positions.
 
 ## What it is not
 
@@ -60,11 +64,11 @@ No runtime plugin dependencies beyond DSH itself:
 
 | Feature | Extra plugin? |
 |---|---|
-| Canvas, graph storage, export | No — bundled |
-| Mermaid rendering | No — bundled |
-| Side conversations | No — DSH native subagent UI |
-| Skill / workflow guidance | No — bundled `architecture-map` skill |
-| Architecture memory | No — workspace files managed by this plugin |
+| Canvas, graph storage, local positions | No — implemented in this bundle |
+| Architecture memory (`arch_sync` + dossier) | No — workspace files managed by this plugin |
+| Mermaid rendering | Planned — not implemented yet |
+| Side conversations | Planned — will use DSH's native subagent UI |
+| Export (Mermaid/SVG/Markdown) | Planned — not implemented yet |
 | Sharper call/impact edges | Optional: `dsh-plugin-codegraph` (recommended, **not installed automatically**) |
 
 ## How memory works (no extra plugin)
@@ -115,10 +119,11 @@ There is no separate "start" button or left-sidebar icon. The plugin adds a righ
 
 | Version | Scope |
 |---|---|
-| 0.1 | graph core, canvas, built-in Mermaid, bootstrap dossier, fork/lite discussions, sync, Mermaid/SVG export |
-| 0.2 | direct node→discussion bridge, pinned positions, persisted proposals, graph diff |
-| 0.3 | edge discussions, group collapse, Mermaid import, Office export |
-| 0.4 | multiple graphs, PR links, shared team maps |
+| 0.1 | graph core and tools, sidebar canvas, node dragging, local position memory, `arch_sync` + manifest + dossier docs |
+| 0.2 | per-node side conversations, built-in Mermaid rendering, Mermaid/SVG/Markdown export |
+| 0.3 | direct node→discussion bridge, shared/persisted positions, proposals, graph diff |
+| 0.4 | edge discussions, group collapse, Mermaid import, Office export |
+| 0.5 | multiple graphs, PR links, shared team maps |
 
 ## Prior art & acknowledgements
 

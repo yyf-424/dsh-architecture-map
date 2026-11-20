@@ -4,7 +4,7 @@
 
 **DeepSeek Harness 的架构工作台：可交互的语义架构图、按节点开启的侧栏子对话、增量架构记忆。**
 
-> 状态：**设计阶段 / pre-alpha**，还没有代码。设计文档保存在本地，不纳入版本跟踪。
+> 状态：**pre-alpha，可工作的骨架**。Host 工具、右侧栏画布、节点位置本地记忆和架构记忆已经可用；按节点子对话、内置 Mermaid 渲染和导出是下一步。设计文档保存在本地，不纳入版本跟踪。
 
 ---
 
@@ -39,14 +39,18 @@ Architecture map 把「项目架构」变成 harness 里**可寻址的一等对�
 └───────────────────────────────────────────────────┴──────────────────────────────┘
 ```
 
-## 特性
+## 已实现
 
-- **语义图 + 确定性渲染**：模型只写节点/边/锚点，客户端算布局。没有模型生成的坐标，不会漂移。
-- **每个 workspace 一张 canonical 图**：`.archmap/graph.json` + rev。子会话、主会话、UI 读同一个文件；写入串行化并做冲突检测。
-- **按节点的子对话**：`fork` 继承主对话已完成轮次（真记忆，成本高）；`lite` 用档案摘要 spawn（便宜，无记忆）。上下文隔离，结论通过节点 notes 共享。
-- **增量记忆**：`.archmap/manifest.json` 记录已分析文件的内容 hash；`arch_sync` 只返回变更文件和过期节点。
-- **内置 Mermaid 渲染**：聊天里的 ` ```mermaid ` 代码块开箱即渲染，**不需要**再装 `dsh-mermaid-plus` 等插件。
-- **默认自包含**：画布、Mermaid、导出、讨论入口都在一个 bundle 里；可选项只推荐，不做依赖。
+- **Canonical 架构图**：`.archmap/graph.json`，带 rev、schema 校验、原子写入和单步备份。模型通过 `arch_graph_get` / `arch_graph_patch` 读写；`apply:false` 只预览不写入。
+- **右侧栏画布**：从当前会话 workspace 读取图，SVG 渲染节点/边，支持平移、滚轮缩放、`Fit`、节点拖拽、`Reset layout`，点击节点看详情。
+- **位置本地记忆**：拖动的节点位置按 workspace 存在浏览器本地，刷新或同机新会话会保留；`Reset layout` 清掉。共享位置是后续计划。
+- **增量架构记忆**：`.archmap/manifest.json` 记录内容 hash；`arch_sync` 只报告新增/修改/删除文件和受影响节点；`arch_manifest_commit` 记录已分析文件；`arch_doc_get` / `arch_doc_put` 读写 `overview`、`modules/<id>`、`notes/<id>`。
+
+## 下一步计划
+
+- 按节点开侧栏子对话（`fork` 继承主对话已完成轮次；`lite` 用档案摘要）。
+- 内置 Mermaid 渲染，聊天里的 ` ```mermaid ` 代码块不再依赖其他插件。
+- Mermaid / SVG / Markdown 导出、节点直连讨论、位置共享/写回图数据。
 
 ## 不是什么
 
@@ -60,11 +64,11 @@ Architecture map 把「项目架构」变成 harness 里**可寻址的一等对�
 
 | 功能 | 需要额外插件? |
 |---|---|
-| 画布、图存储、导出 | 不需要——内置 |
-| Mermaid 渲染 | 不需要——内置 |
-| 侧栏子对话 | 不需要——DSH 原生 subagent UI |
-| Skill / 方法论 | 不需要——随包提供 `architecture-map` skill |
-| 架构记忆 | 不需要——本插件管理的 workspace 文件 |
+| 画布、图存储、位置本地记忆 | 不需要——本 bundle 已实现 |
+| 架构记忆（`arch_sync` + dossier） | 不需要——本插件管理的 workspace 文件 |
+| Mermaid 渲染 | 计划中——尚未实现 |
+| 侧栏子对话 | 计划中——将用 DSH 原生 subagent UI |
+| 导出（Mermaid/SVG/Markdown） | 计划中——尚未实现 |
 | 更准的调用/影响边 | 可选：`dsh-plugin-codegraph`（推荐，**不默认安装**） |
 
 ## 记忆是怎么做的（不需要其他插件）
@@ -115,10 +119,11 @@ Architecture map 在 workspace 里维护一份**架构专用档案**，由插件
 
 | 版本 | 内容 |
 |---|---|
-| 0.1 | 图核心、画布、内置 Mermaid、bootstrap 档案、fork/lite 讨论、增量同步、Mermaid/SVG 导出 |
-| 0.2 | 节点直连讨论、坐标固定、提案持久化、图 diff |
-| 0.3 | 边讨论、分组折叠、Mermaid 导入、Office 导出 |
-| 0.4 | 多图、PR 关联、团队共享 |
+| 0.1 | 图核心与工具、右侧栏画布、节点拖拽、位置本地记忆、`arch_sync` + manifest + dossier |
+| 0.2 | 按节点子对话、内置 Mermaid 渲染、Mermaid/SVG/Markdown 导出 |
+| 0.3 | 节点直连讨论、位置共享/写回图、提案、图 diff |
+| 0.4 | 边讨论、分组折叠、Mermaid 导入、Office 导出 |
+| 0.5 | 多图、PR 关联、团队共享 |
 
 ## 先例与致谢
 
