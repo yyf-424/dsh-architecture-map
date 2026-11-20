@@ -362,6 +362,7 @@ export function createMemoryStore(config = {}, deps = {}) {
         if (!error || error.code !== 'ENOENT') throw error
       }
     }
+    if (!content.endsWith('\n')) content += '\n'
     if (content.length > limits.maxDocBytes) {
       fail('LIMIT_EXCEEDED', `the resulting document would be ${content.length} characters; the limit is ${limits.maxDocBytes}`)
     }
