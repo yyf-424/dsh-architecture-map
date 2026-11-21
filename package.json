@@ -14,7 +14,7 @@
   ],
   "scripts": {
     "check": "node --check index.js && node --check client.js && node --check src/host/plugin.js && node --check src/host/graph.js && node --check src/host/memory.js && node --check src/host/export.js && node --check src/host/signature.js",
-    "test": "node --test test"
+    "test": "node --test test/*.test.mjs"
   },
   "exports": {
     ".": "./index.js",
