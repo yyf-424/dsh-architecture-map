@@ -1,6 +1,6 @@
 {
   "name": "dsh-architecture-map",
-  "version": "0.1.0-m0",
+  "version": "0.1.0",
   "description": "Architecture map for DeepSeek Harness: a semantic architecture graph with per-node side conversations and incremental architecture memory.",
   "type": "module",
   "license": "MIT",

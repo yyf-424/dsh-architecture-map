@@ -1,6 +1,6 @@
 # Changelog
 
-## Unreleased / 0.1.0-m0
+## 0.1.0 — 2026-11-21
 
 - Canonical `.archmap/graph.json` with revision, validation, atomic writes and backup.
 - Sidebar SVG canvas with layered layout, pan/zoom/Fit, node dragging and local position memory.
