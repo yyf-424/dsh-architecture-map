@@ -68,7 +68,7 @@ No runtime plugin dependencies beyond DSH itself:
 | Canvas, graph storage, local positions | No — implemented in this bundle |
 | Skill / bootstrap guidance | No — bundled `architecture-map` skill |
 | Architecture memory (`arch_sync` + dossier) | No — workspace files managed by this plugin |
-| Mermaid rendering | No — Mermaid 12.2.0 is vendored and served locally; `renderMermaid:false` disables |
+| Mermaid rendering | No — Mermaid 12.2.0 is vendored and served locally; `renderMermaid: auto/on/off` |
 | Side conversations | No — `arch_discuss` plus sidebar `Discuss` buttons |
 | Stale detection | No — `arch_sync` with `markStale:true` |
 | Export (Mermaid/SVG/Markdown) | No — `arch_export` |
@@ -79,15 +79,16 @@ No runtime plugin dependencies beyond DSH itself:
 Assistant messages with a ` ```mermaid ` fence render as diagrams. The runtime is vendored at
 `vendor/mermaid.esm.min.mjs` (Mermaid 12.2.0, MIT; ELK is EPL-2.0) and served by the Host at
 `/x-dsh-architecture-map/vendor/mermaid.esm.min.mjs`; the browser never fetches a CDN. The client
-checks `/x-dsh-architecture-map/config` first, so with `renderMermaid: false` fences stay plain
-code blocks and the 5.2 MB runtime is not loaded.
+checks `/x-dsh-architecture-map/config` first, so with `renderMermaid: off` fences stay plain
+code blocks and the 5.2 MB runtime is not loaded. The default `auto` disables our renderer when
+`dsh-mermaid-plus` (a known conflicting fence provider) is enabled; `on` forces it, `off` disables it.
 
 ```yaml
 - insert:
     - id: architecture-map
       name: dsh-architecture-map
       config:
-        renderMermaid: false
+        renderMermaid: off
 ```
 
 ## How memory works (no extra plugin)

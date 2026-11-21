@@ -36,10 +36,10 @@ The model can also use the bundled `architecture-map` skill in a new session.
 - id: architecture-map
   name: dsh-architecture-map
   config:
-    renderMermaid: true
+    renderMermaid: auto
 ```
 
-`renderMermaid: false` keeps ` ```mermaid ` fences as code blocks and does not load the 5.2 MB runtime.
+`renderMermaid: auto|on|off` controls the built-in renderer. `auto` disables it when the known conflicting `dsh-mermaid-plus` plugin is enabled; `off` also keeps fences as code blocks and does not load the 5.2 MB runtime.
 
 ## Data and permissions
 

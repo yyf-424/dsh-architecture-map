@@ -69,7 +69,7 @@ Architecture map 把「项目架构」变成 harness 里**可寻址的一等对�
 | 画布、图存储、位置本地记忆 | 不需要——本 bundle 已实现 |
 | Skill / bootstrap 指导 | 不需要——随包提供 `architecture-map` skill |
 | 架构记忆（`arch_sync` + dossier） | 不需要——本插件管理的 workspace 文件 |
-| Mermaid 渲染 | 不需要——Mermaid 12.2.0 已 vendored 并由本机路由提供；`renderMermaid:false` 可关闭 |
+| Mermaid 渲染 | 不需要——Mermaid 12.2.0 已 vendored 并由本机路由提供；`renderMermaid: auto/on/off` |
 | 侧栏子对话 | 不需要——`arch_discuss` + 右侧栏 `Discuss` 按钮 |
 | Stale 检测 | 不需要——`arch_sync` 的 `markStale:true` |
 | 导出（Mermaid/SVG/Markdown） | 不需要——`arch_export` |

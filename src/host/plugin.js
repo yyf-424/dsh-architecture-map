@@ -96,8 +96,25 @@ function readSkillContent() {
   }
 }
 
+/** Known third-party Mermaid fence providers that would collide on the `mermaid` key. */
+const OTHER_MERMAID_PLUGINS = new Set(['dsh-mermaid-plus'])
+
+/** Detect a known Mermaid fence provider through the loader, when inspectable. */
+function hasOtherMermaidPlugin(ctx) {
+  try {
+    const loader = ctx?.loader ?? (typeof ctx.get === 'function' ? ctx.get('loader') : undefined)
+    const entries = loader?.entries?.() ?? []
+    return entries.some(entry => {
+      const name = entry?.options?.name ?? entry?.name
+      return OTHER_MERMAID_PLUGINS.has(name)
+    })
+  } catch {
+    return false
+  }
+}
+
 /** Report whether the browser half may render Mermaid fences. */
-function serveMermaidConfig(renderMermaid) {
+function serveMermaidConfig(renderMermaid, mode) {
   return (request, response) => {
     if (request.method !== 'GET' && request.method !== 'HEAD') {
       response.writeHead(405, { 'content-type': 'text/plain; charset=utf-8', allow: 'GET, HEAD' })
@@ -108,7 +125,7 @@ function serveMermaidConfig(renderMermaid) {
       'content-type': 'application/json; charset=utf-8',
       'cache-control': 'no-store',
     })
-    response.end(JSON.stringify({ mermaid: renderMermaid }))
+    response.end(JSON.stringify({ mermaid: renderMermaid, mode }))
   }
 }
 
@@ -243,7 +260,14 @@ const GRAPH_OUTPUT = {
  * @returns {void}
  */
 export function apply(ctx, config = {}) {
-  const renderMermaid = config?.renderMermaid !== false
+  const mermaidMode = config?.renderMermaid ?? 'auto'
+  const renderMermaid = mermaidMode === true || mermaidMode === 'on'
+    ? true
+    : mermaidMode === false || mermaidMode === 'off'
+      ? false
+      : mermaidMode === 'auto'
+        ? !hasOtherMermaidPlugin(ctx)
+        : true
   const store = createGraphStore(config)
   const markStaleNodes = async (workspace, ids) => {
     for (let attempt = 0; attempt < 3; attempt += 1) {
@@ -807,7 +831,7 @@ export function apply(ctx, config = {}) {
     scope.effect(() => scope.webServer.register({
       kind: 'exact',
       path: `${RUNTIME_PATH}/config`,
-      handler: serveMermaidConfig(renderMermaid),
+      handler: serveMermaidConfig(renderMermaid, mermaidMode),
     }), 'architecture-map: mermaid config route')
     if (renderMermaid) {
       scope.effect(() => scope.webServer.register({

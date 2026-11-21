@@ -36,10 +36,10 @@
 - id: architecture-map
   name: dsh-architecture-map
   config:
-    renderMermaid: true
+    renderMermaid: auto
 ```
 
-`renderMermaid: false` 时 Mermaid fence 只显示代码块，也不会加载 5.2 MB runtime。
+`renderMermaid: auto|on|off` 控制内置渲染。`auto` 在检测到已知冲突的 `dsh-mermaid-plus` 启用时关闭本插件渲染；`off` 时 fence 只显示代码块，也不加载 5.2 MB runtime。
 
 ## 数据与权限
 
