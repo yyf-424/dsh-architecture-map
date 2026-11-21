@@ -276,8 +276,7 @@ window.__ModuleLoader__.load({
       }
     }
 
-    function layout(graph) {
-      const nodes = Array.isArray(graph?.nodes) ? graph.nodes : []
+    function gridLayout(nodes) {
       const count = Math.max(nodes.length, 1)
       const cols = Math.min(2, Math.max(1, Math.ceil(Math.sqrt(count))))
       const rows = Math.ceil(nodes.length / cols)
@@ -300,6 +299,72 @@ window.__ModuleLoader__.load({
         width: cols * cellW + pad,
         height: Math.max(rows * cellH + pad, 96),
       }
+    }
+
+    /**
+     * Layered layout: longest-path levels for a DAG. Cyclic graphs fall back to
+     * the grid so a bad edge cannot collapse the canvas into one column.
+     */
+    function layout(graph) {
+      const nodes = Array.isArray(graph?.nodes) ? graph.nodes : []
+      if (nodes.length === 0) return { positions: new Map(), width: 0, height: 96 }
+      const ids = new Set(nodes.map(node => node.id))
+      const edges = (Array.isArray(graph?.edges) ? graph.edges : [])
+        .filter(edge => ids.has(edge.from) && ids.has(edge.to))
+      if (edges.length === 0) return gridLayout(nodes)
+      const indegree = new Map(nodes.map(node => [node.id, 0]))
+      const outgoing = new Map(nodes.map(node => [node.id, []]))
+      for (const edge of edges) {
+        outgoing.get(edge.from).push(edge.to)
+        indegree.set(edge.to, indegree.get(edge.to) + 1)
+      }
+      const queue = nodes.filter(node => indegree.get(node.id) === 0).map(node => node.id)
+      const levels = new Map(nodes.map(node => [node.id, 0]))
+      let visited = 0
+      while (queue.length > 0) {
+        const id = queue.shift()
+        visited += 1
+        for (const to of outgoing.get(id)) {
+          levels.set(to, Math.max(levels.get(to), levels.get(id) + 1))
+          indegree.set(to, indegree.get(to) - 1)
+          if (indegree.get(to) === 0) queue.push(to)
+        }
+      }
+      if (visited !== nodes.length) return gridLayout(nodes)
+
+      const byLevel = new Map()
+      for (const node of nodes) {
+        const level = levels.get(node.id) ?? 0
+        if (!byLevel.has(level)) byLevel.set(level, [])
+        byLevel.get(level).push(node)
+      }
+      const direction = String(graph?.layout?.direction ?? 'LR').toUpperCase()
+      const horizontal = direction !== 'TB' && direction !== 'TD' && direction !== 'BT'
+      const nodeW = 196
+      const nodeH = 64
+      const layerGap = 54
+      const nodeGap = 26
+      const pad = 24
+      const layerCount = Math.max(...byLevel.keys()) + 1
+      const widest = Math.max(...[...byLevel.values()].map(list => list.length), 1)
+      const width = horizontal
+        ? pad * 2 + layerCount * nodeW + (layerCount - 1) * layerGap
+        : pad * 2 + widest * nodeW + (widest - 1) * nodeGap
+      const height = horizontal
+        ? pad * 2 + widest * nodeH + (widest - 1) * nodeGap
+        : pad * 2 + layerCount * nodeH + (layerCount - 1) * layerGap
+      const positions = new Map()
+      for (const [level, list] of byLevel) {
+        list.forEach((node, index) => {
+          positions.set(node.id, {
+            x: horizontal ? pad + level * (nodeW + layerGap) : pad + index * (nodeW + nodeGap),
+            y: horizontal ? pad + index * (nodeH + nodeGap) : pad + level * (nodeH + layerGap),
+            w: nodeW,
+            h: nodeH,
+          })
+        })
+      }
+      return { positions, width, height }
     }
 
     function readAll(ctx, sessionId, signal) {
