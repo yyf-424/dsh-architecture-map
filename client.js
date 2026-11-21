@@ -824,7 +824,7 @@ window.__ModuleLoader__.load({
         const legend = h('div', { style: styles.legend },
           Object.entries(legendColors).map(([status, color]) => h('span', { key: status, style: styles.legendItem },
             h('span', { style: { ...styles.legendDot, background: color } }),
-            status,
+            t(`legend.${status}`),
           )))
 
         const openDiscussion = async mode => {
