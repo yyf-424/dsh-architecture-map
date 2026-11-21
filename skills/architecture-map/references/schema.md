@@ -42,7 +42,7 @@ All data lives under `<workspace>/.archmap/`. Do not invent another store.
 - **id**: lowercase letter, then lowercase letters/digits/`_`/`-`; unique within its kind.
 - **kind**: free lower-case text; common values `entry`, `module`, `store`, `client`, `service`, `external`.
 - **status**: `fresh`, `stale`, `proposed`.
-- **anchor**: workspace-relative POSIX `path`, optional `symbol`, optional `hash` (sha256 of the file content); no `..`, absolute paths, backslashes or empty segments. `arch_graph_patch` fills a missing hash from disk and preserves an existing hash unless `refreshAnchors:true` is passed.
+- **anchor**: workspace-relative POSIX `path`, optional `symbol`, optional `hash` (the normalized content signature: comments/whitespace ignored for code); no `..`, absolute paths, backslashes or empty segments. `arch_graph_patch` fills a missing hash from disk and preserves an existing hash unless `refreshAnchors:true` is passed.
 - **group**: optional group id; groups have `id` and `title`.
 - **edge**: `from`/`to` must be existing node ids; `kind` common values `call`, `data`, `dependency`, `next`, `contains`.
 - `layout.mode` is advisory for the client; the current client uses its own grid + local positions.

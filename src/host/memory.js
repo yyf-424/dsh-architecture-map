@@ -9,7 +9,8 @@
  */
 import { promises as fs } from 'node:fs'
 import path from 'node:path'
-import { createHash, randomBytes } from 'node:crypto'
+import { randomBytes } from 'node:crypto'
+import { hashBuffer, signatureOf } from './signature.js'
 
 const MANIFEST_SCHEMA = 1
 
@@ -49,39 +50,6 @@ function normalizeRelative(value) {
     fail('PATH_ESCAPE', `"${value}" must not contain empty, "." or ".." segments`)
   }
   return segments.join('/')
-}
-
-function hashBuffer(buffer) {
-  return createHash('sha256').update(buffer).digest('hex')
-}
-
-const CODE_EXTS = new Set([
-  '.ts', '.tsx', '.js', '.jsx', '.mjs', '.cjs', '.py', '.go', '.rs', '.java',
-  '.kt', '.kts', '.cs', '.rb', '.php', '.swift', '.c', '.h', '.cc', '.cpp',
-  '.hpp', '.m', '.mm', '.sh', '.bash', '.zsh',
-])
-
-/**
- * Normalized code signature for cosmetic-change detection: comments and
- * whitespace are removed, so a comment/format-only edit keeps the same
- * signature while an implementation edit changes it. This is a heuristic:
- * comment markers inside string literals can be stripped too.
- */
-function signatureOf(relativePath, buffer) {
-  const ext = path.extname(relativePath).toLowerCase()
-  const text = buffer.toString('utf8')
-  if (!CODE_EXTS.has(ext)) {
-    return hashBuffer(Buffer.from(text.replace(/\s+/g, ' ').trim()))
-  }
-  let normalized = text.replace(/\r\n?/g, '\n')
-  normalized = normalized.replace(/\/\*[\s\S]*?\*\//g, ' ')
-  normalized = normalized.replace(/(^|[^:])\/\/[^\n]*/g, '$1 ')
-  if (['.py', '.sh', '.bash', '.zsh', '.rb'].includes(ext)) {
-    normalized = normalized.replace(/(^|\s)#[^\n]*/g, '$1 ')
-  }
-  normalized = normalized.replace(/<!--[\s\S]*?-->/g, ' ')
-  normalized = normalized.replace(/\s+/g, ' ').trim()
-  return hashBuffer(Buffer.from(normalized))
 }
 
 async function resolveRoot(raw, dir) {
@@ -232,7 +200,7 @@ export function createMemoryStore(config = {}, deps = {}) {
       const file = scannedFiles.get(anchor.path)
       // Missing/skipped files are handled by the path delta; do not flag a
       // binary or oversized anchor as stale just because it was not scanned.
-      return file !== undefined && file.sha256 !== anchor.hash
+      return file !== undefined && file.signature !== anchor.hash
     }
     const hits = []
     for (const node of graph.nodes) {

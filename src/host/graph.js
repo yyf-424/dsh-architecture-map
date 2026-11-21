@@ -10,7 +10,8 @@
  */
 import { promises as fs } from 'node:fs'
 import path from 'node:path'
-import { createHash, randomBytes } from 'node:crypto'
+import { randomBytes } from 'node:crypto'
+import { signatureOf } from './signature.js'
 
 export const GRAPH_SCHEMA = 1
 
@@ -666,7 +667,7 @@ export function createGraphStore(config = {}) {
         }
         try {
           const content = await fs.readFile(path.join(root, anchor.path))
-          anchors.push({ ...anchor, hash: createHash('sha256').update(content).digest('hex') })
+          anchors.push({ ...anchor, hash: signatureOf(anchor.path, content) })
           updated += 1
         } catch {
           anchors.push(anchor)

@@ -12,6 +12,9 @@
     "diagram",
     "subagent"
   ],
+  "scripts": {
+    "test": "node --test test"
+  },
   "exports": {
     ".": "./index.js",
     "./client": "./client.js",

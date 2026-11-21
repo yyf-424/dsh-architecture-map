@@ -63,7 +63,7 @@ The normalization is heuristic (comments/whitespace for common code extensions).
 
 `markStale:true` only writes code-affected nodes. A node can be stale without a sync (for example, a review found a mismatch); patch it explicitly.
 
-Each anchor may store a sha256 `hash`. Sync also reports a node when its anchor hash differs from the current file, even if the manifest has no pending delta. After reviewing, refresh the hashes with:
+Each anchor may store the normalized content signature in `hash`. Sync also reports a node when its anchor hash differs from the current file, even if the manifest has no pending delta. After reviewing, refresh the hashes with:
 
 ```json
 { "refreshAnchors": true, "baseRev": 6, "ops": [{ "op": "update_node", "id": "n3", "patch": { "status": "fresh" } }] }
