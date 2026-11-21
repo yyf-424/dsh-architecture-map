@@ -878,8 +878,7 @@ window.__ModuleLoader__.load({
                 disabled: discussState.status === 'starting',
                 onClick: () => openDiscussion('lite'),
               }, t('discuss.lite'))),
-            h('div', { style: styles.discussHint },
-              'Tool schemas may be inherited, but shell and source-write calls are denied for discussion children; graph changes still need your approval.'),
+            h('div', { style: styles.discussHint }, t('discuss.hint')),
             discussState.error ? h('div', { style: styles.discussError }, discussState.error) : null)
           : h('div', { style: { ...styles.detail, opacity: 0.65 } }, t('panel.empty'))
 
