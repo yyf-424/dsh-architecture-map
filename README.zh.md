@@ -142,6 +142,25 @@ npm pack --dry-run
 - 或者在输入框输入 `/arch`，选 **Architecture map**。
 - 想单独验证 Host 半，让 agent 调用 `arch_hello`。
 
+## 常见问题
+
+**需要 `dsh-mermaid-plus` 吗？** 不需要，Mermaid 12.2.0 已 vendored。如果启用了 `dsh-mermaid-plus`，
+`renderMermaid: auto` 会关闭本插件渲染，避免共用 `mermaid` fence key；`on` 强制开启本插件。
+
+**为什么手写 SVG，不用 React Flow？** 保持 client bundle 自包含，不引入构建/依赖链。分层布局覆盖当前规模；
+React Flow 仍可作为后续可选升级。
+
+**为什么侧栏显示的图和工具 `workspace` 参数里的图不一样？** 面板按设计跟随会话 workspace。要看哪张图，
+就打开 workspace 指向那个目录的会话。
+
+**fork 和 lite 怎么选？** fork 继承主对话已完成轮次；lite 只从图和档案开始。
+
+**这是通用记忆插件吗？** 不是，档案只服务这张架构图。
+
+**怎么关闭 Mermaid？** 配置 `renderMermaid: off`；代码块保持不变，也不会加载 runtime。
+
+**需要 codegraph 吗？** 不需要；`dsh-plugin-codegraph` 是可选的调用/影响边增强。
+
 ## 要求
 
 - 带 Web/Desktop Host 的 DeepSeek Harness；在 macOS + DSH `0.2.2-rc.5` 上验证，后续版本 API 可能变化。

@@ -158,6 +158,25 @@ There is no separate "start" button or left-sidebar icon. The plugin adds a righ
 - Mermaid rendering is on by default (`auto`) but can be disabled with `renderMermaid: off`; a known `dsh-mermaid-plus` installation makes `auto` disable ours.
 - This is pre-alpha; the API and file schema can still change.
 
+## FAQ
+
+**Do I need `dsh-mermaid-plus`?** No. Mermaid 12.2.0 is vendored. With `dsh-mermaid-plus` enabled,
+`renderMermaid: auto` disables our renderer to avoid the shared `mermaid` fence key; `on` forces ours.
+
+**Why hand-written SVG instead of React Flow?** It keeps the client bundle self-contained and avoids a
+build/dependency chain. The layered layout covers the current graph sizes; React Flow remains an optional upgrade.
+
+**Why does the sidebar show a different graph than a tool's `workspace` argument?** The panel follows the
+session workspace by design. Open a session whose workspace is the graph you want to see.
+
+**fork or lite?** `fork` inherits the parent's completed turns; `lite` starts from the graph and dossier only.
+
+**Is this a general memory plugin?** No. The dossier is only for this architecture graph.
+
+**How do I disable Mermaid?** Set `renderMermaid: off` in the bundle config; fences remain code blocks and the runtime is not loaded.
+
+**Do I need codegraph?** No. `dsh-plugin-codegraph` is an optional companion for sharper call/impact edges.
+
 ## Requirements
 
 - DeepSeek Harness with a Web/Desktop host. Verified with DSH `0.2.2-rc.5` on macOS; the Host/client APIs may change in later releases.
