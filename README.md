@@ -95,6 +95,13 @@ code blocks and the 5.2 MB runtime is not loaded. The default `auto` disables ou
         renderMermaid: off
 ```
 
+## Where data lives
+
+All graph, manifest, dossier and export data lives in `<workspace>/.archmap/`. The plugin installation
+directory contains only code, skill, vendor, docs and locale. The plugin does not modify a user project's
+`.gitignore`; commit `.archmap/` to share the map, or ignore it for local-only data. Uninstalling the plugin
+does not delete `.archmap/`. Node positions are browser-local and are not part of the graph.
+
 ## How memory works (no extra plugin)
 
 Architecture map keeps an architecture-specific dossier in the workspace, managed by the plugin itself:

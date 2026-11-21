@@ -79,6 +79,12 @@ Architecture map 把「项目架构」变成 harness 里**可寻址的一等对�
 | 导出（Mermaid/SVG/Markdown） | 不需要——`arch_export` |
 | 更准的调用/影响边 | 可选：`dsh-plugin-codegraph`（推荐，**不默认安装**） |
 
+## 数据存在哪里
+
+架构图、manifest、档案和导出都在 `<workspace>/.archmap/`；插件安装目录只有代码、skill、vendor、文档和 locale。
+插件不会修改用户项目的 `.gitignore`；想共享就提交 `.archmap/`，想只留本地就自己忽略。卸载插件不会删除
+`.archmap/`。节点位置只存在浏览器本地，不属于图数据。
+
 ## 记忆是怎么做的（不需要其他插件）
 
 Architecture map 在 workspace 里维护一份**架构专用档案**，由插件自己管理：

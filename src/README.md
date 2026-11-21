@@ -1,13 +1,22 @@
 # src
 
-Status: M0 skeleton in progress. Planned layout (implementation detail, see the local `docs/PLAN.md` §4):
+Host implementation (plain ESM) and the hand-written client bundle.
 
-- `host/` — Host plugin: `ctx.arch` service, store, schema, sync, docs, discuss, export, tools, commands, DSH adapter.
-- `client/` — Web client: right-sidebar graph tab, canvas, node card, discussion bridge, theme.
-- `client/mermaid/` — bundled Mermaid fence renderer; copied/adapted MIT code keeps its original copyright header and is listed in `THIRD_PARTY_NOTICES.md`.
+## Host
 
-Current state:
-- `host/plugin.js` — Host entry: `arch_hello`, `arch_graph_get`, `arch_graph_patch`, `/arch`.
-- `host/graph.js` — graph schema/validation, store, rev, atomic writes, backup.
-- `client.js` at the package root — hand-written client bundle (right-sidebar placeholder); later built from `client/`.
+- `host/plugin.js` — entry: `arch_*` tools, `/arch` command, Mermaid static routes, bundled skill registration.
+- `host/graph.js` — graph schema/validation, store, rev, atomic writes, backup, anchor hashes.
+- `host/memory.js` — manifest, incremental sync, cosmetic signatures, stale marking, dossier docs.
+- `host/export.js` — deterministic Mermaid/SVG/Markdown exports.
+- `host/signature.js` — shared sha256 + normalized code signature.
 
+## Client
+
+The client is the package-root `client.js` (hand-written, no build step):
+
+- right-sidebar panel and layered SVG canvas,
+- node dragging and local positions,
+- discussion buttons and the `subagentchat` resource,
+- the `mermaid` chat fence renderer.
+
+The local `docs/PLAN.md` / `docs/DESIGN.md` are design notes and are intentionally not shipped.

@@ -3,8 +3,8 @@ docs/DESIGN.md
 docs/PLAN.md
 docs/M0-FINDINGS.md
 
-# Plugin runtime data
-.archmap/
+# .archmap/ is intentionally NOT ignored: commit it to share the map,
+# or add it to your own .gitignore for local-only data.
 .codegraph/
 
 # Dependencies and build output
