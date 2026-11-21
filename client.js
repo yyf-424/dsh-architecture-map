@@ -134,6 +134,26 @@ window.__ModuleLoader__.load({
         opacity: 0.72,
         color: 'var(--dsw-alias-warning, #c58a1a)',
       },
+      legend: {
+        display: 'flex',
+        alignItems: 'center',
+        gap: '12px',
+        margin: '0 0 8px',
+        fontSize: '11px',
+        opacity: 0.72,
+        flexWrap: 'wrap',
+      },
+      legendItem: {
+        display: 'inline-flex',
+        alignItems: 'center',
+        gap: '4px',
+      },
+      legendDot: {
+        width: '7px',
+        height: '7px',
+        borderRadius: '50%',
+        display: 'inline-block',
+      },
     }
 
     function clip(text, max) {
@@ -417,7 +437,9 @@ window.__ModuleLoader__.load({
           cx: x + box.w - 14, cy: y + 14, r: 4,
           fill: node.status === 'stale'
             ? 'var(--dsw-alias-warning, #d9a441)'
-            : 'var(--dsw-alias-success, #4caf7d)',
+            : node.status === 'proposed'
+              ? '#9a6bd1'
+              : 'var(--dsw-alias-success, #4caf7d)',
         }),
       )
     }
@@ -744,6 +766,17 @@ window.__ModuleLoader__.load({
             ),
           )
 
+        const legendColors = {
+          fresh: 'var(--dsw-alias-success, #4caf7d)',
+          stale: 'var(--dsw-alias-warning, #d9a441)',
+          proposed: '#9a6bd1',
+        }
+        const legend = h('div', { style: styles.legend },
+          Object.entries(legendColors).map(([status, color]) => h('span', { key: status, style: styles.legendItem },
+            h('span', { style: { ...styles.legendDot, background: color } }),
+            status,
+          )))
+
         const openDiscussion = async mode => {
           if (!selected || discussState.status === 'starting') return
           if (!sessionId) {
@@ -804,6 +837,7 @@ window.__ModuleLoader__.load({
             ? h('div', { style: styles.error }, `Graph unavailable: ${state.error}`)
             : null,
           toolbar,
+          legend,
           canvas,
           nodes.length > 0 ? detail : null,
         )
