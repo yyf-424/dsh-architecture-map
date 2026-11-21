@@ -5,7 +5,7 @@
  * Node 2: `arch_graph_get` / `arch_graph_patch` over a workspace-owned
  * `.archmap/graph.json` with a revision, validation, and atomic writes.
  */
-import { appendFileSync, createReadStream, readFileSync } from 'node:fs'
+import { createReadStream, readFileSync } from 'node:fs'
 import { randomUUID } from 'node:crypto'
 import { stat } from 'node:fs/promises'
 import path from 'node:path'
@@ -539,25 +539,21 @@ export function apply(ctx, config = {}) {
   const discussionIds = new Set()
 
   const restrictAgentTools = agent => {
-    const debug = { at: new Date().toISOString(), child: String(agent?.id ?? ''), applied: 0, errors: [] }
-    if (!agent?.ctx?.tools || typeof agent.ctx.tools.restrict !== 'function') {
-      debug.errors.push('no scoped tools.restrict')
-      appendFileSync('/tmp/archmap-restrict.log', JSON.stringify(debug) + '\n')
-      return 0
-    }
+    if (!agent?.ctx?.tools || typeof agent.ctx.tools.restrict !== 'function') return 0
+    let applied = 0
+    let firstError
     for (const name of DISCUSSION_DENY) {
       try {
         agent.ctx.tools.restrict({ deny: [name] })
-        debug.applied += 1
+        applied += 1
       } catch (error) {
-        debug.errors.push(`${name}: ${String(error?.message ?? error)}`)
+        firstError ??= error
       }
     }
-    appendFileSync('/tmp/archmap-restrict.log', JSON.stringify(debug) + '\n')
-    if (debug.applied === 0) {
-      console.warn('[architecture-map] could not restrict discussion child tools:', debug.errors[0] ?? 'no tool matched')
+    if (applied === 0) {
+      console.warn('[architecture-map] could not restrict discussion child tools:', String(firstError?.message ?? 'no tool matched'))
     }
-    return debug.applied
+    return applied
   }
 
   const restrictDiscussionChild = childId => {
