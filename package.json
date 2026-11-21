@@ -22,6 +22,7 @@
     "index.js",
     "client.js",
     "src",
+    "skills",
     "vendor",
     "cordis.patch.yml",
     "locale",

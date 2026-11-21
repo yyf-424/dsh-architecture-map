@@ -66,6 +66,7 @@ No runtime plugin dependencies beyond DSH itself:
 | Feature | Extra plugin? |
 |---|---|
 | Canvas, graph storage, local positions | No — implemented in this bundle |
+| Skill / bootstrap guidance | No — bundled `architecture-map` skill |
 | Architecture memory (`arch_sync` + dossier) | No — workspace files managed by this plugin |
 | Mermaid rendering | No — Mermaid 12.2.0 is vendored and served locally; `renderMermaid:false` disables |
 | Side conversations | No — `arch_discuss` plus sidebar `Discuss` buttons |
@@ -137,7 +138,7 @@ There is no separate "start" button or left-sidebar icon. The plugin adds a righ
 
 | Version | Scope |
 |---|---|
-| 0.1 | graph core and tools, sidebar canvas, node dragging, local position memory, `arch_sync` + manifest + dossier docs, cosmetic diff + stale marking, `arch_discuss`, sidebar discussion buttons, `arch_export`, built-in Mermaid fence rendering |
+| 0.1 | graph core and tools, sidebar canvas, node dragging, local position memory, `arch_sync` + manifest + dossier docs, cosmetic diff + stale marking, bundled architecture skill, `arch_discuss`, sidebar discussion buttons, `arch_export`, built-in Mermaid fence rendering |
 | 0.2 | shared/persisted positions, direct export buttons, release polish |
 | 0.3 | direct node→discussion bridge, shared/persisted positions, proposals, graph diff |
 | 0.4 | edge discussions, group collapse, Mermaid import, Office export |

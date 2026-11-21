@@ -5,7 +5,7 @@
  * Node 2: `arch_graph_get` / `arch_graph_patch` over a workspace-owned
  * `.archmap/graph.json` with a revision, validation, and atomic writes.
  */
-import { createReadStream } from 'node:fs'
+import { createReadStream, readFileSync } from 'node:fs'
 import { stat } from 'node:fs/promises'
 import path from 'node:path'
 import { fileURLToPath } from 'node:url'
@@ -19,6 +19,7 @@ export const name = 'architecture-map'
 const RUNTIME_PATH = '/x-dsh-architecture-map'
 const VENDOR_PREFIX = `${RUNTIME_PATH}/vendor`
 const VENDOR_DIR = fileURLToPath(new URL('../../vendor/', import.meta.url))
+const SKILL_DIR = fileURLToPath(new URL('../../skills/architecture-map/', import.meta.url))
 
 const VENDOR_MIME = {
   '.mjs': 'text/javascript; charset=utf-8',
@@ -78,6 +79,20 @@ async function serveVendorFile(request, response) {
   }
   response.writeHead(200, headers)
   createReadStream(file).pipe(response)
+}
+
+/**
+ * Read the bundled skill body (frontmatter stripped). The skill file is the
+ * single source of truth; the Host registers it as an embedded runtime skill so
+ * a new session sees `architecture-map` in its skill catalog.
+ */
+function readSkillContent() {
+  try {
+    const raw = readFileSync(path.join(SKILL_DIR, 'SKILL.md'), 'utf8')
+    return raw.replace(/^---\r?\n[\s\S]*?\r?\n---\r?\n?/, '').replace(/^\n+/, '')
+  } catch {
+    return undefined
+  }
 }
 
 /** Report whether the browser half may render Mermaid fences. */
@@ -639,6 +654,30 @@ export function apply(ctx, config = {}) {
     })
     return () => {
       subagents = null
+    }
+  })
+
+  // The bundled architecture-map skill teaches the agent the sync/patch/dossier
+  // loop. It is optional: a profile without the skill registry still gets the
+  // tools and the panel.
+  ctx.inject(['skills'], scope => {
+    const content = readSkillContent()
+    if (content === undefined) {
+      console.warn('[architecture-map] bundled skill content not found')
+      return () => {}
+    }
+    try {
+      return scope.skills.register({
+        name: 'architecture-map',
+        description: 'Maintain a canonical architecture graph and dossier; use arch_sync, arch_graph_get/patch, arch_doc_get/put, arch_manifest_commit, arch_discuss and arch_export.',
+        whenToUse: 'When the user asks for a project architecture map, module/dependency overview, or wants to discuss one module.',
+        source: 'bundled',
+        content,
+        resourceBase: { kind: 'directory', path: SKILL_DIR },
+      })
+    } catch (error) {
+      console.warn('[architecture-map] bundled skill registration failed:', error)
+      return () => {}
     }
   })
 

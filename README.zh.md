@@ -67,6 +67,7 @@ Architecture map 把「项目架构」变成 harness 里**可寻址的一等对�
 | 功能 | 需要额外插件? |
 |---|---|
 | 画布、图存储、位置本地记忆 | 不需要——本 bundle 已实现 |
+| Skill / bootstrap 指导 | 不需要——随包提供 `architecture-map` skill |
 | 架构记忆（`arch_sync` + dossier） | 不需要——本插件管理的 workspace 文件 |
 | Mermaid 渲染 | 不需要——Mermaid 12.2.0 已 vendored 并由本机路由提供；`renderMermaid:false` 可关闭 |
 | 侧栏子对话 | 不需要——`arch_discuss` + 右侧栏 `Discuss` 按钮 |
@@ -122,7 +123,7 @@ Architecture map 在 workspace 里维护一份**架构专用档案**，由插件
 
 | 版本 | 内容 |
 |---|---|
-| 0.1 | 图核心与工具、右侧栏画布、节点拖拽、位置本地记忆、`arch_sync` + manifest + dossier、格式改动识别 + stale、`arch_discuss`、右侧栏讨论按钮、`arch_export`、内置 Mermaid fence 渲染 |
+| 0.1 | 图核心与工具、右侧栏画布、节点拖拽、位置本地记忆、`arch_sync` + manifest + dossier、格式改动识别 + stale、内置 architecture skill、`arch_discuss`、右侧栏讨论按钮、`arch_export`、内置 Mermaid fence 渲染 |
 | 0.2 | 位置共享/写回图数据、右侧栏导出按钮、发布打磨 |
 | 0.3 | 节点直连讨论、位置共享/写回图、提案、图 diff |
 | 0.4 | 边讨论、分组折叠、Mermaid 导入、Office 导出 |
