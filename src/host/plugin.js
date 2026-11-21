@@ -335,7 +335,8 @@ export function apply(ctx, config = {}) {
     name: 'arch_graph_patch',
     description:
       'Apply a validated batch edit to the architecture graph. Pass the latest baseRev (0 for a new graph). '
-      + 'Use apply:false to validate and preview without writing. Add nodes before edges that reference them.',
+      + 'Use apply:false to validate and preview without writing. Add nodes before edges that reference them. '
+      + 'Missing anchor hashes are filled from disk; refreshAnchors:true recomputes all anchor hashes after review.',
     parameters: {
       type: 'object',
       additionalProperties: false,
@@ -353,6 +354,10 @@ export function apply(ctx, config = {}) {
         apply: {
           type: 'boolean',
           description: 'false validates and returns a diff without writing; default true.',
+        },
+        refreshAnchors: {
+          type: 'boolean',
+          description: 'Recompute every anchor hash from the current files after applying. Use after reviewing a stale node; default false (only missing hashes are filled).',
         },
         workspace: {
           type: 'string',

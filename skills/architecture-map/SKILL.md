@@ -13,7 +13,7 @@ Maintain one canonical graph at `.archmap/graph.json` plus a dossier under `.arc
 2. **Read before patch.** Call `arch_graph_get` and pass its `rev` as `baseRev`. Batch changes; use `apply:false` first for non-trivial edits.
 3. **Only read what changed.** The sync result names the changed files and affected nodes. Do not re-read the whole repository for one change.
 4. **Stable ids.** Keep node/edge ids stable; never renumber the graph.
-5. **Anchors are evidence.** Every code node needs at least one `path#symbol` anchor. A conceptual node is allowed only if you say it is conceptual.
+5. **Anchors are evidence.** Every code node needs at least one `path#symbol` anchor. A conceptual node is allowed only if you say it is conceptual. After a review, refresh stale anchor hashes with `refreshAnchors:true`.
 6. **Write only the map.** Graph/dossier writes go through `arch_graph_patch`, `arch_doc_put` and `arch_manifest_commit`. Do not edit source code as part of mapping.
 7. **Commit after analysis.** `arch_manifest_commit` records files you actually read; never commit files you did not inspect.
 8. **No general memory.** The dossier is only for this graph: overview, modules and node notes. Do not turn it into a conversation-summary store.

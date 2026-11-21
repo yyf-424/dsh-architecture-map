@@ -44,7 +44,7 @@ Architecture map 把「项目架构」变成 harness 里**可寻址的一等对�
 - **Canonical 架构图**：`.archmap/graph.json`，带 rev、schema 校验、原子写入和单步备份。模型通过 `arch_graph_get` / `arch_graph_patch` 读写；`apply:false` 只预览不写入。
 - **右侧栏画布**：从当前会话 workspace 读取图，SVG 渲染节点/边，支持平移、滚轮缩放、`Fit`、节点拖拽、`Reset layout`，点击节点看详情。
 - **位置本地记忆**：拖动的节点位置按 workspace 存在浏览器本地，刷新或同机新会话会保留；`Reset layout` 清掉。共享位置是后续计划。
-- **增量架构记忆 + 格式改动识别**：`.archmap/manifest.json` 记录 hash 和归一化代码签名；`arch_sync` 只报告新增/修改/删除文件，区分代码改动和仅格式/注释改动，并列出受影响节点；`markStale:true` 会把这些节点标成 stale 并递增 graph rev，默认只报告不写图；`arch_manifest_commit` 记录已分析文件；`arch_doc_get` / `arch_doc_put` 读写 `overview`、`modules/<id>`、`notes/<id>`。
+- **增量架构记忆 + 格式改动识别**：`.archmap/manifest.json` 记录 hash 和归一化代码签名；`arch_sync` 只报告新增/修改/删除文件，区分代码改动和仅格式/注释改动，并列出受影响节点；`markStale:true` 会把这些节点标成 stale 并递增 graph rev，默认只报告不写图；anchor 还可以存文件的 sha256，sync 会发现 hash 不匹配的节点，复盘后用 `arch_graph_patch` 的 `refreshAnchors:true` 刷新；`arch_manifest_commit` 记录已分析文件；`arch_doc_get` / `arch_doc_put` 读写 `overview`、`modules/<id>`、`notes/<id>`。
 - **确定性导出**：`arch_export` 把 Mermaid flowchart、独立 SVG 或 Markdown 档案摘要写到 `.archmap/export/`；不改变 graph rev，也不改源文件。
 - **内置 Mermaid 渲染**：assistant 消息里的 ` ```mermaid ` 块用 vendored Mermaid 12.2.0 渲染，runtime 由本插件 Host 路由提供，不依赖 CDN，也不依赖 `dsh-mermaid-plus`。流式时保留代码块，语法错误回退代码块 + 错误行；`renderMermaid:false` 可关闭。
 - **按节点子对话**：`arch_discuss` 为 `node:<id>` 或 `edge:<id>` 开子会话；`fork` 继承主对话已完成轮次，`lite` 只靠图和档案。结果只走 caller，不污染主对话；结论写进 `notes/<id>`。节点详情里还有 `Discuss (fork)` / `Lite` 按钮，通过 `subagentchat` resource 在右侧栏打开子会话。

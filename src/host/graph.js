@@ -10,7 +10,7 @@
  */
 import { promises as fs } from 'node:fs'
 import path from 'node:path'
-import { randomBytes } from 'node:crypto'
+import { createHash, randomBytes } from 'node:crypto'
 
 export const GRAPH_SCHEMA = 1
 
@@ -649,6 +649,35 @@ export function createGraphStore(config = {}) {
     return { rev: graph.rev, counts, text }
   }
 
+  /**
+   * Fill missing anchor hashes (and optionally refresh all of them) from the
+   * current files. Existing hashes are preserved unless refreshAnchors is true,
+   * so a status-only patch cannot silently hide a stale anchor.
+   */
+  async function refreshAnchorHashes(root, graph, refreshAll) {
+    let updated = 0
+    const nodes = []
+    for (const node of graph.nodes) {
+      const anchors = []
+      for (const anchor of node.anchors ?? []) {
+        if (!refreshAll && anchor.hash !== undefined) {
+          anchors.push(anchor)
+          continue
+        }
+        try {
+          const content = await fs.readFile(path.join(root, anchor.path))
+          anchors.push({ ...anchor, hash: createHash('sha256').update(content).digest('hex') })
+          updated += 1
+        } catch {
+          anchors.push(anchor)
+        }
+      }
+      nodes.push({ ...node, anchors })
+    }
+    graph.nodes = nodes
+    return updated
+  }
+
   async function patch(rawWorkspace, input = {}) {
     const root = await resolveRoot(rawWorkspace)
     return withLock(root, async () => {
@@ -669,13 +698,15 @@ export function createGraphStore(config = {}) {
           text: `validated ${input.ops.length} op(s), ${changes} change(s); no write (rev stays ${current.rev})\n${formatDiff(diff)}`,
         }
       }
+      const refreshed = await refreshAnchorHashes(root, next, input.refreshAnchors === true)
       next.rev = current.rev + 1
       next.updatedAt = new Date().toISOString()
       await writeGraph(root, next)
+      const refreshLine = refreshed > 0 ? `\nanchors refreshed: ${refreshed}` : ''
       return {
         rev: next.rev,
         counts: graphCounts(next),
-        text: `rev ${current.rev} -> ${next.rev} · applied ${input.ops.length} op(s), ${changes} change(s)\n${formatDiff(diff)}\n${formatCounts(graphCounts(next))}`,
+        text: `rev ${current.rev} -> ${next.rev} · applied ${input.ops.length} op(s), ${changes} change(s)\n${formatDiff(diff)}\n${formatCounts(graphCounts(next))}${refreshLine}`,
       }
     })
   }

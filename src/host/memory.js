@@ -219,7 +219,7 @@ export function createMemoryStore(config = {}, deps = {}) {
     await fs.rename(temp, file)
   }
 
-  async function affectedNodes(root, changedPaths) {
+  async function affectedNodes(root, changedPaths, scannedFiles) {
     if (typeof deps.readGraph !== 'function') return []
     let graph
     try {
@@ -227,9 +227,16 @@ export function createMemoryStore(config = {}, deps = {}) {
     } catch {
       return []
     }
+    const hashMismatch = anchor => {
+      if (typeof anchor.hash !== 'string' || anchor.hash === '') return false
+      const file = scannedFiles.get(anchor.path)
+      // Missing/skipped files are handled by the path delta; do not flag a
+      // binary or oversized anchor as stale just because it was not scanned.
+      return file !== undefined && file.sha256 !== anchor.hash
+    }
     const hits = []
     for (const node of graph.nodes) {
-      const anchor = (node.anchors ?? []).find(item => changedPaths.has(item.path))
+      const anchor = (node.anchors ?? []).find(item => changedPaths.has(item.path) || hashMismatch(item))
       if (anchor) hits.push({ id: node.id, title: node.title, path: anchor.path })
     }
     return hits
@@ -277,7 +284,7 @@ export function createMemoryStore(config = {}, deps = {}) {
     deleted.sort()
     const cosmeticSet = new Set(cosmetic)
     const changedCode = changed.filter(file => !cosmeticSet.has(file))
-    const affected = await affectedNodes(scanned.root, new Set([...added, ...changedCode, ...deleted]))
+    const affected = await affectedNodes(scanned.root, new Set([...added, ...changedCode, ...deleted]), scanned.files)
 
     let marked = []
     let graphRev = null
