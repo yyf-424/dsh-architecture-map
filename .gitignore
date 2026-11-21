@@ -10,6 +10,7 @@ docs/M0-FINDINGS.md
 # Dependencies and build output
 node_modules/
 .build/
+dist/
 coverage/
 
 # OS / editor noise
