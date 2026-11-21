@@ -105,6 +105,18 @@ window.__ModuleLoader__.load({
         fontFamily: 'ui-monospace, SFMono-Regular, Menlo, monospace',
         fontSize: '11px',
       },
+      discussRow: {
+        display: 'flex',
+        gap: '8px',
+        marginTop: '10px',
+        flexWrap: 'wrap',
+      },
+      discussError: {
+        marginTop: '8px',
+        fontSize: '12px',
+        lineHeight: 1.5,
+        color: 'var(--dsw-alias-danger, #d9534f)',
+      },
     }
 
     function clip(text, max) {
@@ -235,12 +247,17 @@ window.__ModuleLoader__.load({
         const storageKey = cwd ? POSITIONS_KEY + cwd : undefined
         const [state, setState] = React.useState({ status: 'loading', graph: null, error: null })
         const [selectedId, setSelectedId] = React.useState(null)
+        const [discussState, setDiscussState] = React.useState({ status: 'idle', error: null })
         const [tick, setTick] = React.useState(0)
         const [view, setView] = React.useState({ zoom: 1, x: 0, y: 0 })
         const [positions, setPositions] = React.useState({})
         const svgRef = React.useRef(null)
         const panRef = React.useRef(null)
         const fittedRef = React.useRef(false)
+
+        React.useEffect(() => {
+          setDiscussState({ status: 'idle', error: null })
+        }, [selectedId])
 
         React.useEffect(() => {
           if (!sessionId) {
@@ -545,6 +562,33 @@ window.__ModuleLoader__.load({
             ),
           )
 
+        const openDiscussion = async mode => {
+          if (!selected || discussState.status === 'starting') return
+          if (!sessionId) {
+            setDiscussState({ status: 'error', error: 'No session is bound to this tab.' })
+            return
+          }
+          setDiscussState({ status: 'starting', error: null })
+          try {
+            const line = `/arch discuss node:${selected.id} ${mode}`
+            const response = await ctx.remote.commands.execute(sessionId, line, [])
+            if (!response.ok) throw new Error(`${response.error.code}: ${response.error.message}`)
+            const outcome = response.value?.result
+            if (!outcome || outcome.kind !== 'success') throw new Error(outcome?.text ?? 'discussion failed')
+            const text = outcome.text ?? ''
+            const match = /\[child=([^\s\]]+) parent=([^\s\]]+) mode=([^\s\]]+)/.exec(text)
+            if (!match) throw new Error(`discussion started but no sidebar address: ${text}`)
+            if (!ctx.sidebarRight || typeof ctx.sidebarRight.openResource !== 'function') {
+              throw new Error('the right sidebar does not support opening a subagent chat')
+            }
+            const address = `dsh-resource://subagentchat/session/${encodeURIComponent(match[1])}?parent=${encodeURIComponent(match[2])}&mode=${encodeURIComponent(match[3])}`
+            ctx.sidebarRight.openResource(address, { kind: 'subagentchat', preferNewPane: true })
+            setDiscussState({ status: 'idle', error: null })
+          } catch (error) {
+            setDiscussState({ status: 'error', error: error?.message ?? String(error) })
+          }
+        }
+
         const detail = selected
           ? h('div', { style: styles.detail },
             h('p', { style: styles.detailTitle }, `${selected.id} · ${selected.title}`),
@@ -555,7 +599,21 @@ window.__ModuleLoader__.load({
               : null,
             selectedEdges.length
               ? h('div', { style: styles.detailRow }, selectedEdges.map(edge => `${edge.id}: ${edge.from} → ${edge.to}${edge.label ? ` (${edge.label})` : ''}`).join('  ·  '))
-              : null)
+              : null,
+            h('div', { style: styles.discussRow },
+              h('button', {
+                type: 'button',
+                style: styles.button,
+                disabled: discussState.status === 'starting',
+                onClick: () => openDiscussion('fork'),
+              }, discussState.status === 'starting' ? 'Starting…' : 'Discuss (fork)'),
+              h('button', {
+                type: 'button',
+                style: styles.button,
+                disabled: discussState.status === 'starting',
+                onClick: () => openDiscussion('lite'),
+              }, 'Lite')),
+            discussState.error ? h('div', { style: styles.discussError }, discussState.error) : null)
           : h('div', { style: { ...styles.detail, opacity: 0.65 } }, 'Click a node to see its summary, anchors and edges.')
 
         return h('div', { style: styles.root },
@@ -571,7 +629,7 @@ window.__ModuleLoader__.load({
     }
 
     return {
-      inject: ['slots', 'sidebarRightTabs', 'sidebarRight', 'remote', 'remote.workspaceFiles'],
+      inject: ['slots', 'sidebarRightTabs', 'sidebarRight', 'remote', 'remote.commands', 'remote.workspaceFiles'],
       apply(ctx) {
         ctx.sidebarRightTabs.register({
           id: TYPE_ID,

@@ -88,8 +88,9 @@ const DISCUSS_OUTPUT = {
       name: { type: 'string' },
       mode: { type: 'string' },
       target: { type: 'string' },
+      childId: { type: 'string' },
     },
-    required: ['text', 'name', 'mode', 'target'],
+    required: ['text', 'name', 'mode', 'target', 'childId'],
   },
   render: (_args, value) => [{ type: 'text', text: value.text }],
 }
@@ -373,60 +374,95 @@ export function apply(ctx, config = {}) {
 
   // Per-node side conversations are optional: a minimal profile may not
   // compose the subagent service. When it is present, register the tool.
-  ctx.inject(['subagents'], scope => {
-    const discuss = async (args, exec) => {
-      if (!exec.agent) throw new Error('arch_discuss requires an owning agent session')
-      const workspace = workspaceOf(args, exec)
-      const graph = await store.readGraph(workspace)
-      const target = String(args.target ?? '')
-      const match = /^(node|edge):(.+)$/.exec(target)
-      if (!match) throw new Error('target must be node:<id> or edge:<id>')
-      const [, kind, id] = match
-      const node = kind === 'node' ? graph.nodes.find(item => item.id === id) : undefined
-      const edge = kind === 'edge' ? graph.edges.find(item => item.id === id) : undefined
-      if (!node && !edge) throw new Error(`${kind} "${id}" does not exist in ${workspace}`)
-      const mode = args.mode === 'lite' ? 'lite' : 'fork'
-      const name = `${kind === 'node' ? 'node' : 'edge'}-${id}`
-      const label = `Discuss ${kind} ${id}`
-      const title = node ? node.title : edge.label ?? `${edge.from} -> ${edge.to}`
-      const prompt = [
-        `You are the discussion agent for architecture ${kind} ${id}${title ? ` ("${title}")` : ''} in workspace ${workspace}.`,
-        '',
-        `Start by calling arch_graph_get({ workspace: ${JSON.stringify(workspace)}, target: ${JSON.stringify(target)}, include: ["summary", "anchors", "edges"] }) and arch_doc_get({ workspace: ${JSON.stringify(workspace)}, id: "modules/${id}" }) if it exists.`,
-        '',
-        'Rules:',
-        `- Discuss ${id} and its edges only; ask before touching other nodes.`,
-        '- Do not edit source code. Graph edits go through arch_graph_patch with the latest rev; prefer apply:false until the user says apply.',
-        '- Do not message the parent agent. Write conclusions to notes/' + id + ' via arch_doc_put with mode "append".',
-        '- If an anchor looks stale, call arch_sync and say so before concluding.',
-        mode === 'lite' ? '- You do not inherit the parent conversation; rely on the graph and the dossier.' : '',
-        typeof args.question === 'string' && args.question.trim() !== '' ? `\nThe user's initial question: ${args.question.trim()}` : '',
-      ].filter(Boolean).join('\n')
-      const activation = await scope.subagents.startActivation({
-        provider: mode === 'fork' ? 'fork' : 'spawn',
-        label,
-        name,
-        prompt: [{ type: 'text', text: prompt }],
-        parent: exec.agent,
-        signal: exec.signal,
-        delivery: 'caller',
-      })
-      // The child runs in the background; the caller does not await its result.
-      void activation.result.catch(() => {})
-      return {
-        text: `started ${activation.name} (${mode}) — open it from the subagent catalog in the session header.`,
-        name: activation.name,
-        mode,
-        target,
+  let subagents = null
+
+  const startDiscussion = async ({ agent, workspace, target, mode, question, signal }) => {
+    if (!agent) throw new Error('arch_discuss requires an owning agent session')
+    if (subagents === null) throw new Error('arch_discuss requires the subagents service')
+    const graph = await store.readGraph(workspace)
+    const match = /^(node|edge):(.+)$/.exec(String(target ?? ''))
+    if (!match) throw new Error('target must be node:<id> or edge:<id>')
+    const [, kind, id] = match
+    const node = kind === 'node' ? graph.nodes.find(item => item.id === id) : undefined
+    const edge = kind === 'edge' ? graph.edges.find(item => item.id === id) : undefined
+    if (!node && !edge) throw new Error(`${kind} "${id}" does not exist in ${workspace}`)
+    const chosenMode = mode === 'lite' ? 'lite' : 'fork'
+    const name = `${kind === 'node' ? 'node' : 'edge'}-${id}${chosenMode === 'lite' ? '-lite' : ''}`
+    const label = `Discuss ${kind} ${id}`
+    const parentId = String(agent.session.id)
+
+    const findExisting = async () => {
+      if (typeof subagents.listDescendants !== 'function') return undefined
+      try {
+        const rows = await subagents.listDescendants(parentId, signal)
+        const found = rows.find(row => row.kind === 'child' && row.depth === 1 && 'name' in row && row.name === name)
+        if (!found || found.mode === 'external' || found.mode === 'unknown') return undefined
+        return found
+      } catch {
+        return undefined
       }
     }
 
+    const existing = await findExisting()
+    if (existing) {
+      return {
+        text: `existing ${name} — open it from the subagent catalog.`,
+        name: existing.name ?? name,
+        childId: String(existing.id),
+        parentId,
+        resourceMode: existing.mode === 'one-shot' ? 'one-shot' : 'continuable',
+        mode: chosenMode,
+        target: `${kind}:${id}`,
+        existing: true,
+      }
+    }
+
+    const title = node ? node.title : edge.label ?? `${edge.from} -> ${edge.to}`
+    const prompt = [
+      `You are the discussion agent for architecture ${kind} ${id}${title ? ` ("${title}")` : ''} in workspace ${workspace}.`,
+      '',
+      `Start by calling arch_graph_get({ workspace: ${JSON.stringify(workspace)}, target: ${JSON.stringify(`${kind}:${id}`)}, include: ["summary", "anchors", "edges"] }) and arch_doc_get({ workspace: ${JSON.stringify(workspace)}, id: "modules/${id}" }) if it exists.`,
+      '',
+      'Rules:',
+      `- Discuss ${id} and its edges only; ask before touching other nodes.`,
+      '- Do not edit source code. Graph edits go through arch_graph_patch with the latest rev; prefer apply:false until the user says apply.',
+      '- Do not message the parent agent. Write conclusions to notes/' + id + ' via arch_doc_put with mode "append".',
+      '- If an anchor looks stale, call arch_sync and say so before concluding.',
+      chosenMode === 'lite' ? '- You do not inherit the parent conversation; rely on the graph and the dossier.' : '',
+      typeof question === 'string' && question.trim() !== '' ? `\nThe user's initial question: ${question.trim()}` : '',
+    ].filter(Boolean).join('\n')
+
+    const activation = await subagents.startActivation({
+      provider: chosenMode === 'fork' ? 'fork' : 'spawn',
+      label,
+      name,
+      prompt: [{ type: 'text', text: prompt }],
+      parent: agent,
+      signal,
+      delivery: 'caller',
+    })
+    // The child runs in the background; the caller does not await its result.
+    void activation.result.catch(() => {})
+    return {
+      text: `started ${activation.name} (${chosenMode}) — open it from the subagent catalog in the session header.`,
+      name: activation.name,
+      childId: String(activation.childId),
+      parentId,
+      resourceMode: 'continuable',
+      mode: chosenMode,
+      target: `${kind}:${id}`,
+      existing: false,
+    }
+  }
+
+  ctx.inject(['subagents'], scope => {
+    subagents = scope.subagents
     scope.tools.register({
       name: 'arch_discuss',
       description:
         'Start a side conversation about one architecture node or edge. mode:fork inherits the main conversation\'s '
-        + 'completed turns; mode:lite starts fresh with the graph and dossier. The child gets arch_* tools and runs in '
-        + 'its own session; open it from the subagent catalog.',
+        + 'completed turns; mode:lite starts fresh with the graph and dossier. Reuses an existing named child instead '
+        + 'of creating a duplicate. The child gets arch_* tools and runs in its own session.',
       parameters: {
         type: 'object',
         additionalProperties: false,
@@ -453,26 +489,66 @@ export function apply(ctx, config = {}) {
       },
       output: DISCUSS_OUTPUT,
       async execute(args, exec) {
-        return discuss(args, exec)
+        const started = await startDiscussion({
+          agent: exec.agent,
+          workspace: workspaceOf(args, exec),
+          target: args.target,
+          mode: args.mode,
+          question: args.question,
+          signal: exec.signal,
+        })
+        return {
+          text: started.text,
+          name: started.name,
+          mode: started.mode,
+          target: started.target,
+          childId: started.childId,
+        }
       },
     })
+    return () => {
+      subagents = null
+    }
   })
 
   // The host command supplies the catalog row and the composer's command chip.
   // The client half listens for command/executed and opens the right-sidebar panel.
+  // `/arch discuss` is also the UI's entry point for a node conversation.
   ctx.commands.register({
     name: 'arch',
-    description: 'Open the Architecture map panel',
-    input: { hint: '[open]' },
-    handler: ({ rawInput }) => {
+    description: 'Open the Architecture map panel or start a node discussion',
+    input: { hint: '[open|discuss node:<id> [fork|lite]]' },
+    async handler({ agent, rawInput, signal }) {
       const extra = rawInput.trim()
-      if (extra !== '' && extra !== 'open') {
-        return {
-          kind: 'error',
-          text: '用法：/arch 或 /arch open（打开面板）。要调用工具，请直接发送“调用 arch_graph_get”。',
+      if (extra === '' || extra === 'open') {
+        return { kind: 'success', text: 'Architecture map opened in the right sidebar.' }
+      }
+      const discuss = /^discuss\s+((?:node|edge):[a-z][a-z0-9_-]*)(?:\s+(fork|lite))?\s*$/.exec(extra)
+      if (discuss) {
+        try {
+          const workspace = agent.session.header.cwd
+          if (typeof workspace !== 'string' || workspace === '') {
+            return { kind: 'error', text: 'the session has no working directory; pass an explicit workspace to arch_discuss' }
+          }
+          const started = await startDiscussion({
+            agent,
+            workspace,
+            target: discuss[1],
+            mode: discuss[2],
+            signal,
+          })
+          return {
+            kind: 'success',
+            text: `${started.text} [child=${started.childId} parent=${started.parentId} mode=${started.resourceMode} target=${started.target}]`,
+          }
+        } catch (error) {
+          return { kind: 'error', text: error?.message ?? String(error) }
         }
       }
-      return { kind: 'success', text: 'Architecture map opened in the right sidebar.' }
+      return {
+        kind: 'error',
+        text: '用法：/arch 或 /arch open（打开面板）；/arch discuss node:<id> [fork|lite]（开节点讨论）。要调用图工具，请直接发送“调用 arch_graph_get”。',
+      }
     },
   })
 }
