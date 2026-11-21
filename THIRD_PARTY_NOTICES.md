@@ -6,10 +6,16 @@ This file is populated as the implementation lands. Until then it records the pl
 
 ## Mermaid rendering
 
-- **dsh-mermaid-plus** — https://github.com/pidongqianqian/dsh-mermaid-plus (MIT)
-  Reference/adaptation for the built-in `mermaid` chat fence renderer (rendering, layout selection, zoom/export behavior).
-- **mermaid** — https://github.com/mermaid-js/mermaid (MIT)
-  Bundled diagram renderer.
+- **dsh-mermaid-plus 0.6.2** — https://github.com/pidongqianqian/dsh-mermaid-plus (MIT)
+  Reference/adaptation for the built-in `mermaid` chat fence renderer. Its vendored Mermaid
+  bundle (`vendor/mermaid.esm.min.mjs`), license files and the static-route approach were
+  copied from this MIT project; the original license texts are retained under `vendor/`.
+- **mermaid 12.2.0** — https://github.com/mermaid-js/mermaid (MIT)
+  Bundled as `vendor/mermaid.esm.min.mjs`; MIT text in `vendor/mermaid.LICENSE`.
+- **ELK (elkjs) 0.9.3** — https://github.com/kieler/elkjs (EPL-2.0)
+  Inlined into the vendored Mermaid bundle as an unmodified dependency. EPL text in
+  `vendor/elkjs.LICENSE`; the source is available at the URL above. Do not describe the
+  whole package as MIT-only when redistributing the vendored runtime.
 
 ## Side chat UX references (no code copied at design time)
 
@@ -25,8 +31,6 @@ This file is populated as the implementation lands. Until then it records the pl
 
 ## Libraries bundled into the client artifact
 
-- **@xyflow/react** — MIT
-- **dagre** — MIT
-- **mermaid** — MIT
-
-When bundled, their license texts are included in the published artifact and summarized here.
+- **mermaid 12.2.0** — MIT, served on demand from `vendor/mermaid.esm.min.mjs`
+- **ELK (elkjs) 0.9.3** — EPL-2.0, inlined into the Mermaid bundle
+- The hand-written canvas uses no React Flow or dagre dependency.

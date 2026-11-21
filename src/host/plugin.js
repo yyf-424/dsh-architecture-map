@@ -5,11 +5,97 @@
  * Node 2: `arch_graph_get` / `arch_graph_patch` over a workspace-owned
  * `.archmap/graph.json` with a revision, validation, and atomic writes.
  */
+import { createReadStream } from 'node:fs'
+import { stat } from 'node:fs/promises'
+import path from 'node:path'
+import { fileURLToPath } from 'node:url'
 import { createGraphStore, workspaceOf } from './graph.js'
 import { createMemoryStore } from './memory.js'
 import { createExporter } from './export.js'
 
 export const name = 'architecture-map'
+
+/** Local asset route for the vendored Mermaid runtime; the Host serves it, never a CDN. */
+const RUNTIME_PATH = '/x-dsh-architecture-map'
+const VENDOR_PREFIX = `${RUNTIME_PATH}/vendor`
+const VENDOR_DIR = fileURLToPath(new URL('../../vendor/', import.meta.url))
+
+const VENDOR_MIME = {
+  '.mjs': 'text/javascript; charset=utf-8',
+  '.js': 'text/javascript; charset=utf-8',
+  '.license': 'text/plain; charset=utf-8',
+}
+
+/**
+ * Serve one allow-listed file from the vendored Mermaid directory.
+ * Mirrors the static-asset approach used by dsh-mermaid-plus (MIT).
+ */
+async function serveVendorFile(request, response) {
+  if (request.method !== 'GET' && request.method !== 'HEAD') {
+    response.writeHead(405, { 'content-type': 'text/plain; charset=utf-8', allow: 'GET, HEAD' })
+    response.end('Method Not Allowed')
+    return
+  }
+  let pathname
+  try {
+    pathname = decodeURIComponent(new URL(request.url ?? '/', 'http://dsh.invalid').pathname)
+  } catch {
+    response.writeHead(400, { 'content-type': 'text/plain; charset=utf-8' })
+    response.end('Bad Request')
+    return
+  }
+  const prefix = `${VENDOR_PREFIX}/`
+  const name = pathname.startsWith(prefix) ? pathname.slice(prefix.length) : ''
+  if (!/^[A-Za-z0-9][A-Za-z0-9._-]*$/.test(name) || name.includes('/')) {
+    response.writeHead(404, { 'content-type': 'text/plain; charset=utf-8', 'cache-control': 'no-store' })
+    response.end('Not Found')
+    return
+  }
+  const file = path.join(VENDOR_DIR, name)
+  let info
+  try {
+    info = await stat(file)
+  } catch {
+    response.writeHead(404, { 'content-type': 'text/plain; charset=utf-8', 'cache-control': 'no-store' })
+    response.end('Not Found')
+    return
+  }
+  if (!info.isFile()) {
+    response.writeHead(404, { 'content-type': 'text/plain; charset=utf-8', 'cache-control': 'no-store' })
+    response.end('Not Found')
+    return
+  }
+  const headers = {
+    'content-type': VENDOR_MIME[path.extname(name).toLowerCase()] ?? 'application/octet-stream',
+    'content-length': info.size,
+    'cache-control': 'no-store',
+    'x-content-type-options': 'nosniff',
+  }
+  if (request.method === 'HEAD') {
+    response.writeHead(200, headers)
+    response.end()
+    return
+  }
+  response.writeHead(200, headers)
+  createReadStream(file).pipe(response)
+}
+
+/** Report whether the browser half may render Mermaid fences. */
+function serveMermaidConfig(renderMermaid) {
+  return (request, response) => {
+    if (request.method !== 'GET' && request.method !== 'HEAD') {
+      response.writeHead(405, { 'content-type': 'text/plain; charset=utf-8', allow: 'GET, HEAD' })
+      response.end('Method Not Allowed')
+      return
+    }
+    response.writeHead(200, {
+      'content-type': 'application/json; charset=utf-8',
+      'cache-control': 'no-store',
+    })
+    response.end(JSON.stringify({ mermaid: renderMermaid }))
+  }
+}
+
 
 /** Services this plugin needs before it activates. */
 export const inject = ['tools', 'commands']
@@ -141,6 +227,7 @@ const GRAPH_OUTPUT = {
  * @returns {void}
  */
 export function apply(ctx, config = {}) {
+  const renderMermaid = config?.renderMermaid !== false
   const store = createGraphStore(config)
   const markStaleNodes = async (workspace, ids) => {
     for (let attempt = 0; attempt < 3; attempt += 1) {
@@ -553,6 +640,25 @@ export function apply(ctx, config = {}) {
     return () => {
       subagents = null
     }
+  })
+
+  // Mermaid is served from the plugin's own origin; no CDN and no second plugin.
+  // The browser half asks /config first, so renderMermaid:false leaves code fences
+  // as plain code blocks without fetching the 5 MB runtime.
+  ctx.inject(['webServer'], scope => {
+    scope.effect(() => scope.webServer.register({
+      kind: 'exact',
+      path: `${RUNTIME_PATH}/config`,
+      handler: serveMermaidConfig(renderMermaid),
+    }), 'architecture-map: mermaid config route')
+    if (renderMermaid) {
+      scope.effect(() => scope.webServer.register({
+        kind: 'prefix',
+        path: VENDOR_PREFIX,
+        handler: serveVendorFile,
+      }), 'architecture-map: mermaid runtime route')
+    }
+    return () => {}
   })
 
   // The host command supplies the catalog row and the composer's command chip.

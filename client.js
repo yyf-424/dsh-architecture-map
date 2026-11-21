@@ -16,6 +16,8 @@ window.__ModuleLoader__.load({
     const GRAPH_PATH = '.archmap/graph.json'
     const POLL_MS = 2000
     const POSITIONS_KEY = 'dsh-architecture-map:positions:'
+    const MERMAID_CONFIG_URL = '/x-dsh-architecture-map/config'
+    const MERMAID_RUNTIME_URL = '/x-dsh-architecture-map/vendor/mermaid.esm.min.mjs'
 
     const styles = {
       root: {
@@ -117,11 +119,126 @@ window.__ModuleLoader__.load({
         lineHeight: 1.5,
         color: 'var(--dsw-alias-danger, #d9534f)',
       },
+      mermaid: {
+        overflow: 'auto',
+        maxWidth: '100%',
+        border: '1px solid var(--dsw-alias-border-secondary, rgba(127,127,127,0.25))',
+        borderRadius: '8px',
+        padding: '8px',
+        background: 'var(--dsw-alias-bg-primary, transparent)',
+      },
+      mermaidError: {
+        marginTop: '6px',
+        fontSize: '12px',
+        lineHeight: 1.5,
+        opacity: 0.72,
+        color: 'var(--dsw-alias-warning, #c58a1a)',
+      },
     }
 
     function clip(text, max) {
       const value = String(text ?? '')
       return value.length <= max ? value : `${value.slice(0, max - 1)}…`
+    }
+
+    let mermaidRuntime
+    let mermaidUid = 0
+
+    /**
+     * Load the vendored Mermaid ESM once. The Host's /config route is the
+     * renderMermaid switch: when it is false, fences stay plain code blocks and
+     * the 5 MB runtime is never fetched.
+     */
+    function loadMermaidRuntime() {
+      if (mermaidRuntime) return mermaidRuntime
+      const dynamicImport = typeof globalThis.__dshMermaidImport === 'function'
+        ? globalThis.__dshMermaidImport
+        : specifier => import(/* @vite-ignore */ specifier)
+      mermaidRuntime = fetch(MERMAID_CONFIG_URL, { cache: 'no-store' })
+        .then(response => {
+          if (!response.ok) throw new Error(`Mermaid config unavailable (${response.status})`)
+          return response.json()
+        })
+        .then(config => {
+          if (config?.mermaid === false) throw new Error('Mermaid rendering is disabled')
+          return dynamicImport(new URL(MERMAID_RUNTIME_URL, document.baseURI).href)
+        })
+        .then(module => {
+          const api = module.default ?? module
+          const dark = window.matchMedia?.('(prefers-color-scheme: dark)')?.matches === true
+          api.initialize({
+            startOnLoad: false,
+            securityLevel: 'strict',
+            suppressErrorRendering: true,
+            theme: dark ? 'dark' : 'default',
+            fontFamily: 'inherit',
+            flowchart: { htmlLabels: true, curve: 'basis' },
+          })
+          return api
+        })
+        .catch(error => {
+          console.warn('[architecture-map] Mermaid runtime unavailable:', error)
+          throw error
+        })
+      return mermaidRuntime
+    }
+
+    /** Keep a Mermaid render failure inside the fence instead of the whole page. */
+    class MermaidErrorBoundary extends React.Component {
+      constructor(props) {
+        super(props)
+        this.state = { failed: false }
+      }
+      static getDerivedStateFromError() {
+        return { failed: true }
+      }
+      componentDidCatch(error) {
+        console.warn('[architecture-map] Mermaid fence failed:', error)
+      }
+      render() {
+        return this.state.failed ? this.props.fallback : this.props.children
+      }
+    }
+
+    /** Chat fence renderer for ```mermaid blocks. Falls back to the code block. */
+    function MermaidInner(props) {
+      const code = typeof props.code === 'string' ? props.code : ''
+      const streaming = props.streaming === true
+      const fallback = props.children ?? null
+      const [result, setResult] = React.useState({ status: 'idle', svg: null, error: null, renderError: false })
+
+      React.useEffect(() => {
+        if (streaming || code.trim() === '') return undefined
+        let disposed = false
+        setResult(previous => ({ ...previous, status: 'loading', error: null, renderError: false }))
+        const id = `archmap-mermaid-${++mermaidUid}`
+        loadMermaidRuntime()
+          .then(api => api.render(id, code))
+          .then(rendered => {
+            if (!disposed) setResult({ status: 'ready', svg: rendered.svg, error: null, renderError: false })
+          })
+          .catch(error => {
+            if (disposed) return
+            const message = String(error?.message ?? error)
+            const renderError = !/disabled/i.test(message)
+            setResult({ status: 'error', svg: null, error: message, renderError })
+          })
+        return () => { disposed = true }
+      }, [code, streaming])
+
+      if (streaming || result.status !== 'ready') {
+        return h(React.Fragment, null,
+          fallback,
+          result.renderError && result.error
+            ? h('div', { style: styles.mermaidError }, `Mermaid: ${result.error}`)
+            : null,
+        )
+      }
+      return h('div', { style: styles.mermaid, dangerouslySetInnerHTML: { __html: result.svg } })
+    }
+
+    function MermaidFence(props) {
+      return h(MermaidErrorBoundary, { fallback: props.children ?? null }, h(MermaidInner, props))
     }
 
     function readSavedPositions(key) {
@@ -649,6 +766,26 @@ window.__ModuleLoader__.load({
           name: 'sidebar.right.pane.tab',
           key: TYPE_ID,
         }, GraphTab))
+
+        // Fence rendering is optional: a slot/version mismatch must never stop
+        // the graph tab from mounting. Register it after the panel and contain
+        // any failure to this feature.
+        try {
+          ctx.slots.inject('conversation.chat.markdown.fence', () => {
+            try {
+              return ctx.slots.register({
+                name: 'conversation.chat.markdown.fence',
+                key: 'mermaid',
+                id: 'dsh-architecture-map/fence/mermaid',
+              }, MermaidFence)
+            } catch (error) {
+              console.warn('[architecture-map] Mermaid fence registration failed:', error)
+              return () => {}
+            }
+          })
+        } catch (error) {
+          console.warn('[architecture-map] Mermaid fence injection failed:', error)
+        }
 
         // `/arch` is a Host command (the composer shows the same blue chip as
         // /goal). When it succeeds, open the panel here.

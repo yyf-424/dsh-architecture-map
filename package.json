@@ -22,6 +22,7 @@
     "index.js",
     "client.js",
     "src",
+    "vendor",
     "cordis.patch.yml",
     "locale",
     "icon.svg",

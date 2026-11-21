@@ -4,7 +4,7 @@ English | [中文](README.zh.md)
 
 **中文名：架构地图** · An architecture workbench for DeepSeek Harness: a live semantic architecture graph, per-node side conversations, and incremental architecture memory.
 
-> Status: **pre-alpha, working skeleton.** The Host tools, sidebar canvas, local node positions and architecture memory work today. Per-node side conversations, built-in Mermaid rendering and export are planned next. Design notes are kept locally and intentionally not tracked.
+> Status: **pre-alpha, working skeleton.** The Host tools, sidebar canvas, local node positions, architecture memory, per-node discussions, deterministic exports and built-in Mermaid rendering work today. Shared positions and release polish are next. Design notes are kept locally and intentionally not tracked.
 
 ---
 
@@ -46,12 +46,12 @@ Architecture map makes the architecture a **first-class, addressable object** in
 - **Local layout memory** — dragged node positions are kept per workspace in browser storage, so a refresh or a new session on the same machine keeps the layout. `Reset layout` clears it. Shared positions are planned.
 - **Incremental architecture memory with cosmetic detection** — `.archmap/manifest.json` records content hashes plus a normalized code signature; `arch_sync` reports only added/changed/deleted files, distinguishes code changes from format/comment-only changes, and lists the nodes whose anchors are affected. `markStale:true` marks those nodes stale (and bumps the graph rev); the default is report-only. `arch_manifest_commit` records analyzed files, and `arch_doc_get` / `arch_doc_put` read and write `overview`, `modules/<id>` and `notes/<id>`.
 - **Deterministic exports** — `arch_export` writes Mermaid flowchart source, a standalone SVG, or a Markdown dossier digest to `.archmap/export/`; graph revision and files stay unchanged.
+- **Built-in Mermaid rendering** — assistant ` ```mermaid ` fences render with a vendored Mermaid 12.2.0 runtime served from the plugin's own Host route. No CDN and no `dsh-mermaid-plus` dependency. Streaming keeps the code block; parse errors fall back to code plus an error line. `renderMermaid: false` disables it.
 - **Per-node side conversations** — `arch_discuss` starts a child for `node:<id>` or `edge:<id>`: `fork` inherits the main conversation's completed turns; `lite` starts fresh with the graph and dossier. Delivery is caller-only, so the main conversation is not polluted; conclusions go to `notes/<id>`. The node detail also has `Discuss (fork)` / `Lite` buttons that open the child in the right sidebar through the `subagentchat` resource.
 
 ## Planned next
 
-- Built-in Mermaid rendering, so ` ```mermaid ` blocks render without another plugin.
-- Built-in Mermaid fence rendering, and persisted/shared positions.
+- Shared/persisted positions, direct export buttons in the panel, and release polish (CI, packaging, GIF).
 
 ## What it is not
 
@@ -67,11 +67,27 @@ No runtime plugin dependencies beyond DSH itself:
 |---|---|
 | Canvas, graph storage, local positions | No — implemented in this bundle |
 | Architecture memory (`arch_sync` + dossier) | No — workspace files managed by this plugin |
-| Mermaid rendering | Planned — not implemented yet |
+| Mermaid rendering | No — Mermaid 12.2.0 is vendored and served locally; `renderMermaid:false` disables |
 | Side conversations | No — `arch_discuss` plus sidebar `Discuss` buttons |
 | Stale detection | No — `arch_sync` with `markStale:true` |
 | Export (Mermaid/SVG/Markdown) | No — `arch_export` |
 | Sharper call/impact edges | Optional: `dsh-plugin-codegraph` (recommended, **not installed automatically**) |
+
+## Mermaid rendering
+
+Assistant messages with a ` ```mermaid ` fence render as diagrams. The runtime is vendored at
+`vendor/mermaid.esm.min.mjs` (Mermaid 12.2.0, MIT; ELK is EPL-2.0) and served by the Host at
+`/x-dsh-architecture-map/vendor/mermaid.esm.min.mjs`; the browser never fetches a CDN. The client
+checks `/x-dsh-architecture-map/config` first, so with `renderMermaid: false` fences stay plain
+code blocks and the 5.2 MB runtime is not loaded.
+
+```yaml
+- insert:
+    - id: architecture-map
+      name: dsh-architecture-map
+      config:
+        renderMermaid: false
+```
 
 ## How memory works (no extra plugin)
 
@@ -121,8 +137,8 @@ There is no separate "start" button or left-sidebar icon. The plugin adds a righ
 
 | Version | Scope |
 |---|---|
-| 0.1 | graph core and tools, sidebar canvas, node dragging, local position memory, `arch_sync` + manifest + dossier docs, cosmetic diff + stale marking, `arch_discuss`, sidebar discussion buttons, `arch_export` |
-| 0.2 | built-in Mermaid fence rendering, shared/persisted positions |
+| 0.1 | graph core and tools, sidebar canvas, node dragging, local position memory, `arch_sync` + manifest + dossier docs, cosmetic diff + stale marking, `arch_discuss`, sidebar discussion buttons, `arch_export`, built-in Mermaid fence rendering |
+| 0.2 | shared/persisted positions, direct export buttons, release polish |
 | 0.3 | direct node→discussion bridge, shared/persisted positions, proposals, graph diff |
 | 0.4 | edge discussions, group collapse, Mermaid import, Office export |
 | 0.5 | multiple graphs, PR links, shared team maps |

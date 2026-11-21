@@ -1,4 +1,5 @@
 - insert:
     - id: architecture-map
       name: dsh-architecture-map
-      config: {}
+      config:
+        renderMermaid: true
