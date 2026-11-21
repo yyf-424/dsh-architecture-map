@@ -26,6 +26,8 @@ The sidebar `Discuss (fork)` / `Lite` buttons call the same Host operation (`/ar
 
 ## Child rules (already in the prompt)
 
+- The Host makes a best-effort restriction: shell and generic source-write tools are denied; `arch_graph_patch` / `arch_doc_put` remain available.
+
 - stay on the target node/edge and its direct edges;
 - read the graph and `modules/<id>` first;
 - do not edit source code;
