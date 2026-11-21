@@ -1,0 +1,218 @@
+{
+  "schema": 1,
+  "rev": 6,
+  "updatedAt": "2026-11-21T09:35:25.352Z",
+  "layout": {
+    "mode": "layered",
+    "direction": "LR"
+  },
+  "groups": [
+    {
+      "id": "g-host",
+      "title": "Host"
+    },
+    {
+      "id": "g-client",
+      "title": "Client"
+    },
+    {
+      "id": "g-docs",
+      "title": "Docs & skill"
+    }
+  ],
+  "nodes": [
+    {
+      "id": "n1",
+      "title": "Host entry",
+      "kind": "entry",
+      "group": "g-host",
+      "summary": "Registers the graph, memory, export and discussion tools; owns the /arch command, Mermaid static route and bundled skill registration.",
+      "anchors": [
+        {
+          "path": "src/host/plugin.js",
+          "symbol": "apply",
+          "hash": "3f685fcf7c027533c42a5475f6e702c58bccb1718513dad79a11619838c46773"
+        }
+      ],
+      "status": "fresh"
+    },
+    {
+      "id": "n2",
+      "title": "Graph store",
+      "kind": "store",
+      "group": "g-host",
+      "summary": "Canonical .archmap/graph.json: schema validation, ordered ops, baseRev CAS, per-workspace lock, atomic write and backup.",
+      "anchors": [
+        {
+          "path": "src/host/graph.js",
+          "symbol": "createGraphStore",
+          "hash": "6a22a2fd974a56e40a64ac931f77c999c735acf3cbbf6656fc0cc93df7e9d3bd"
+        }
+      ],
+      "status": "fresh"
+    },
+    {
+      "id": "n3",
+      "title": "Memory store",
+      "kind": "module",
+      "group": "g-host",
+      "summary": "Manifest, incremental sync, cosmetic signatures, stale marking, dossier docs and anchor-hash refresh.",
+      "anchors": [
+        {
+          "path": "src/host/memory.js",
+          "symbol": "createMemoryStore",
+          "hash": "c953b79b800f40d31dc2019c421c13aa2e9c15dac840ab7695397ccfa45c3d30"
+        }
+      ],
+      "status": "fresh"
+    },
+    {
+      "id": "n4",
+      "title": "Exporter",
+      "kind": "module",
+      "group": "g-host",
+      "summary": "Deterministic Mermaid, SVG and Markdown exports under .archmap/export/.",
+      "anchors": [
+        {
+          "path": "src/host/export.js",
+          "symbol": "createExporter",
+          "hash": "ff881b604593be7d8e9674eb9bf11a3bc0363836fbf6939ea6ea85a0e266a66a"
+        }
+      ],
+      "status": "fresh"
+    },
+    {
+      "id": "n5",
+      "title": "Sidebar panel",
+      "kind": "module",
+      "group": "g-client",
+      "summary": "Reads graph.json for the session workspace, polls every 2s, renders header/detail/discussion controls, and opens its right-sidebar tab when the Host /arch command succeeds.",
+      "anchors": [
+        {
+          "path": "client.js",
+          "symbol": "createGraphTab",
+          "hash": "0a159584c825dd70b994f7b2281cc08eb7c31c28757646fde0b96ba8c93619da"
+        }
+      ],
+      "status": "fresh"
+    },
+    {
+      "id": "n6",
+      "title": "Graph canvas",
+      "kind": "module",
+      "group": "g-client",
+      "summary": "Layered SVG layout, pan/zoom/Fit, node dragging, status dots and local position memory.",
+      "anchors": [
+        {
+          "path": "client.js",
+          "symbol": "NodeShape",
+          "hash": "0a159584c825dd70b994f7b2281cc08eb7c31c28757646fde0b96ba8c93619da"
+        }
+      ],
+      "status": "fresh"
+    },
+    {
+      "id": "n7",
+      "title": "Mermaid fence",
+      "kind": "module",
+      "group": "g-client",
+      "summary": "Assistant mermaid fence renderer; loads the vendored Mermaid runtime from the Host route and falls back to code on errors.",
+      "anchors": [
+        {
+          "path": "client.js",
+          "symbol": "MermaidFence",
+          "hash": "0a159584c825dd70b994f7b2281cc08eb7c31c28757646fde0b96ba8c93619da"
+        }
+      ],
+      "status": "fresh"
+    },
+    {
+      "id": "n8",
+      "title": "Architecture skill",
+      "kind": "module",
+      "group": "g-docs",
+      "summary": "Bundled SKILL.md and references that teach the sync/read/patch/dossier/commit loop.",
+      "anchors": [
+        {
+          "path": "skills/architecture-map/SKILL.md",
+          "hash": "cae770835dbf592192643586a97008b4058b6b6d59923d552feac80917899d63"
+        }
+      ],
+      "status": "fresh"
+    }
+  ],
+  "edges": [
+    {
+      "id": "e1",
+      "from": "n1",
+      "to": "n2",
+      "label": "exposes graph tools",
+      "kind": "call",
+      "status": "fresh"
+    },
+    {
+      "id": "e2",
+      "from": "n1",
+      "to": "n3",
+      "label": "exposes memory tools",
+      "kind": "call",
+      "status": "fresh"
+    },
+    {
+      "id": "e3",
+      "from": "n1",
+      "to": "n4",
+      "label": "exposes export tool",
+      "kind": "call",
+      "status": "fresh"
+    },
+    {
+      "id": "e4",
+      "from": "n8",
+      "to": "n1",
+      "label": "guides tool use",
+      "kind": "dependency",
+      "status": "fresh"
+    },
+    {
+      "id": "e5",
+      "from": "n5",
+      "to": "n2",
+      "label": "polls graph.json",
+      "kind": "data",
+      "status": "fresh"
+    },
+    {
+      "id": "e6",
+      "from": "n5",
+      "to": "n6",
+      "label": "delegates rendering",
+      "kind": "dependency",
+      "status": "fresh"
+    },
+    {
+      "id": "e7",
+      "from": "n3",
+      "to": "n2",
+      "label": "reads and marks stale",
+      "kind": "data",
+      "status": "fresh"
+    },
+    {
+      "id": "e8",
+      "from": "n1",
+      "to": "n7",
+      "label": "serves Mermaid runtime",
+      "kind": "data",
+      "status": "fresh"
+    },
+    {
+      "id": "e9",
+      "from": "n1",
+      "to": "n5",
+      "label": "opens panel",
+      "kind": "call",
+      "status": "fresh"
+    }
+  ]
+}

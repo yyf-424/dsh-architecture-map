@@ -1,0 +1,187 @@
+{
+  "schema": 1,
+  "generatedAt": "2026-11-21T09:56:42.002Z",
+  "root": ".",
+  "files": {
+    ".github/workflows/ci.yml": {
+      "sha256": "ec8aeed5a5b3e6c142f9926f3a6b1ac6a4a84cedd89c57991dc4971a3d24146d",
+      "size": 361,
+      "signature": "aaebc6cd131c2367c12b97b5f097712b46841662f6f22de87319b508ead41ea9"
+    },
+    ".gitignore": {
+      "sha256": "16ff3ca61d4b72c9f47e4cc7d3116c1614bf84e0cec4afc539a939e2d3c154d5",
+      "size": 352,
+      "signature": "14847619b8929f9210686c6ffa4cacbfd6bd7b3e50e901492f568f9596c116fd"
+    },
+    "CHANGELOG.md": {
+      "sha256": "939fdb4b3dba0c97b1bbcc1307ea4b01a4df762cc432172ee0aa5354fcfa4b8f",
+      "size": 685,
+      "signature": "743f53152a86e1b5d0d0fa356f8b9d5eaf96c937a1b66ced60a93a6049607eb1"
+    },
+    "client.js": {
+      "sha256": "a7371ae23fda719e26b1ae62058748daf7ea79d8d0ff7153338943db7b347ac5",
+      "size": 36563,
+      "signature": "0a159584c825dd70b994f7b2281cc08eb7c31c28757646fde0b96ba8c93619da"
+    },
+    "CODE_OF_CONDUCT.md": {
+      "sha256": "36681fba171d2c05f0a51acfb9bc00d96ffe391938ca9256f729aaa38fdaf692",
+      "size": 451,
+      "signature": "4165a63b956c94cda077f64ed4044f3e3864de3f77962224dbfec1424113f471"
+    },
+    "CONTRIBUTING.md": {
+      "sha256": "f5da28ce5cc1a617505350590905f55308683a0491df21d705ce31a7b60cba79",
+      "size": 1036,
+      "signature": "99dc15a7303d74ce31411fa4d357e183817920a482aecb5b3f1ba2959df18e27"
+    },
+    "cordis.patch.yml": {
+      "sha256": "6e1e55e4cee2ec50db352798fbf863209d6761b5d87163b74d1587544cc0b81e",
+      "size": 112,
+      "signature": "76c0d1fd2f08bdc5e04d664e83028366395ffbc83ccf1e51a47fdad76045ff5d"
+    },
+    "docs/DESIGN.md": {
+      "sha256": "a5b314b06de13c9c38fd95c922e53cc95c96a6b26c67935bfdbe58bb421cff06",
+      "size": 48980,
+      "signature": "0931d13ed0ee98a24d685b29b2ea343c926c0741895a2a1e20c535ad8c6b6332"
+    },
+    "docs/DETAIL.md": {
+      "sha256": "384cececf001d4c8af8f1baa9c1c1e2673c8be8054bc044996befab9110687dc",
+      "size": 4133,
+      "signature": "9a54ecf7b8d9e22535ad4219e20107da772eb2b0c8a527fe709f040491e7951e"
+    },
+    "docs/DETAIL.zh.md": {
+      "sha256": "63724a80b6ecd08962aa8c8495543d14befabd24dab060d56a99c1bc8a20ddb1",
+      "size": 3731,
+      "signature": "385f82114e755fef654a0bad8529b44e99eaab7391e26e65c180fc420817d8a5"
+    },
+    "docs/M0-FINDINGS.md": {
+      "sha256": "d4699811302db4806fea68b5681a308de9266948e8b1c86b47a5a721a95ccde3",
+      "size": 1325,
+      "signature": "f8eba91eacb4258cabdfb9b5bbb74c2508cf9c5a205bd09b2c56543439e3e2f6"
+    },
+    "docs/PLAN.md": {
+      "sha256": "944a3a4e242961331d21d662ee2922c3c4a3547cbba381f02c5a0000101a3dca",
+      "size": 26926,
+      "signature": "bfe8a8d6bea126e61db2f08e291502e8f1e894c9856a3a8c12486eeb6a2f1d11"
+    },
+    "docs/preview.svg": {
+      "sha256": "625438ca4f25834725bb095c1aedeb7963e5682557a293580c48230bf34a4320",
+      "size": 3140,
+      "signature": "6fc92dc8b862db91fd520a2db3c39e372801282038f2398bfef787edd42e6cea"
+    },
+    "icon.svg": {
+      "sha256": "bc816c516bc079dfac2062f0fba3c32f9727c5c78df7d3db47e72ee78992e164",
+      "size": 706,
+      "signature": "fba16c0e6ab0b9171b6ad351e3934fc7fc6c5757c50da0779f959a61719a1963"
+    },
+    "index.js": {
+      "sha256": "c0d4a08a3aeb5b565073c16ea77d9abff22b34fbd2a6f07a65850bdd605a65bb",
+      "size": 59,
+      "signature": "8974102045a347e81d5cfeeb066f8a1176d5fb00d4ff86ce7857842f9c10bdb0"
+    },
+    "LICENSE": {
+      "sha256": "123fcbc9adbba4b3680995fd3213d8817ca598ca6967013180a50dd9f3353401",
+      "size": 1090,
+      "signature": "54b8d582a4c3e85edf1464efe5400a8917e9d26db371de698362b058a21163d7"
+    },
+    "locale/en.json": {
+      "sha256": "1a701c7613b1988b158c39d785dff8eb5bab998471e9928602df578ae18dd3aa",
+      "size": 211,
+      "signature": "f6d8c3559b5187d52624f2a39c9abd9940e2a0682d3e6b57e9bd5be7be0452b3"
+    },
+    "locale/zh.json": {
+      "sha256": "0aa8af9c553770211062d373a5ed3e1bbdc6d46b908b2d50387ae4866723e9e5",
+      "size": 208,
+      "signature": "67c8a61bf7fd569e25af652ef079e069573ab2442d368e3b0d05c290fb1802fa"
+    },
+    "package.json": {
+      "sha256": "64d1da13061c9ab9c09c54a2bb5c90274abf0415b718dd6b0da98374065ea305",
+      "size": 1769,
+      "signature": "88b01b6ae21552a5d86418c73d6ef81509d17197a5a0e99b51163461eaf22b50"
+    },
+    "README.md": {
+      "sha256": "85a460a23831ffe4ee35b476ffc8b287555dd67c64ca934c2f77fca5037ca074",
+      "size": 15655,
+      "signature": "21f58d8726981d03ca923f9e98d8d0e97df318467b2f0645760b2aaa5e4ee04b"
+    },
+    "README.zh.md": {
+      "sha256": "5fbc9dd6768d4ece2d0d576a8f7a4d495b205fef2fdbaebbbc23ea6bd58e5859",
+      "size": 13601,
+      "signature": "aaff473def3a481c31b7dc79f44aade1fb21e1027d0b7980060e3c1b0be41c0e"
+    },
+    "skills/architecture-map/references/bootstrap.md": {
+      "sha256": "7ea7bf5d25f73a7607078717f71bcd47e04c857761e19a5f71e4f4bfb3c9f817",
+      "size": 3688,
+      "signature": "6eb3fc5fa22df848b9c34884b5a6ef9c6fb7aba3935f6486e4db2427e771e4e5"
+    },
+    "skills/architecture-map/references/discussion.md": {
+      "sha256": "83b5d0c240897f09881446906169754183010441137830afd76db6a3bb5ad1ec",
+      "size": 3551,
+      "signature": "05173619dfdd25c3d6735b6e42b22723f9a2bb9ff419b6b06f24a750e6ce08e9"
+    },
+    "skills/architecture-map/references/incremental.md": {
+      "sha256": "264ba70dba1072ccffb6a54a34e6e441b233fc97ee2ebc75cbc3f6cba5c2468c",
+      "size": 3710,
+      "signature": "8221b65b0146b3ca1e82071802fa1c765bcdc9f184737554c73c6b4c046e7c5f"
+    },
+    "skills/architecture-map/references/schema.md": {
+      "sha256": "0284f692e78e4852242398e41c4406339e86e1f7ce59acfa8ba6e68a9be0c099",
+      "size": 4038,
+      "signature": "f61f87011515ab615441aced7c4ee45a24c35239199bf8cdcd07c1f9dccc8a03"
+    },
+    "skills/architecture-map/SKILL.md": {
+      "sha256": "fb69823172270c2fe2a8fd327c374f718284c2dadb5fc4aab750fdfe3721b3c2",
+      "size": 4167,
+      "signature": "cae770835dbf592192643586a97008b4058b6b6d59923d552feac80917899d63"
+    },
+    "src/host/export.js": {
+      "sha256": "c581fb3a92c53780f7256c10547ec66c6781ae6217643132189ae7fbdb38f709",
+      "size": 9729,
+      "signature": "ff881b604593be7d8e9674eb9bf11a3bc0363836fbf6939ea6ea85a0e266a66a"
+    },
+    "src/host/graph.js": {
+      "sha256": "01b629eb8e26a5dba0569cad606956bd98b122318c049c7d1a0680aa6c70402b",
+      "size": 28961,
+      "signature": "6a22a2fd974a56e40a64ac931f77c999c735acf3cbbf6656fc0cc93df7e9d3bd"
+    },
+    "src/host/memory.js": {
+      "sha256": "254216912949ca72f77a13bf5e2c3a11d34dc440d56966422a36159a280952cc",
+      "size": 15255,
+      "signature": "c953b79b800f40d31dc2019c421c13aa2e9c15dac840ab7695397ccfa45c3d30"
+    },
+    "src/host/plugin.js": {
+      "sha256": "90a63050fcdce5e5dd9818977a93852537504bf02fcccd677bd94fed1e435a06",
+      "size": 31920,
+      "signature": "3f685fcf7c027533c42a5475f6e702c58bccb1718513dad79a11619838c46773"
+    },
+    "src/host/signature.js": {
+      "sha256": "29b4a1f89fb1d35d27fe4d210006ce06695b58f731a170cca9a5e7f1136df394",
+      "size": 1679,
+      "signature": "c9a03f949839b8fa84f9ab29c7273478d6b84f87a0cdfd88182c401dfbd9c7e6"
+    },
+    "src/README.md": {
+      "sha256": "6a67332f75a3d7dcadc957d5b9cbfd09743d76876793265e91b93e38464afcd1",
+      "size": 891,
+      "signature": "62f2fcf168eb73c1956c45da29ec3c47913f4ba94d34682f0413558f5f07ae60"
+    },
+    "test/export.test.mjs": {
+      "sha256": "fb03011566a1b3817b56893d35f2a3508fb8ec287ec92274ca9a7860cae6e3d6",
+      "size": 2595,
+      "signature": "5258317c3226d13e98b03ddbeb83f28590b479887a861415264cdd7feb9671d0"
+    },
+    "test/graph.test.mjs": {
+      "sha256": "d9ff6989e68eaf0896357afa492b43260e1da4b1853840425fa3a5e05c041c13",
+      "size": 4459,
+      "signature": "229db4f5433d6e7b2920728eaf1b75588adc6b61da218c382587a18d66501fdb"
+    },
+    "test/memory.test.mjs": {
+      "sha256": "3e759c8d61c6b2ad050c866e4fa82716a8e96db46a1c5461b25479c1a6df43d4",
+      "size": 6271,
+      "signature": "4824d5a2f4fabd684e636e79bd26481a504abac1bf9971e743de87386f4d0e7b"
+    },
+    "THIRD_PARTY_NOTICES.md": {
+      "sha256": "822e7bdb72f07ca82ec6eaee27cd47e7dfa51de346cd571096333b5be95b7c3b",
+      "size": 2082,
+      "signature": "fc7a5dbb0ebd9e58d8e16e41e6c25c78f720bfb19a159b0a499928801d7ed1a1"
+    }
+  }
+}
