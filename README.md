@@ -45,12 +45,13 @@ Architecture map makes the architecture a **first-class, addressable object** in
 - **Right-sidebar canvas** — reads the graph from the session workspace, renders nodes/edges as SVG, supports pan, wheel zoom, `Fit`, node dragging and `Reset layout`, and shows node details on click.
 - **Local layout memory** — dragged node positions are kept per workspace in browser storage, so a refresh or a new session on the same machine keeps the layout. `Reset layout` clears it. Shared positions are planned.
 - **Incremental architecture memory with cosmetic detection** — `.archmap/manifest.json` records content hashes plus a normalized code signature; `arch_sync` reports only added/changed/deleted files, distinguishes code changes from format/comment-only changes, and lists the nodes whose anchors are affected. `markStale:true` marks those nodes stale (and bumps the graph rev); the default is report-only. `arch_manifest_commit` records analyzed files, and `arch_doc_get` / `arch_doc_put` read and write `overview`, `modules/<id>` and `notes/<id>`.
+- **Deterministic exports** — `arch_export` writes Mermaid flowchart source, a standalone SVG, or a Markdown dossier digest to `.archmap/export/`; graph revision and files stay unchanged.
 - **Per-node side conversations** — `arch_discuss` starts a child for `node:<id>` or `edge:<id>`: `fork` inherits the main conversation's completed turns; `lite` starts fresh with the graph and dossier. Delivery is caller-only, so the main conversation is not polluted; conclusions go to `notes/<id>`. The node detail also has `Discuss (fork)` / `Lite` buttons that open the child in the right sidebar through the `subagentchat` resource.
 
 ## Planned next
 
 - Built-in Mermaid rendering, so ` ```mermaid ` blocks render without another plugin.
-- Mermaid / SVG / Markdown export, and persisted/shared positions.
+- Built-in Mermaid fence rendering, and persisted/shared positions.
 
 ## What it is not
 
@@ -69,7 +70,7 @@ No runtime plugin dependencies beyond DSH itself:
 | Mermaid rendering | Planned — not implemented yet |
 | Side conversations | No — `arch_discuss` plus sidebar `Discuss` buttons |
 | Stale detection | No — `arch_sync` with `markStale:true` |
-| Export (Mermaid/SVG/Markdown) | Planned — not implemented yet |
+| Export (Mermaid/SVG/Markdown) | No — `arch_export` |
 | Sharper call/impact edges | Optional: `dsh-plugin-codegraph` (recommended, **not installed automatically**) |
 
 ## How memory works (no extra plugin)
@@ -120,8 +121,8 @@ There is no separate "start" button or left-sidebar icon. The plugin adds a righ
 
 | Version | Scope |
 |---|---|
-| 0.1 | graph core and tools, sidebar canvas, node dragging, local position memory, `arch_sync` + manifest + dossier docs, cosmetic diff + stale marking, `arch_discuss`, sidebar discussion buttons |
-| 0.2 | built-in Mermaid rendering, Mermaid/SVG/Markdown export |
+| 0.1 | graph core and tools, sidebar canvas, node dragging, local position memory, `arch_sync` + manifest + dossier docs, cosmetic diff + stale marking, `arch_discuss`, sidebar discussion buttons, `arch_export` |
+| 0.2 | built-in Mermaid fence rendering, shared/persisted positions |
 | 0.3 | direct node→discussion bridge, shared/persisted positions, proposals, graph diff |
 | 0.4 | edge discussions, group collapse, Mermaid import, Office export |
 | 0.5 | multiple graphs, PR links, shared team maps |

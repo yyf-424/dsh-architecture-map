@@ -45,12 +45,13 @@ Architecture map 把「项目架构」变成 harness 里**可寻址的一等对�
 - **右侧栏画布**：从当前会话 workspace 读取图，SVG 渲染节点/边，支持平移、滚轮缩放、`Fit`、节点拖拽、`Reset layout`，点击节点看详情。
 - **位置本地记忆**：拖动的节点位置按 workspace 存在浏览器本地，刷新或同机新会话会保留；`Reset layout` 清掉。共享位置是后续计划。
 - **增量架构记忆 + 格式改动识别**：`.archmap/manifest.json` 记录 hash 和归一化代码签名；`arch_sync` 只报告新增/修改/删除文件，区分代码改动和仅格式/注释改动，并列出受影响节点；`markStale:true` 会把这些节点标成 stale 并递增 graph rev，默认只报告不写图；`arch_manifest_commit` 记录已分析文件；`arch_doc_get` / `arch_doc_put` 读写 `overview`、`modules/<id>`、`notes/<id>`。
+- **确定性导出**：`arch_export` 把 Mermaid flowchart、独立 SVG 或 Markdown 档案摘要写到 `.archmap/export/`；不改变 graph rev，也不改源文件。
 - **按节点子对话**：`arch_discuss` 为 `node:<id>` 或 `edge:<id>` 开子会话；`fork` 继承主对话已完成轮次，`lite` 只靠图和档案。结果只走 caller，不污染主对话；结论写进 `notes/<id>`。节点详情里还有 `Discuss (fork)` / `Lite` 按钮，通过 `subagentchat` resource 在右侧栏打开子会话。
 
 ## 下一步计划
 
 - 内置 Mermaid 渲染，聊天里的 ` ```mermaid ` 代码块不再依赖其他插件。
-- Mermaid / SVG / Markdown 导出、位置共享/写回图数据。
+- 内置 Mermaid fence 渲染、位置共享/写回图数据。
 
 ## 不是什么
 
@@ -69,7 +70,7 @@ Architecture map 把「项目架构」变成 harness 里**可寻址的一等对�
 | Mermaid 渲染 | 计划中——尚未实现 |
 | 侧栏子对话 | 不需要——`arch_discuss` + 右侧栏 `Discuss` 按钮 |
 | Stale 检测 | 不需要——`arch_sync` 的 `markStale:true` |
-| 导出（Mermaid/SVG/Markdown） | 计划中——尚未实现 |
+| 导出（Mermaid/SVG/Markdown） | 不需要——`arch_export` |
 | 更准的调用/影响边 | 可选：`dsh-plugin-codegraph`（推荐，**不默认安装**） |
 
 ## 记忆是怎么做的（不需要其他插件）
@@ -120,8 +121,8 @@ Architecture map 在 workspace 里维护一份**架构专用档案**，由插件
 
 | 版本 | 内容 |
 |---|---|
-| 0.1 | 图核心与工具、右侧栏画布、节点拖拽、位置本地记忆、`arch_sync` + manifest + dossier、格式改动识别 + stale、`arch_discuss`、右侧栏讨论按钮 |
-| 0.2 | 内置 Mermaid 渲染、Mermaid/SVG/Markdown 导出 |
+| 0.1 | 图核心与工具、右侧栏画布、节点拖拽、位置本地记忆、`arch_sync` + manifest + dossier、格式改动识别 + stale、`arch_discuss`、右侧栏讨论按钮、`arch_export` |
+| 0.2 | 内置 Mermaid fence 渲染、位置共享/写回图数据 |
 | 0.3 | 节点直连讨论、位置共享/写回图、提案、图 diff |
 | 0.4 | 边讨论、分组折叠、Mermaid 导入、Office 导出 |
 | 0.5 | 多图、PR 关联、团队共享 |
