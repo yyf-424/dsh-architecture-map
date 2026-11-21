@@ -527,6 +527,24 @@ export function apply(ctx, config = {}) {
   // compose the subagent service. When it is present, register the tool.
   let subagents = null
 
+  /** Best-effort child restriction: no shell and no generic source-file writes. */
+  const DISCUSSION_DENY = ['bash', 'pwsh', 'terminal', 'write', 'edit', 'str_replace_editor', 'apply_patch']
+  const restrictDiscussionChild = (ctx, childId) => {
+    const agents = typeof ctx.get === 'function' ? ctx.get('agents') : undefined
+    const child = agents?.get?.(childId)
+    if (!child?.ctx?.tools || typeof child.ctx.tools.restrict !== 'function') return false
+    let applied = 0
+    for (const name of DISCUSSION_DENY) {
+      try {
+        child.ctx.tools.restrict({ deny: [name] })
+        applied += 1
+      } catch {
+        // Tool name absent in this profile; keep the remaining restrictions.
+      }
+    }
+    return applied > 0
+  }
+
   const startDiscussion = async ({ agent, workspace, target, mode, question, signal }) => {
     if (!agent) throw new Error('arch_discuss requires an owning agent session')
     if (subagents === null) throw new Error('arch_discuss requires the subagents service')
@@ -556,6 +574,7 @@ export function apply(ctx, config = {}) {
 
     const existing = await findExisting()
     if (existing) {
+      restrictDiscussionChild(ctx, existing.id)
       return {
         text: `existing ${name} — open it from the subagent catalog.`,
         name: existing.name ?? name,
@@ -593,6 +612,7 @@ export function apply(ctx, config = {}) {
       delivery: 'caller',
     })
     // The child runs in the background; the caller does not await its result.
+    restrictDiscussionChild(ctx, activation.childId)
     void activation.result.catch(() => {})
     return {
       text: `started ${activation.name} (${chosenMode}) — open it from the subagent catalog in the session header.`,

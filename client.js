@@ -119,6 +119,12 @@ window.__ModuleLoader__.load({
         lineHeight: 1.5,
         color: 'var(--dsw-alias-danger, #d9534f)',
       },
+      discussHint: {
+        marginTop: '6px',
+        fontSize: '11px',
+        lineHeight: 1.4,
+        opacity: 0.6,
+      },
       mermaid: {
         overflow: 'auto',
         maxWidth: '100%',
@@ -828,6 +834,8 @@ window.__ModuleLoader__.load({
                 disabled: discussState.status === 'starting',
                 onClick: () => openDiscussion('lite'),
               }, 'Lite')),
+            h('div', { style: styles.discussHint },
+              'Discussion children cannot edit source files; graph changes still need your approval.'),
             discussState.error ? h('div', { style: styles.discussError }, discussState.error) : null)
           : h('div', { style: { ...styles.detail, opacity: 0.65 } }, 'Click a node to see its summary, anchors and edges.')
 
