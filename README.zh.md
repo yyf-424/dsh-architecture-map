@@ -105,6 +105,23 @@ npm test        # node --test test
 npm pack --dry-run
 ```
 
+## 快速开始
+
+1. 新会话里说：*“用 architecture-map skill 扫一遍这个 workspace，建/更新图并写档案。”*
+2. 打开 `/arch`；如果保存的布局遮住了新节点，点 **重置布局**。
+3. 点节点 → **讨论（fork）** 开继承上下文的讨论，或 **轻讨论** 开便宜版本。
+4. 改代码后让 agent 调 `arch_sync`；只读变更文件，更新节点/档案，再 `arch_manifest_commit`。
+5. 用 `arch_export` 导出 Mermaid/SVG/Markdown，或直接用聊天里的 Mermaid fence。
+
+## 限制
+
+- 右侧栏跟随**会话 workspace**；工具参数里的显式 `workspace` 可能和面板显示的图不同。
+- 节点位置只存在浏览器本地，不在 `graph.json`。
+- fork 讨论继承父对话 request prefix，工具列表里可能仍显示 `bash`/`write`，但执行层会拒绝。
+- 画布是手写 SVG + 分层布局，不是 React Flow。
+- Mermaid 默认 `auto` 开启；`renderMermaid: off` 可关；检测到已知的 `dsh-mermaid-plus` 时 `auto` 会关闭本插件渲染。
+- pre-alpha，API 和文件 schema 仍可能变化。
+
 ## 安装
 
 尚未发布。v0.1 发布后：

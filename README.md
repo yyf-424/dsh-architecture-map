@@ -123,9 +123,9 @@ npm pack --dry-run
 
 ## Installation
 
-Not available yet. When v0.1 ships:
+Pre-alpha; the bundle is installed locally rather than from npm:
 
-1. Install the bundle via **Plugins → Add plugin** (local directory) or the plugin manager.
+1. Install the bundle via **Plugins → Add plugin** (local directory) or add it as a `link:` dependency in the profile.
 2. Restart DSH once after installing so the client half joins the browser boot graph.
 3. Open a conversation.
 4. Optional but recommended: install `dsh-plugin-codegraph` separately (`dsh plugin add dsh-plugin-codegraph`). It is **not bundled and not installed automatically**.
@@ -137,6 +137,23 @@ There is no separate "start" button or left-sidebar icon. The plugin adds a righ
 - Open the right sidebar and click **+** (add tab) → **Architecture map**.
 - Or type `/arch` in the composer and pick **Architecture map**.
 - To check the Host half, ask the agent to call `arch_hello`.
+
+## Quick start
+
+1. In a new conversation, ask: *"Use the architecture-map skill: sync this workspace, build or update the graph, and write the dossier."*
+2. Open `/arch` and click **Reset layout** if the saved layout hides the new graph.
+3. Click a node → **Discuss (fork)** for a context-aware discussion, or **Lite** for a cheap one.
+4. After changing code, ask for `arch_sync`; review only the changed files, update the node/doc, then `arch_manifest_commit`.
+5. Use `arch_export` for Mermaid/SVG/Markdown, or the **Mermaid** fence renderer for chat diagrams.
+
+## Limitations
+
+- The sidebar follows the **session workspace**; an explicit tool `workspace` can point at a different graph than the panel shows.
+- Node positions are stored in the browser locally, not in `graph.json`.
+- Fork discussions inherit the parent request prefix, so their tool schemas may still show `bash`/`write` even though calls are denied.
+- The canvas is hand-written SVG with a layered layout, not React Flow.
+- Mermaid rendering is on by default (`auto`) but can be disabled with `renderMermaid: off`; a known `dsh-mermaid-plus` installation makes `auto` disable ours.
+- This is pre-alpha; the API and file schema can still change.
 
 ## Requirements
 
@@ -159,7 +176,7 @@ This space already has excellent DSH plugins. Architecture map builds on their i
 
 | Project | What we take |
 |---|---|
-| [dsh-mermaid-plus](https://github.com/pidongqianqian/dsh-mermaid-plus) (MIT) | The built-in Mermaid fence renderer will be adapted from it; original copyright notices will be retained. |
+| [dsh-mermaid-plus](https://github.com/pidongqianqian/dsh-mermaid-plus) (MIT) | The built-in Mermaid fence renderer and vendored runtime are adapted from it; original copyright notices are retained. |
 | [@eduwork/dsh-side-chat](https://github.com/ECNU/EduWork/tree/main/packages/dsh-side-chat) (MIT/MulanPSL-2.0) | UX reference for native seed-fork side chats and hiding inherited messages. |
 | [@ahggg/dsh-side-chat](https://github.com/AHGGG/dsh-side-chat) (MIT) | Codex-style side-chat interaction reference. |
 | [dsh-project-brain](https://github.com/yj-liuzepeng/dsh-project-brain) (MIT) | Prior art for project memory; our dossier is architecture-specific, not a general memory. |
@@ -168,7 +185,7 @@ This space already has excellent DSH plugins. Architecture map builds on their i
 | [dsh-mindmap-live](https://github.com/SSShooter/dsh-mindmap-live) (MIT) | Bidirectional agent/user editing reference. |
 | [dsh-plugin-codegraph](https://github.com/CC19990113/dsh-plugin-codegraph) (MIT) | Optional code-fact companion. |
 
-Copied or adapted code keeps its original license header and is listed in [`THIRD_PARTY_NOTICES.md`](THIRD_PARTY_NOTICES.md) once the implementation lands.
+Copied or adapted code keeps its original license header and is listed in [`THIRD_PARTY_NOTICES.md`](THIRD_PARTY_NOTICES.md).
 
 ## Design notes
 

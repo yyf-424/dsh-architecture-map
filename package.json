@@ -36,7 +36,8 @@
     "LICENSE",
     "THIRD_PARTY_NOTICES.md",
     "docs/DETAIL.md",
-    "docs/DETAIL.zh.md"
+    "docs/DETAIL.zh.md",
+    "CHANGELOG.md"
   ],
   "dsh": {
     "bundle": {
@@ -51,5 +52,13 @@
         "@deepseek-ai/dsh-client-ui-sidebar-right"
       ]
     }
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/yyf-424/dsh-architecture-map.git"
+  },
+  "homepage": "https://github.com/yyf-424/dsh-architecture-map#readme",
+  "bugs": {
+    "url": "https://github.com/yyf-424/dsh-architecture-map/issues"
   }
 }
