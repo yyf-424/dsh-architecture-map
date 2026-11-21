@@ -1,6 +1,6 @@
 {
   "schema": 1,
-  "generatedAt": "2026-11-21T09:56:42.002Z",
+  "generatedAt": "2026-11-21T10:42:01.169Z",
   "root": ".",
   "files": {
     ".github/workflows/ci.yml": {
@@ -29,9 +29,9 @@
       "signature": "4165a63b956c94cda077f64ed4044f3e3864de3f77962224dbfec1424113f471"
     },
     "CONTRIBUTING.md": {
-      "sha256": "f5da28ce5cc1a617505350590905f55308683a0491df21d705ce31a7b60cba79",
-      "size": 1036,
-      "signature": "99dc15a7303d74ce31411fa4d357e183817920a482aecb5b3f1ba2959df18e27"
+      "sha256": "664cc74bdd68b9f367392f65cae5205445ae71463dcb04ff34d0f5692e116045",
+      "size": 1031,
+      "signature": "e14b2ba133247d254e0e4ddbd40ed6e920acae83f7fd326087d096e42896fcd5"
     },
     "cordis.patch.yml": {
       "sha256": "6e1e55e4cee2ec50db352798fbf863209d6761b5d87163b74d1587544cc0b81e",
@@ -94,19 +94,19 @@
       "signature": "67c8a61bf7fd569e25af652ef079e069573ab2442d368e3b0d05c290fb1802fa"
     },
     "package.json": {
-      "sha256": "64d1da13061c9ab9c09c54a2bb5c90274abf0415b718dd6b0da98374065ea305",
-      "size": 1769,
-      "signature": "88b01b6ae21552a5d86418c73d6ef81509d17197a5a0e99b51163461eaf22b50"
+      "sha256": "bcf6cf99b0766bd07321368903643cac6cbaae51e1c7facd0189df69c7d4baa2",
+      "size": 1764,
+      "signature": "6a6090e7fffbdb99a287ae69d5e083199b11f31c3c5d8052f50583ba9ef96f35"
     },
     "README.md": {
-      "sha256": "85a460a23831ffe4ee35b476ffc8b287555dd67c64ca934c2f77fca5037ca074",
-      "size": 15655,
-      "signature": "21f58d8726981d03ca923f9e98d8d0e97df318467b2f0645760b2aaa5e4ee04b"
+      "sha256": "7d1e9c893c3fb98fd46973bb4607a801609ad42737dbbaa4cedbad8f9381609b",
+      "size": 15650,
+      "signature": "a32ec4da645c3b053893bec8def1a1fbf0dba726c6c6fb2c37b71d6330a6a316"
     },
     "README.zh.md": {
-      "sha256": "5fbc9dd6768d4ece2d0d576a8f7a4d495b205fef2fdbaebbbc23ea6bd58e5859",
-      "size": 13601,
-      "signature": "aaff473def3a481c31b7dc79f44aade1fb21e1027d0b7980060e3c1b0be41c0e"
+      "sha256": "3976e7b805becc5c135add5d2ab8661e97ee892f9209f9db505334d960da637f",
+      "size": 13596,
+      "signature": "56f0a56eae7570425479126fe58b9724c24f9eeb95efb4ccd885182e3f26a69a"
     },
     "skills/architecture-map/references/bootstrap.md": {
       "sha256": "7ea7bf5d25f73a7607078717f71bcd47e04c857761e19a5f71e4f4bfb3c9f817",

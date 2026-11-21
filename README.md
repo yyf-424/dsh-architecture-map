@@ -128,7 +128,7 @@ Architecture map keeps an architecture-specific dossier in the workspace, manage
 
 ```bash
 npm run check   # node --check for the Host/Client entry points
-npm test        # node --test test
+npm test        # node --test
 npm pack --dry-run
 ```
 

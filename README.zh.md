@@ -111,7 +111,7 @@ Architecture map 在 workspace 里维护一份**架构专用档案**，由插件
 
 ```bash
 npm run check   # Host/Client 入口语法检查
-npm test        # node --test test
+npm test        # node --test
 npm pack --dry-run
 ```
 

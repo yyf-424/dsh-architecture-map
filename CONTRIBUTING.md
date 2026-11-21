@@ -6,7 +6,7 @@ Thanks for taking a look. This is a pre-alpha bundle; small, focused changes wit
 
 ```bash
 npm run check   # syntax check the Host/Client entry points
-npm test        # node --test test
+npm test        # node --test
 npm pack --dry-run
 ```
 
