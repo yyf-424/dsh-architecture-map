@@ -112,6 +112,14 @@ Architecture map keeps an architecture-specific dossier in the workspace, manage
 
 - [dsh-plugin-codegraph](https://github.com/CC19990113/dsh-plugin-codegraph) — tree-sitter code intelligence (symbols, callers, impact). Recommended if you want sharper edges; **not required**. Upstream reports ~1s first index and ~45ms re-index on a 337-file workspace, so structural queries are cheap after the first build. It is type-free, so dynamic dispatch and member calls may stay unresolved and fall back to text search. On a small repo the first index can cost more than a few greps.
 
+## Development
+
+```bash
+npm run check   # node --check for the Host/Client entry points
+npm test        # node --test test
+npm pack --dry-run
+```
+
 ## Installation
 
 Not available yet. When v0.1 ships:

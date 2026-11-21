@@ -97,6 +97,14 @@ Architecture map 在 workspace 里维护一份**架构专用档案**，由插件
 
 - [dsh-plugin-codegraph](https://github.com/CC19990113/dsh-plugin-codegraph)：tree-sitter 代码智能（符号、调用、影响面）。想让连线更准可以装；**不装也能用**。上游报告 337 文件仓库首次索引约 1s、增量约 45ms，建好之后结构查询很便宜；但它是 type-free 解析，动态派发和成员调用可能解析不到，仍要 grep 兜底。小仓库首次索引可能比几次 grep 更贵。
 
+## 开发
+
+```bash
+npm run check   # Host/Client 入口语法检查
+npm test        # node --test test
+npm pack --dry-run
+```
+
 ## 安装
 
 尚未发布。v0.1 发布后：
