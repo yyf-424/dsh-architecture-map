@@ -7,6 +7,7 @@
  */
 import { createGraphStore, workspaceOf } from './graph.js'
 import { createMemoryStore } from './memory.js'
+import { createExporter } from './export.js'
 
 export const name = 'architecture-map'
 
@@ -79,6 +80,21 @@ const DOC_PUT_OUTPUT = {
   render: (_args, value) => [{ type: 'text', text: value.text }],
 }
 
+const EXPORT_OUTPUT = {
+  schema: {
+    type: 'object',
+    additionalProperties: false,
+    properties: {
+      text: { type: 'string' },
+      path: { type: 'string' },
+      bytes: { type: 'integer' },
+      format: { type: 'string' },
+    },
+    required: ['text', 'path', 'bytes', 'format'],
+  },
+  render: (_args, value) => [{ type: 'text', text: value.text }],
+}
+
 const DISCUSS_OUTPUT = {
   schema: {
     type: 'object',
@@ -144,6 +160,7 @@ export function apply(ctx, config = {}) {
     return { marked: [], rev: 0 }
   }
   const memory = createMemoryStore(config, { readGraph: store.readGraph, markStale: markStaleNodes })
+  const exporter = createExporter({ readGraph: store.readGraph })
 
   ctx.tools.register({
     name: 'arch_hello',
@@ -369,6 +386,33 @@ export function apply(ctx, config = {}) {
     output: DOC_PUT_OUTPUT,
     async execute(args, exec) {
       return memory.putDoc(workspaceOf(args, exec), args)
+    },
+  })
+
+  ctx.tools.register({
+    name: 'arch_export',
+    description:
+      'Export the canonical architecture graph to .archmap/export/. Formats: mermaid (flowchart source), '
+      + 'svg (standalone diagram) and markdown (dossier digest). Deterministic; does not modify the graph.',
+    parameters: {
+      type: 'object',
+      additionalProperties: false,
+      properties: {
+        format: {
+          type: 'string',
+          enum: ['mermaid', 'svg', 'markdown'],
+          description: 'mermaid: flowchart source; svg: standalone diagram; markdown: dossier digest.',
+        },
+        workspace: {
+          type: 'string',
+          description: 'Absolute workspace root; defaults to the session working directory.',
+        },
+      },
+      required: ['format'],
+    },
+    output: EXPORT_OUTPUT,
+    async execute(args, exec) {
+      return exporter.export(workspaceOf(args, exec), args)
     },
   })
 
