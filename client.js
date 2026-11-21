@@ -438,7 +438,7 @@ window.__ModuleLoader__.load({
           fill: node.status === 'stale'
             ? 'var(--dsw-alias-warning, #d9a441)'
             : node.status === 'proposed'
-              ? '#9a6bd1'
+              ? 'var(--dsw-alias-danger, #e5484d)'
               : 'var(--dsw-alias-success, #4caf7d)',
         }),
       )
@@ -769,7 +769,7 @@ window.__ModuleLoader__.load({
         const legendColors = {
           fresh: 'var(--dsw-alias-success, #4caf7d)',
           stale: 'var(--dsw-alias-warning, #d9a441)',
-          proposed: '#9a6bd1',
+          proposed: 'var(--dsw-alias-danger, #e5484d)',
         }
         const legend = h('div', { style: styles.legend },
           Object.entries(legendColors).map(([status, color]) => h('span', { key: status, style: styles.legendItem },

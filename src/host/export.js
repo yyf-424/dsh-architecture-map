@@ -100,7 +100,7 @@ function mermaidSource(graph) {
     lines.push(`  class ${stale.join(',')} stale;`)
   }
   if (proposed.length > 0) {
-    lines.push('  classDef proposed fill:#f3e8ff,stroke:#9a6bd1,color:#4f2b6e;')
+    lines.push('  classDef proposed fill:#fdecec,stroke:#d9534f,color:#6b1f1f;')
     lines.push(`  class ${proposed.join(',')} proposed;`)
   }
   return lines.join('\n') + '\n'
@@ -170,7 +170,7 @@ function svgSource(graph) {
   const palette = {
     fresh: ['#eef4ff', '#6f93c9', '#22344f'],
     stale: ['#f6e7c1', '#c58a1a', '#5d4300'],
-    proposed: ['#f3e8ff', '#9a6bd1', '#42205f'],
+    proposed: ['#fdecec', '#d9534f', '#6b1f1f'],
   }
   const lines = [
     `<svg xmlns="http://www.w3.org/2000/svg" width="${width}" height="${height}" viewBox="0 0 ${width} ${height}" role="img" aria-label="Architecture map">`,
