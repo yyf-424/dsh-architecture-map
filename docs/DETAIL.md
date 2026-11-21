@@ -1,5 +1,7 @@
 # Architecture map
 
+![Architecture map panel](preview.svg)
+
 A live, addressable architecture graph for DeepSeek Harness. The model writes nodes, edges and anchors into one canonical file; the right sidebar renders it; every node can open an isolated discussion with inherited conversation memory.
 
 ## What you get

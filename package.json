@@ -37,7 +37,10 @@
     "THIRD_PARTY_NOTICES.md",
     "docs/DETAIL.md",
     "docs/DETAIL.zh.md",
-    "CHANGELOG.md"
+    "CHANGELOG.md",
+    "docs/preview.svg",
+    "CONTRIBUTING.md",
+    "CODE_OF_CONDUCT.md"
   ],
   "dsh": {
     "bundle": {

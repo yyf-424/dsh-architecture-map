@@ -27,6 +27,8 @@ Architecture map makes the architecture a **first-class, addressable object** in
 
 ## What it looks like
 
+![Architecture map panel](docs/preview.svg)
+
 ```
 ┌──────────────── main conversation ────────────────┬──────── right sidebar ────────┐
 │  you: draw the architecture of this project       │  [Graph]  [n3 · discuss]  [+] │
@@ -157,8 +159,10 @@ There is no separate "start" button or left-sidebar icon. The plugin adds a righ
 
 ## Requirements
 
-- DeepSeek Harness with a Web/Desktop host.
+- DeepSeek Harness with a Web/Desktop host. Verified with DSH `0.2.2-rc.5` on macOS; the Host/client APIs may change in later releases.
+- Node.js 22+ for the test suite and CI.
 - A workspace the agent can read.
+- Mermaid is vendored; no separate Mermaid plugin is required.
 
 ## Roadmap
 

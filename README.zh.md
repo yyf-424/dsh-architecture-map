@@ -27,6 +27,8 @@ Architecture map 把「项目架构」变成 harness 里**可寻址的一等对�
 
 ## 界面示意
 
+![架构地图面板](docs/preview.svg)
+
 ```
 ┌──────────────── 主对话 ───────────────────────────┬──────── 右侧栏 ──────────────┐
 │  你：画一下这个项目的架构图                        │  [架构图]  [n3 · 讨论]   [+]  │
@@ -141,8 +143,10 @@ npm pack --dry-run
 
 ## 要求
 
-- 带 Web/Desktop Host 的 DeepSeek Harness。
+- 带 Web/Desktop Host 的 DeepSeek Harness；在 macOS + DSH `0.2.2-rc.5` 上验证，后续版本 API 可能变化。
+- 测试套件和 CI 需要 Node.js 22+。
 - agent 可读的 workspace。
+- Mermaid 已 vendored，不需要额外 Mermaid 插件。
 
 ## 路线图
 
