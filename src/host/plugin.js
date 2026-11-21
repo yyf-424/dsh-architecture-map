@@ -5,7 +5,8 @@
  * Node 2: `arch_graph_get` / `arch_graph_patch` over a workspace-owned
  * `.archmap/graph.json` with a revision, validation, and atomic writes.
  */
-import { createReadStream, readFileSync } from 'node:fs'
+import { appendFileSync, createReadStream, readFileSync } from 'node:fs'
+import { randomUUID } from 'node:crypto'
 import { stat } from 'node:fs/promises'
 import path from 'node:path'
 import { fileURLToPath } from 'node:url'
@@ -525,24 +526,116 @@ export function apply(ctx, config = {}) {
 
   // Per-node side conversations are optional: a minimal profile may not
   // compose the subagent service. When it is present, register the tool.
+  let agents = null
   let subagents = null
+
+  ctx.inject(['agents'], scope => {
+    agents = scope.agents
+    return () => { agents = null }
+  })
 
   /** Best-effort child restriction: no shell and no generic source-file writes. */
   const DISCUSSION_DENY = ['bash', 'pwsh', 'terminal', 'write', 'edit', 'str_replace_editor', 'apply_patch']
-  const restrictDiscussionChild = (ctx, childId) => {
-    const agents = typeof ctx.get === 'function' ? ctx.get('agents') : undefined
-    const child = agents?.get?.(childId)
-    if (!child?.ctx?.tools || typeof child.ctx.tools.restrict !== 'function') return false
-    let applied = 0
+  const discussionIds = new Set()
+
+  const restrictAgentTools = agent => {
+    const debug = { at: new Date().toISOString(), child: String(agent?.id ?? ''), applied: 0, errors: [] }
+    if (!agent?.ctx?.tools || typeof agent.ctx.tools.restrict !== 'function') {
+      debug.errors.push('no scoped tools.restrict')
+      appendFileSync('/tmp/archmap-restrict.log', JSON.stringify(debug) + '\n')
+      return 0
+    }
     for (const name of DISCUSSION_DENY) {
       try {
-        child.ctx.tools.restrict({ deny: [name] })
-        applied += 1
-      } catch {
-        // Tool name absent in this profile; keep the remaining restrictions.
+        agent.ctx.tools.restrict({ deny: [name] })
+        debug.applied += 1
+      } catch (error) {
+        debug.errors.push(`${name}: ${String(error?.message ?? error)}`)
       }
     }
-    return applied > 0
+    appendFileSync('/tmp/archmap-restrict.log', JSON.stringify(debug) + '\n')
+    if (debug.applied === 0) {
+      console.warn('[architecture-map] could not restrict discussion child tools:', debug.errors[0] ?? 'no tool matched')
+    }
+    return debug.applied
+  }
+
+  const restrictDiscussionChild = childId => {
+    const id = String(childId)
+    discussionIds.add(id)
+    if (agents !== null && typeof agents.get === 'function') {
+      const child = agents.get(id)
+      if (child) return restrictAgentTools(child)
+    }
+    return 0
+  }
+
+  /** A resumed child emits agent/created; restrict it before its queued turn runs. */
+  /** Recognize our children from the durable subagent descriptor (label). */
+  const isDiscussionAgent = agent => {
+    if (discussionIds.has(String(agent.id))) return true
+    try {
+      const events = agent.session?.snapshotEvents?.() ?? []
+      const descriptor = events.find(event => event.type === 'subagent/descriptor')
+      return typeof descriptor?.data?.label === 'string' && /^Discuss (node|edge) /.test(descriptor.data.label)
+    } catch {
+      return false
+    }
+  }
+
+  if (typeof ctx.on === 'function') {
+    ctx.on('agent/created', ({ agent }) => {
+      if (!agent || !isDiscussionAgent(agent)) return
+      discussionIds.add(String(agent.id))
+      restrictAgentTools(agent)
+    })
+  }
+
+  /** An inactive child has no live Agent yet; retry, then rely on agent/created. */
+  const restrictDiscussionChildSoon = childId => {
+    if (restrictDiscussionChild(childId) > 0) return
+    let attempts = 0
+    const timer = setInterval(() => {
+      attempts += 1
+      const applied = restrictDiscussionChild(childId)
+      if (applied > 0 || attempts >= 10) {
+        clearInterval(timer)
+        if (applied === 0) console.warn('[architecture-map] discussion child is not live; restriction will apply when it starts')
+      }
+    }, 100)
+    timer.unref?.()
+  }
+
+  /**
+   * Reapply restrictions to discussion children that outlived a plugin reload.
+   * Inactive children still get their id recorded; agent/created catches them
+   * when they resume.
+   */
+  const discoverDiscussionChildren = async () => {
+    if (!agents || !subagents || typeof agents.list !== 'function' || typeof subagents.listDescendants !== 'function') return
+    const roots = agents.list()
+    const seenRoots = new Set()
+    for (const root of roots) {
+      const rootId = String(root.id)
+      if (seenRoots.has(rootId)) continue
+      seenRoots.add(rootId)
+      let rows
+      try {
+        rows = await subagents.listDescendants(root.id)
+      } catch {
+        continue
+      }
+      for (const row of rows) {
+        if (row.kind !== 'child') continue
+        const name = typeof row.name === 'string' ? row.name : ''
+        if (!/^(node|edge)-/.test(name)) continue
+        const id = String(row.id)
+        if (discussionIds.has(id)) continue
+        discussionIds.add(id)
+        const live = typeof agents.get === 'function' ? agents.get(id) : undefined
+        if (live) restrictAgentTools(live)
+      }
+    }
   }
 
   const startDiscussion = async ({ agent, workspace, target, mode, question, signal }) => {
@@ -574,7 +667,7 @@ export function apply(ctx, config = {}) {
 
     const existing = await findExisting()
     if (existing) {
-      restrictDiscussionChild(ctx, existing.id)
+      restrictDiscussionChildSoon(existing.id)
       return {
         text: `existing ${name} — open it from the subagent catalog.`,
         name: existing.name ?? name,
@@ -602,8 +695,13 @@ export function apply(ctx, config = {}) {
       typeof question === 'string' && question.trim() !== '' ? `\nThe user's initial question: ${question.trim()}` : '',
     ].filter(Boolean).join('\n')
 
+    // Reserve the child id first so agent/created can restrict it before the
+    // first model turn runs.
+    const childId = randomUUID()
+    discussionIds.add(childId)
     const activation = await subagents.startActivation({
       provider: chosenMode === 'fork' ? 'fork' : 'spawn',
+      childId,
       label,
       name,
       prompt: [{ type: 'text', text: prompt }],
@@ -612,7 +710,7 @@ export function apply(ctx, config = {}) {
       delivery: 'caller',
     })
     // The child runs in the background; the caller does not await its result.
-    restrictDiscussionChild(ctx, activation.childId)
+    restrictDiscussionChildSoon(activation.childId)
     void activation.result.catch(() => {})
     return {
       text: `started ${activation.name} (${chosenMode}) — open it from the subagent catalog in the session header.`,

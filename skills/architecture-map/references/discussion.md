@@ -26,7 +26,7 @@ The sidebar `Discuss (fork)` / `Lite` buttons call the same Host operation (`/ar
 
 ## Child rules (already in the prompt)
 
-- The Host makes a best-effort restriction: shell and generic source-write tools are denied; `arch_graph_patch` / `arch_doc_put` remain available.
+- The Host denies shell and generic source-write tools at execution; `arch_graph_patch` / `arch_doc_put` remain available. A fork may still display the inherited tool schemas, so the model should treat bash/write/edit as unavailable and rely on an actual call error.
 
 - stay on the target node/edge and its direct edges;
 - read the graph and `modules/<id>` first;

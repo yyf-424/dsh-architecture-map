@@ -835,7 +835,7 @@ window.__ModuleLoader__.load({
                 onClick: () => openDiscussion('lite'),
               }, 'Lite')),
             h('div', { style: styles.discussHint },
-              'Discussion children cannot edit source files; graph changes still need your approval.'),
+              'Tool schemas may be inherited, but shell and source-write calls are denied for discussion children; graph changes still need your approval.'),
             discussState.error ? h('div', { style: styles.discussError }, discussState.error) : null)
           : h('div', { style: { ...styles.detail, opacity: 0.65 } }, 'Click a node to see its summary, anchors and edges.')
 
