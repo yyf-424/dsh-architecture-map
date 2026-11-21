@@ -955,22 +955,6 @@ window.__ModuleLoader__.load({
           }
         })
 
-        // Temporary M0 convenience: keep trying until a session is available.
-        console.info('[architecture-map] client loaded')
-        let attempts = 0
-        const timer = setInterval(() => {
-          attempts += 1
-          try {
-            ctx.sidebarRight.openTab('archmap.graph')
-            clearInterval(timer)
-          } catch {
-            if (attempts >= 60) {
-              console.warn('[architecture-map] could not auto-open the sidebar tab; open it from the sidebar instead')
-              clearInterval(timer)
-            }
-          }
-        }, 500)
-        if (typeof ctx.effect === 'function') ctx.effect(() => () => clearInterval(timer))
       },
     }
   },
