@@ -730,8 +730,10 @@ export function apply(ctx, config = {}) {
   // `/arch discuss` is also the UI's entry point for a node conversation.
   ctx.commands.register({
     name: 'arch',
-    description: 'Open the Architecture map panel or start a node discussion',
-    input: { hint: '[open|discuss node:<id> [fork|lite]]' },
+    description: 'Open the Architecture map panel',
+    // No `input` descriptor: `/arch` + Enter must execute immediately. The
+    // sidebar's Discuss button still calls `/arch discuss ...` through the
+    // direct commands RPC, which accepts raw input without a composer claim.
     async handler({ agent, rawInput, signal }) {
       const extra = rawInput.trim()
       if (extra === '' || extra === 'open') {
