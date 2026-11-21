@@ -1,6 +1,7 @@
 {
   "meta": {
     "title": "Architecture map",
-    "description": "A live semantic architecture graph with per-node side conversations and incremental architecture memory."
+    "description": "A live semantic architecture graph with per-node side conversations and incremental architecture memory.",
+    "detail": "docs/DETAIL.md"
   }
 }
