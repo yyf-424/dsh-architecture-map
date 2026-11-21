@@ -57,6 +57,7 @@ The model can also use the bundled `architecture-map` skill in a new session.
 - Node positions are local to the browser; shared positions are not implemented yet.
 - The sidebar follows the **session workspace**; it does not show a graph from an explicit `workspace` argument when the two differ.
 - Fork discussions inherit the parent request prefix, so their tool list can still show schemas that are denied at execution.
+- If the parent agent uses `send_message` to continue a child, DSH posts a native settlement notice (with the child's closing text) in the parent conversation. The initial `arch_discuss` result is caller-only; the child transcript is not copied into the main log.
 - Mermaid layout is Mermaid's default (dagre); a layout selector is not exposed.
 
 ## Third-party

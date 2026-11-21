@@ -120,6 +120,7 @@ npm pack --dry-run
 - 右侧栏跟随**会话 workspace**；工具参数里的显式 `workspace` 可能和面板显示的图不同。
 - 节点位置只存在浏览器本地，不在 `graph.json`。
 - fork 讨论继承父对话 request prefix，工具列表里可能仍显示 `bash`/`write`，但执行层会拒绝。
+- 父对话主动 `send_message` 给讨论子会话时，DSH 会在主对话里投递 native settlement notice（含子会话 closing text）。初次 `arch_discuss` 是 caller-only，子会话完整 transcript 不会进主日志；需要继续聊请在子会话侧栏里发。
 - 画布是手写 SVG + 分层布局，不是 React Flow。
 - Mermaid 默认 `auto` 开启；`renderMermaid: off` 可关；检测到已知的 `dsh-mermaid-plus` 时 `auto` 会关闭本插件渲染。
 - pre-alpha，API 和文件 schema 仍可能变化。

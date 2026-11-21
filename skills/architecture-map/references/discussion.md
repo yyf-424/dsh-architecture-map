@@ -60,6 +60,10 @@ The child writes notes and may propose patches; the parent (or the user) decides
 - on `STALE_REV`, re-read and rebase;
 - after a review, set affected nodes to `fresh` and commit analyzed files.
 
+## Parent-visible settlement notices
+
+The initial `arch_discuss` activation is caller-only, so its full transcript does not enter the parent log. However, if the **parent agent** later uses `send_message` to continue a child, DSH posts a native settlement notice (including the child's closing text) in the parent conversation. That is runtime behavior, not a transcript copy. For narrative follow-ups, the user should chat in the child's sidebar; the parent should not use `send_message` unless a notice is acceptable.
+
 ## Notes, not chat logs
 
 `notes/<id>` is for durable decisions/findings, not a transcript. Append a short conclusion with anchor evidence. Do not copy the whole child conversation into the dossier.

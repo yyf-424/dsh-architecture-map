@@ -153,6 +153,7 @@ There is no separate "start" button or left-sidebar icon. The plugin adds a righ
 - The sidebar follows the **session workspace**; an explicit tool `workspace` can point at a different graph than the panel shows.
 - Node positions are stored in the browser locally, not in `graph.json`.
 - Fork discussions inherit the parent request prefix, so their tool schemas may still show `bash`/`write` even though calls are denied.
+- A parent-initiated `send_message` to a discussion child produces DSH's native settlement notice (including the child's closing text) in the parent conversation. The initial `arch_discuss` is caller-only and the child's full transcript never enters the main log; use the child's sidebar chat for narrative follow-ups.
 - The canvas is hand-written SVG with a layered layout, not React Flow.
 - Mermaid rendering is on by default (`auto`) but can be disabled with `renderMermaid: off`; a known `dsh-mermaid-plus` installation makes `auto` disable ours.
 - This is pre-alpha; the API and file schema can still change.

@@ -57,6 +57,7 @@
 - 节点位置只存在浏览器本地；共享位置还没做。
 - 右侧栏跟随**会话 workspace**；工具参数里的显式 `workspace` 不同时，面板不会显示那张图。
 - fork 讨论会继承父对话 request prefix，工具列表里可能仍显示执行层已拒绝的 schema。
+- 父 agent 用 `send_message` 继续子会话时，DSH 会在主对话里投递 settlement notice（含子会话 closing text）；初次 `arch_discuss` 是 caller-only，子会话 transcript 不会复制进主日志。
 - Mermaid 布局使用默认 dagre；尚未提供布局选择器。
 
 ## 第三方
