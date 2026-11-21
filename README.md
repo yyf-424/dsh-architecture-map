@@ -29,6 +29,8 @@ Architecture map makes the architecture a **first-class, addressable object** in
 
 ![Architecture map panel](docs/preview.svg)
 
+A static feature preview is included. A recorded 30-second demo GIF is not part of this repository yet.
+
 ```
 ┌──────────────── main conversation ────────────────┬──────── right sidebar ────────┐
 │  you: draw the architecture of this project       │  [Graph]  [n3 · discuss]  [+] │
