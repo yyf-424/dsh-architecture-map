@@ -17,6 +17,50 @@ window.__ModuleLoader__.load({
     const POLL_MS = 2000
     const POSITIONS_KEY = 'dsh-architecture-map:positions:'
     const MERMAID_CONFIG_URL = '/x-dsh-architecture-map/config'
+    const LOCALE_NS = 'architecture-map'
+    const EN = {
+      'panel.title': 'Architecture map',
+      'panel.refresh': 'Refresh',
+      'panel.fit': 'Fit',
+      'panel.reset': 'Reset layout',
+      'panel.hint': 'drag to pan · wheel to zoom',
+      'panel.empty': 'Click a node to see its summary, anchors and edges.',
+      'panel.error': 'Graph unavailable',
+      'legend.fresh': 'fresh',
+      'legend.stale': 'stale',
+      'legend.proposed': 'proposed',
+      'discuss.fork': 'Discuss (fork)',
+      'discuss.lite': 'Lite',
+      'discuss.starting': 'Starting…',
+      'discuss.hint': 'Tool schemas may be inherited, but shell and source-write calls are denied for discussion children; graph changes still need your approval.',
+      'detail.kind': 'kind',
+      'detail.group': 'group',
+      'detail.status': 'status',
+      'guide.title': 'Architecture map',
+      'guide.description': 'Open the live architecture graph panel',
+    }
+    const ZH = {
+      'panel.title': '架构地图',
+      'panel.refresh': '刷新',
+      'panel.fit': '适配',
+      'panel.reset': '重置布局',
+      'panel.hint': '拖动平移 · 滚轮缩放',
+      'panel.empty': '点击节点查看摘要、锚点和边。',
+      'panel.error': '图不可用',
+      'legend.fresh': '有效',
+      'legend.stale': '过期',
+      'legend.proposed': '提案',
+      'discuss.fork': '讨论（fork）',
+      'discuss.lite': '轻讨论',
+      'discuss.starting': '启动中…',
+      'discuss.hint': '子会话可能继承工具 schema，但 shell 和源码写调用会被拒绝；改图仍需你确认。',
+      'detail.kind': '类型',
+      'detail.group': '分组',
+      'detail.status': '状态',
+      'guide.title': '架构地图',
+      'guide.description': '打开实时架构图面板',
+    }
+    let t = key => EN[key] ?? key
     const MERMAID_RUNTIME_URL = '/x-dsh-architecture-map/vendor/mermaid.esm.min.mjs'
 
     const styles = {
@@ -438,7 +482,7 @@ window.__ModuleLoader__.load({
         }, clip(node.title ?? node.id, 22)),
         h('text', {
           x: x + 12, y: y + 44, fill: 'currentColor', fontSize: 11, opacity: 0.65,
-        }, `${node.kind ?? 'module'}${node.group ? ` · ${node.group}` : ''}${node.status === 'stale' ? ' · stale' : ''}`),
+        }, `${node.kind ?? 'module'}${node.group ? ` · ${node.group}` : ''}${node.status === 'stale' ? ` · ${t('legend.stale')}` : ''}`),
         h('circle', {
           cx: x + box.w - 14, cy: y + 14, r: 4,
           fill: node.status === 'stale'
@@ -681,7 +725,7 @@ window.__ModuleLoader__.load({
         const header = h(
           'div',
           { style: styles.header },
-          h('h2', { style: styles.title }, 'Architecture map'),
+          h('h2', { style: styles.title }, t('panel.title')),
           h(
             'div',
             { style: { display: 'flex', alignItems: 'center', gap: '8px' } },
@@ -692,8 +736,8 @@ window.__ModuleLoader__.load({
               type: 'button',
               style: styles.button,
               onClick: () => setTick(value => value + 1),
-              title: 'Refresh graph',
-            }, 'Refresh'),
+              title: t('panel.refresh'),
+            }, t('panel.refresh')),
           ),
         )
 
@@ -704,15 +748,15 @@ window.__ModuleLoader__.load({
               type: 'button',
               style: styles.button,
               onClick: () => fitGraph(graph),
-            }, 'Fit'),
+            }, t('panel.fit')),
             h('button', {
               type: 'button',
               style: styles.button,
               onClick: resetLayout,
               title: 'Reset node positions to the automatic layout',
-            }, 'Reset layout'),
+            }, t('panel.reset')),
             h('span', { style: styles.meta }, `${Math.round(view.zoom * 100)}%`),
-            h('span', { style: { ...styles.meta, opacity: 0.55 } }, 'drag to pan · wheel to zoom'))
+            h('span', { style: { ...styles.meta, opacity: 0.55 } }, t('panel.hint')))
 
         const canvas = nodes.length === 0
           ? h('div', { style: styles.empty },
@@ -813,7 +857,7 @@ window.__ModuleLoader__.load({
         const detail = selected
           ? h('div', { style: styles.detail },
             h('p', { style: styles.detailTitle }, `${selected.id} · ${selected.title}`),
-            h('div', { style: styles.detailRow }, `kind ${selected.kind}${selected.group ? ` · group ${selected.group}` : ''} · ${selected.status}`),
+            h('div', { style: styles.detailRow }, `${t('detail.kind')} ${selected.kind}${selected.group ? ` · ${t('detail.group')} ${selected.group}` : ''} · ${t('detail.status')} ${t(`legend.${selected.status}`)}`),
             selected.summary ? h('div', { style: styles.detailRow }, selected.summary) : null,
             selected.anchors?.length
               ? h('div', { style: { ...styles.detailRow, ...styles.mono } }, selected.anchors.map(anchor => `${anchor.path}${anchor.symbol ? `#${anchor.symbol}` : ''}`).join('  ·  '))
@@ -827,22 +871,22 @@ window.__ModuleLoader__.load({
                 style: styles.button,
                 disabled: discussState.status === 'starting',
                 onClick: () => openDiscussion('fork'),
-              }, discussState.status === 'starting' ? 'Starting…' : 'Discuss (fork)'),
+              }, discussState.status === 'starting' ? t('discuss.starting') : t('discuss.fork')),
               h('button', {
                 type: 'button',
                 style: styles.button,
                 disabled: discussState.status === 'starting',
                 onClick: () => openDiscussion('lite'),
-              }, 'Lite')),
+              }, t('discuss.lite'))),
             h('div', { style: styles.discussHint },
               'Tool schemas may be inherited, but shell and source-write calls are denied for discussion children; graph changes still need your approval.'),
             discussState.error ? h('div', { style: styles.discussError }, discussState.error) : null)
-          : h('div', { style: { ...styles.detail, opacity: 0.65 } }, 'Click a node to see its summary, anchors and edges.')
+          : h('div', { style: { ...styles.detail, opacity: 0.65 } }, t('panel.empty'))
 
         return h('div', { style: styles.root },
           header,
           state.status === 'error' && state.error
-            ? h('div', { style: styles.error }, `Graph unavailable: ${state.error}`)
+            ? h('div', { style: styles.error }, `${t('panel.error')}: ${state.error}`)
             : null,
           toolbar,
           legend,
@@ -853,17 +897,23 @@ window.__ModuleLoader__.load({
     }
 
     return {
-      inject: ['slots', 'sidebarRightTabs', 'sidebarRight', 'remote', 'remote.commands', 'remote.workspaceFiles'],
+      inject: ['slots', 'locale', 'sidebarRightTabs', 'sidebarRight', 'remote', 'remote.commands', 'remote.workspaceFiles'],
       apply(ctx) {
+        if (ctx.locale) {
+          const register = () => ctx.locale.register(LOCALE_NS, { en: EN, zh: ZH })
+          if (typeof ctx.effect === 'function') ctx.effect(register, 'architecture-map: locale dictionaries')
+          else register()
+          t = ctx.locale.bind(LOCALE_NS)
+        }
         ctx.sidebarRightTabs.register({
           id: TYPE_ID,
           kind: 'archmap.graph',
           priority: 'extension',
-          title: () => 'Architecture map',
+          title: () => t('panel.title'),
           guide: [{
             id: 'open',
             order: 30,
-            title: () => 'Architecture map',
+            title: () => t('panel.title'),
             description: () => 'Open the live architecture graph panel',
           }],
         })
