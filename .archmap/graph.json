@@ -1,7 +1,7 @@
 {
   "schema": 1,
-  "rev": 10,
-  "updatedAt": "2026-11-22T09:19:59.742Z",
+  "rev": 11,
+  "updatedAt": "2026-11-22T09:22:37.720Z",
   "layout": {
     "mode": "layered",
     "direction": "LR"
@@ -177,6 +177,20 @@
         {
           "path": "src/host/content/local.js",
           "hash": "3cfc34b749b00c3221bd66bc063b8c34270b5b894425ffbbc8b3824a5aa61b37"
+        }
+      ],
+      "status": "fresh"
+    },
+    {
+      "id": "n11",
+      "title": "Remote transport",
+      "kind": "module",
+      "group": "g-host",
+      "summary": "Read-only SSH transport: fixed OpenSSH options, optional ControlMaster, POSIX quoting, bounded concurrency, per-command timeout, abort handling, output caps and a capability probe. Remote content will consume it.",
+      "anchors": [
+        {
+          "path": "src/host/remote/ssh.js",
+          "hash": "46480ec34b405e8b7c8f7df11e610572bd5204dcb691131b39d059342de95141"
         }
       ],
       "status": "fresh"

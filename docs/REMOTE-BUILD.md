@@ -628,22 +628,23 @@ npm test
 
 | 计划节点 | 标题 | 类型 | 分组 | 锚点文件（落地后） | 落地于 | 验证 |
 |---|---|---|---|---|---|---|
-| n9 | Project registry | module | g-host | `src/host/projects.js`, `src/host/workspace.js` | W1 | 锚点 hash + 本地回归 |
-| n10 | Remote transport | module | g-host | `src/host/remote/ssh.js` | W3 | 注入/超时测试 |
-| n11 | Remote content source | module | g-host | `src/host/remote/content.js` | W4 | 与本地对齐 |
-| n12 | Consent gate | module | g-host | `src/host/remote/consent.js` | W6 | 状态机测试 |
-| n13 | Remote read tools | module | g-host | `src/host/remote/tools.js` | W7 | 授权 + 工具测试 |
-| n14 | Remote indexer | module | g-host | `src/host/remote/indexer.js` | W8/W10 | 同步/轮询测试 |
-| n15 | Remote maintainer | module | g-host | `src/host/remote/maintainer.js` | W10 | 条件矩阵 + 子会话 |
+| n9 | Project index | module | g-host | `src/host/projects.js`, `src/host/workspace.js` | W1 | 锚点 hash + 本地回归 |
+| n10 | Content source | module | g-host | `src/host/content/index.js`, `src/host/content/local.js` | W2 | scan/hash 与旧实现一致 |
+| n11 | Remote transport | module | g-host | `src/host/remote/ssh.js` | W3 | 注入/超时测试 |
+| n12 | Remote content source | module | g-host | `src/host/remote/content.js` | W4 | 与本地对齐 |
+| n13 | Consent gate | module | g-host | `src/host/remote/consent.js` | W6 | 状态机测试 |
+| n14 | Remote read tools | module | g-host | `src/host/remote/tools.js` | W7 | 授权 + 工具测试 |
+| n15 | Remote indexer | module | g-host | `src/host/remote/indexer.js` | W8/W10 | 同步/轮询测试 |
+| n16 | Remote maintainer | module | g-host | `src/host/remote/maintainer.js` | W10 | 条件矩阵 + 子会话 |
 
 建议边（落地时按实际调用关系补）：
 
-- `n1 → n9`（注册项目解析）、`n1 → n13`（注册远程工具）；
-- `n13 → n11`（读内容）、`n13 → n12`（先授权）；
-- `n11 → n10`（传输）；
-- `n14 → n11`（索引/哈希）、`n14 → n2`（标 stale）；
-- `n15 → n14`（变更驱动维护）、`n15 → n8`（沿用 skill）；
-- `n5 → n9`（面板读 index）。
+- `n1 → n9`（注册项目解析）、`n1 → n14`（注册远程工具）；
+- `n14 → n12`（读内容）、`n14 → n13`（先授权）；
+- `n12 → n11`（传输）；
+- `n15 → n12`（索引/哈希）、`n15 → n2`（标 stale）；
+- `n16 → n15`（变更驱动维护）、`n16 → n8`（沿用 skill）；
+- `n2 → n10`、`n3 → n10`、`n9 → n10`、`n5 → n9`。
 
 验证方法：
 
@@ -678,7 +679,7 @@ npm test
 | W0 | 2026-11-22 | 2026-11-22 | `npm run check && npm test` | 7/7 pass；基线 `d501c41`，graph rev 7 / 8 nodes / 8 edges | ☑ | worktree `feature/remote-source` |
 | W1 | 2026-11-22 | 2026-11-22 | `node --test test/projects.test.mjs`；`npm run check && npm test` | 5/5 + 12/12 pass；本地 graph rev 7 / 8 nodes / 8 edges 不变；远程项目落到 `.archmap/projects/staging/` | ☑ | 远程 sync/commit 仍失败关闭，W8 接 |
 | W2 | 2026-11-22 | 2026-11-22 | `node --test test/content-local.test.mjs`；`npm run check && npm test`；新旧 scan 对拍 | 5/5 + 17/17 pass；旧 `memory.scan` 与新 `content.scan` 输出完全一致；13 个锚点 0 mismatch；`.git` worktree 文件被跳过 | ☑ | 纯重构；本地格式/行为未变 |
-| W3 | | | `node --test test/remote-ssh.test.mjs` | | ☐ | |
+| W3 | 2026-11-22 | 2026-11-22 | `node --test test/remote-ssh.test.mjs`；`npm run check && npm test` | 7/7 + 24/24 pass；引号/超时/取消/输出上限/鉴权错误映射全过；假 SSH 不连网 | ☑ | 无远程写命令 |
 | W4 | | | `node --test test/remote-content.test.mjs` | | ☐ | |
 | W5 | | | `node --test test/remote-project.test.mjs` | | ☐ | |
 | W6 | | | `node --test test/remote-consent.test.mjs` | | ☐ | |

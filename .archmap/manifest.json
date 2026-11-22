@@ -1,6 +1,6 @@
 {
   "schema": 1,
-  "generatedAt": "2026-11-22T09:20:14.525Z",
+  "generatedAt": "2026-11-22T09:22:43.065Z",
   "root": ".",
   "files": {
     ".github/workflows/ci.yml": {
@@ -159,9 +159,9 @@
       "signature": "c9a03f949839b8fa84f9ab29c7273478d6b84f87a0cdfd88182c401dfbd9c7e6"
     },
     "src/README.md": {
-      "sha256": "181048184313f6c9a7edb40271c8cb8d3da2c891bd9c3adca7e0db63d2191cfa",
-      "size": 1319,
-      "signature": "45c64cfb098341bc6671890ed6fa1a4964cbd1e66eacdd7d1f44ed777107c25a"
+      "sha256": "2a6c94d5aac4ee4a8c40f5c234a996137aafbc6892880d63d0a9d9206a8dd3a3",
+      "size": 1460,
+      "signature": "8bc6c3835ec422c8c1e8607814f29dda8de83284c022e0066977f025bbc68529"
     },
     "test/export.test.mjs": {
       "sha256": "fb03011566a1b3817b56893d35f2a3508fb8ec287ec92274ca9a7860cae6e3d6",
@@ -199,9 +199,9 @@
       "signature": "392683268e187f32d88b100490bf86d2a821316c0e51a0ebb3ec63c41ef958b3"
     },
     "docs/REMOTE-BUILD.md": {
-      "sha256": "7b62abf0ef062f23b707442c0a858eefc15e6a2b36be9b8607e253445bd16b57",
-      "size": 29576,
-      "signature": "4d7a2e53098b083b70098b31634dd3d3516042ab04bb53c548c1d10e86546449"
+      "sha256": "25944c294e376c1846145d2cc25f897246865f181aa322b6baab0b29b5d5a79a",
+      "size": 29937,
+      "signature": "a88d89adc66e0440e558f89776062132a824abba5d7d19780de32ce91a633cc1"
     },
     "docs/REMOTE-PLAN.md": {
       "sha256": "2fe3b9548abef3434099bdcacec4560d0a02a5667040f5aa58673423ebbf8043",
@@ -222,6 +222,21 @@
       "sha256": "9ddd0753aa531661c06a9b0dae6ac65274eb9451d4e5cf6e37d25e51c04270cc",
       "size": 5838,
       "signature": "b4ec1bca90336a649ad0c73ffd32b6ace0d88089a7a678b3845fd0247db64709"
+    },
+    "src/host/remote/ssh.js": {
+      "sha256": "31df0ccb64b47d258fb84b7a971b18b43e625301aa9ed1c0237f23dc52dbe903",
+      "size": 10784,
+      "signature": "46480ec34b405e8b7c8f7df11e610572bd5204dcb691131b39d059342de95141"
+    },
+    "test/remote-ssh.test.mjs": {
+      "sha256": "17b4effe82e75280128eb620ae900650057491010191efcd6375d5d5c71e12c5",
+      "size": 4975,
+      "signature": "e034f4b97d5de4fdb351120b09c95e39b21e0f7a23069ddb0407b0e8adaf7f24"
+    },
+    "test/fixtures/fake-ssh/ssh": {
+      "sha256": "6f7ed9432b9de1593f3f5f6a2b408270e168e7797a23493d35bdf1b2aacffcc2",
+      "size": 822,
+      "signature": "35c650c7eead09686dfe71dfadf3b99409224919c6bc8ed354b9b9eca5ede347"
     }
   }
 }

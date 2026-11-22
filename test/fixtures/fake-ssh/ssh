@@ -1,0 +1,38 @@
+#!/bin/sh
+# Test-only ssh stand-in. Options are skipped; the remaining command runs in
+# FAKE_SSH_ROOT against the local fixture. FAKE_SSH_FAIL simulates an auth
+# error, FAKE_SSH_SLEEP simulates a stalled connection, and FAKE_SSH_LOG
+# appends every remote command for assertions.
+set -u
+
+if [ -n "${FAKE_SSH_FAIL:-}" ]; then
+  echo "Permission denied (publickey)." >&2
+  exit 255
+fi
+
+while [ $# -gt 0 ]; do
+  case "$1" in
+    -o|-p|-l|-i|-F|-S|-c|-m|-D|-J|-W|-P|-Q)
+      shift
+      [ $# -gt 0 ] && shift
+      ;;
+    -*)
+      shift
+      ;;
+    *)
+      shift
+      break
+      ;;
+  esac
+done
+
+command="$*"
+if [ -n "${FAKE_SSH_LOG:-}" ]; then
+  printf '%s\n' "$command" >> "$FAKE_SSH_LOG"
+fi
+if [ -n "${FAKE_SSH_SLEEP:-}" ]; then
+  exec sleep "$FAKE_SSH_SLEEP"
+fi
+
+cd "${FAKE_SSH_ROOT:-.}" || exit 1
+sh -c "$command"

@@ -4,7 +4,7 @@ This repository is both the plugin and its first fixture. The graph is intention
 
 ## Layers
 
-- **Host** — entry, project index/workspace resolver, content source, graph store, memory store, exporter.
+- **Host** — entry, project index/workspace resolver, content source, remote transport, graph store, memory store, exporter.
 - **Client** — sidebar panel, canvas and Mermaid fence.
 - **Docs & skill** — the bundled `architecture-map` workflow.
 
@@ -20,4 +20,4 @@ This repository is both the plugin and its first fixture. The graph is intention
 - The panel follows the session workspace; open a session whose workspace is this repository to see this graph.
 - Node positions are browser-local.
 - Mermaid is vendored; `renderMermaid:auto` disables it when `dsh-mermaid-plus` is enabled.
-- Remote projects are in development; the project index and local content source exist, remote content arrives with the SSH source.
+- Remote projects are in development: the project index, local content source and read-only SSH transport exist; the remote content source and tools arrive later.
