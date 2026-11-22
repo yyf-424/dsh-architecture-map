@@ -129,13 +129,3 @@ test('remote anchors refresh after a remote file change', { skip: SKIP }, async 
     await cleanup(item)
   }
 })
-
-test('remote sync and commit stay disabled until W8', { skip: SKIP }, async () => {
-  const item = await fixture()
-  try {
-    await assert.rejects(() => item.memory.sync('remote:staging', {}, item.context), /REMOTE_SYNC_UNAVAILABLE/)
-    await assert.rejects(() => item.memory.commit('remote:staging', { paths: ['src/app.ts'] }, item.context), /REMOTE_SYNC_UNAVAILABLE/)
-  } finally {
-    await cleanup(item)
-  }
-})

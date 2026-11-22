@@ -52,7 +52,7 @@ Architecture map 把「项目架构」变成 harness 里**可寻址的一等对�
 - **确定性导出**：`arch_export` 把 Mermaid flowchart、独立 SVG 或 Markdown 档案摘要写到 `.archmap/export/`；不改变 graph rev，也不改源文件。
 - **内置 Mermaid 渲染**：assistant 消息里的 ` ```mermaid ` 块用 vendored Mermaid 12.2.0 渲染，runtime 由本插件 Host 路由提供，不依赖 CDN，也不依赖 `dsh-mermaid-plus`。流式时保留代码块，语法错误回退代码块 + 错误行；`renderMermaid:false` 可关闭。
 - **按节点子对话**：`arch_discuss` 为 `node:<id>` 或 `edge:<id>` 开子会话；`fork` 继承主对话已完成轮次，`lite` 只靠图和档案。结果只走 caller，不污染主对话；结论写进 `notes/<id>`。节点详情里还有 `Discuss (fork)` / `Lite` 按钮，通过 `subagentchat` resource 在右侧栏打开子会话。子会话受提示词约束；shell 和通用源码写调用在执行时会被拒绝（fork 可能仍显示继承的工具 schema）；改图仍需你确认。
-- **远程读取工具（开发者预览）**：`arch_remote_list/status/tree/read/grep` 通过 SSH 查看已登记的远程 Linux 仓库，不 clone；读内容前要授权，图和档案留在 `.archmap/projects/<id>/`，远程文件不被修改。
+- **远程读取工具（开发者预览）**：`arch_remote_list/status/tree/read/grep` 通过 SSH 查看已登记的远程 Linux 仓库，不 clone；读内容前要授权，远程 `arch_sync`/`arch_manifest_commit` 只哈希已分析文件，图和档案留在 `.archmap/projects/<id>/`，远程文件不被修改。
 
 ## 下一步计划
 
@@ -113,7 +113,7 @@ Architecture map 把「项目架构」变成 harness 里**可寻址的一等对�
 
 3. 图工具用 `workspace: "remote:staging"`；数据写在 `.archmap/projects/staging/` 下。远程文件永远不会被修改。
 
-远程 `arch_sync` / `arch_manifest_commit`、变更轮询、自动维护和面板来源选择还在后续节点。
+远程 `arch_sync` / `arch_manifest_commit` 现在可用；变更轮询、自动维护、`/arch remote add` 命令和面板来源选择还在后续节点。
 
 ## 记忆是怎么做的（不需要其他插件）
 

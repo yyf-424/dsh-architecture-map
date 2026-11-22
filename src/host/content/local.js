@@ -31,6 +31,11 @@ function looksTextual(buffer) {
   return !buffer.includes(0)
 }
 
+/** True when a workspace-relative path has a known binary extension. */
+export function isBinaryPath(relative) {
+  return BINARY_EXTS.has(path.posix.extname(relative).toLowerCase())
+}
+
 function relativeOf(root, abs) {
   return path.relative(root, abs).split(path.sep).join('/')
 }

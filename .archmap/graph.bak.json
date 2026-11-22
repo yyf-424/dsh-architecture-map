@@ -1,7 +1,7 @@
 {
   "schema": 1,
-  "rev": 17,
-  "updatedAt": "2026-11-22T09:30:59.635Z",
+  "rev": 19,
+  "updatedAt": "2026-11-22T09:32:56.815Z",
   "layout": {
     "mode": "layered",
     "direction": "LR"
@@ -26,15 +26,15 @@
       "title": "Host entry",
       "kind": "entry",
       "group": "g-host",
-      "summary": "Registers the graph, memory, export and discussion tools; owns the /arch command, Mermaid static route, bundled skill registration and the optional remote consent gate.",
+      "summary": "Registers graph, memory, export, discussion and remote read tools; owns the /arch command, Mermaid static route, bundled skill and optional remote consent gate.",
       "anchors": [
         {
           "path": "src/host/plugin.js",
           "symbol": "apply",
-          "hash": "69deb1e60ce8868461d1d071a05b4a67f2b538d9936930c367b04554a18bfd8b"
+          "hash": "8a2a338257db277eeac9b399b12f7efe879b0012475e2f633602dd8398996052"
         }
       ],
-      "status": "stale"
+      "status": "fresh"
     },
     {
       "id": "n2",
@@ -64,7 +64,7 @@
           "hash": "efc0576bdaed2bdccfc85416ab6bd065aab1f6b888932bf25496f1908a5f8a39"
         }
       ],
-      "status": "fresh"
+      "status": "stale"
     },
     {
       "id": "n4",
@@ -131,14 +131,14 @@
       "title": "Architecture skill",
       "kind": "module",
       "group": "g-docs",
-      "summary": "Bundled SKILL.md and references that teach the sync/read/patch/dossier/commit loop.",
+      "summary": "Bundled skill: sync/patch/dossier loop, discussion rules and the remote-workspace workflow (arch_remote_* tools, consent, no local reads).",
       "anchors": [
         {
           "path": "skills/architecture-map/SKILL.md",
-          "hash": "cae770835dbf592192643586a97008b4058b6b6d59923d552feac80917899d63"
+          "hash": "bb90bb938e55b871d91587f7085562d3d1308d6413e2f761001de72ef14b2710"
         }
       ],
-      "status": "stale"
+      "status": "fresh"
     },
     {
       "id": "n9",
@@ -179,7 +179,7 @@
           "hash": "3cfc34b749b00c3221bd66bc063b8c34270b5b894425ffbbc8b3824a5aa61b37"
         }
       ],
-      "status": "fresh"
+      "status": "stale"
     },
     {
       "id": "n11",
@@ -219,6 +219,20 @@
         {
           "path": "src/host/remote/consent.js",
           "hash": "33fa0ebe6bdf7e75c343ea0c3609baac6524c2e728593adfe638ceafead5b99e"
+        }
+      ],
+      "status": "fresh"
+    },
+    {
+      "id": "n14",
+      "title": "Remote read tools",
+      "kind": "module",
+      "group": "g-host",
+      "summary": "arch_remote_list/status/tree/read/grep handlers. List and status expose metadata only; tree/read/grep pass the consent gate before touching remote content. Remote discussions deny local read/grep/glob.",
+      "anchors": [
+        {
+          "path": "src/host/remote/tools.js",
+          "hash": "941445358c1b3b0d2f5aa778aa4d70721fcedbe0d3f334e78d5f77a54853551f"
         }
       ],
       "status": "fresh"
@@ -374,6 +388,30 @@
       "from": "n13",
       "to": "n9",
       "label": "reads and writes project consent",
+      "kind": "dependency",
+      "status": "fresh"
+    },
+    {
+      "id": "e20",
+      "from": "n1",
+      "to": "n14",
+      "label": "registers remote read tools",
+      "kind": "call",
+      "status": "fresh"
+    },
+    {
+      "id": "e21",
+      "from": "n14",
+      "to": "n13",
+      "label": "checks consent before content",
+      "kind": "dependency",
+      "status": "fresh"
+    },
+    {
+      "id": "e22",
+      "from": "n14",
+      "to": "n12",
+      "label": "reads remote content",
       "kind": "dependency",
       "status": "fresh"
     }

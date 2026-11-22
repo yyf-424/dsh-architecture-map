@@ -14,7 +14,7 @@ Host implementation (plain ESM) and the hand-written client bundle.
 - `host/remote/consent.js` — blocking consent gate for remote content: session grant, durable workspace grant, revoke and child inheritance.
 - `host/remote/tools.js` — `arch_remote_list/status/tree/read/grep` handlers; content reads pass the consent gate.
 - `host/graph.js` — graph schema/validation, store, rev, atomic writes, backup, anchor hashes.
-- `host/memory.js` — manifest, incremental sync, cosmetic signatures, stale marking, dossier docs.
+- `host/memory.js` — manifest, incremental sync (local scan; remote path list + manifest-only hashes), cosmetic signatures, stale marking, dossier docs.
 - `host/export.js` — deterministic Mermaid/SVG/Markdown exports.
 - `host/signature.js` — shared sha256 + normalized code signature.
 

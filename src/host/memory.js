@@ -11,6 +11,7 @@ import { promises as fs } from 'node:fs'
 import path from 'node:path'
 import { randomBytes } from 'node:crypto'
 import { normalizeDataDir, resolveWorkspace } from './workspace.js'
+import { isBinaryPath } from './content/local.js'
 
 const MANIFEST_SCHEMA = 1
 
@@ -62,16 +63,44 @@ export function createMemoryStore(config = {}, deps = {}) {
   }
   const resolveConfig = { dir: limits.dir, ssh: config.ssh }
 
+  async function scanWorkspace(ws, context, options = {}) {
+    if (ws.kind !== 'remote') {
+      const scanned = await ws.content.scan({
+        maxFiles: limits.maxFiles,
+        maxFileBytes: limits.maxFileBytes,
+      })
+      return {
+        ws,
+        root: ws.workspaceRoot,
+        ...scanned,
+        tree: new Set(scanned.files.keys()),
+        remote: false,
+      }
+    }
+    const tree = await ws.content.listTree({ maxFiles: limits.maxFiles })
+    const treePaths = new Set(tree.entries.map(entry => entry.path).filter(entry => !isBinaryPath(entry)))
+    const manifestPaths = Object.keys(options.manifest?.files ?? {}).filter(file => treePaths.has(file))
+    const hashes = await ws.content.hashMany(manifestPaths)
+    const files = new Map()
+    for (const file of manifestPaths) {
+      const hash = hashes.get(file)
+      if (typeof hash === 'string') files.set(file, { sha256: hash })
+    }
+    return {
+      ws,
+      root: ws.workspaceRoot,
+      files,
+      tree: treePaths,
+      truncated: tree.truncated,
+      skipped: 0,
+      remote: true,
+    }
+  }
+
   async function scan(rawWorkspace, context) {
     const ws = await resolveWorkspace(rawWorkspace, context, resolveConfig)
-    if (ws.kind === 'remote' || !ws.content || typeof ws.content.scan !== 'function') {
-      fail('REMOTE_SYNC_UNAVAILABLE', 'remote sync is not wired yet; the local project still works')
-    }
-    const scanned = await ws.content.scan({
-      maxFiles: limits.maxFiles,
-      maxFileBytes: limits.maxFileBytes,
-    })
-    return { ws, root: ws.workspaceRoot, ...scanned }
+    const manifest = ws.kind === 'remote' ? await readManifest(ws) : null
+    return scanWorkspace(ws, context, { manifest })
   }
 
   async function readManifest(ws) {
@@ -116,7 +145,8 @@ export function createMemoryStore(config = {}, deps = {}) {
       const file = scannedFiles.get(anchor.path)
       // Missing/skipped files are handled by the path delta; do not flag a
       // binary or oversized anchor as stale just because it was not scanned.
-      return file !== undefined && file.signature !== anchor.hash
+      const fileHash = file?.signature ?? file?.sha256
+      return file !== undefined && typeof fileHash === 'string' && fileHash !== anchor.hash
     }
     const hits = []
     for (const node of graph.nodes) {
@@ -127,16 +157,18 @@ export function createMemoryStore(config = {}, deps = {}) {
   }
 
   async function sync(rawWorkspace, input = {}, context) {
-    const scanned = await scan(rawWorkspace, context)
-    const ws = scanned.ws
+    const ws = await resolveWorkspace(rawWorkspace, context, resolveConfig)
     const manifest = await readManifest(ws)
+    const scanned = await scanWorkspace(ws, context, { manifest })
     let scannedFiles = scanned.files
     let baseFiles = manifest?.files ?? {}
+    let scannedPaths = new Set(scanned.tree ?? scannedFiles.keys())
 
     if (Array.isArray(input.paths) && input.paths.length > 0) {
       const wanted = new Set(input.paths.map(item => normalizeRelative(item)))
       scannedFiles = new Map([...scannedFiles].filter(([key]) => wanted.has(key)))
       baseFiles = Object.fromEntries(Object.entries(baseFiles).filter(([key]) => wanted.has(key)))
+      scannedPaths = new Set([...scannedPaths].filter(path => wanted.has(path)))
     }
 
     const mode = !manifest || input.full === true ? 'full' : 'incremental'
@@ -145,13 +177,18 @@ export function createMemoryStore(config = {}, deps = {}) {
     const cosmetic = []
     const deleted = []
     if (mode === 'full') {
-      added.push(...scannedFiles.keys())
+      added.push(...scannedPaths)
     } else {
-      for (const [file, info] of scannedFiles) {
+      for (const file of scannedPaths) {
         const previous = baseFiles[file]
         if (!previous) {
           added.push(file)
-        } else if (previous.sha256 !== info.sha256 || previous.size !== info.size) {
+          continue
+        }
+        const info = scannedFiles.get(file)
+        if (!info) continue
+        if (previous.sha256 !== info.sha256
+          || (info.size !== undefined && previous.size !== undefined && previous.size !== info.size)) {
           changed.push(file)
           if (previous.signature !== undefined && previous.signature === info.signature) {
             cosmetic.push(file)
@@ -159,7 +196,7 @@ export function createMemoryStore(config = {}, deps = {}) {
         }
       }
       for (const file of Object.keys(baseFiles)) {
-        if (!scannedFiles.has(file)) deleted.push(file)
+        if (!scannedPaths.has(file)) deleted.push(file)
       }
     }
 
@@ -176,7 +213,7 @@ export function createMemoryStore(config = {}, deps = {}) {
     const lines = [
       `workspace: ${ws.display}`,
       `mode: ${mode}${manifest ? '' : ' (no manifest yet)'}`,
-      `${scanned.files.size} scanned · ${added.length} added · ${changed.length} changed (${changedCode.length} code, ${cosmetic.length} cosmetic) · ${deleted.length} deleted`,
+      `${scannedPaths.size} scanned · ${added.length} added · ${changed.length} changed (${changedCode.length} code, ${cosmetic.length} cosmetic) · ${deleted.length} deleted`,
     ]
     if (mode === 'full' && manifest) lines.push('full:true ignores the manifest and lists every scannable file.')
     const section = (title, values) => {
@@ -217,7 +254,7 @@ export function createMemoryStore(config = {}, deps = {}) {
     return {
       text: lines.join('\n'),
       counts: {
-        scanned: scanned.files.size,
+        scanned: scannedPaths.size,
         added: added.length,
         changed: changed.length,
         cosmetic: cosmetic.length,
@@ -233,9 +270,6 @@ export function createMemoryStore(config = {}, deps = {}) {
       fail('INVALID_PATH', 'paths must be a non-empty array of workspace-relative files')
     }
     const ws = await resolveWorkspace(rawWorkspace, context, resolveConfig)
-    if (ws.kind === 'remote') {
-      fail('REMOTE_SYNC_UNAVAILABLE', 'remote commit is not wired yet; the local project still works')
-    }
     const manifest = await readManifest(ws) ?? {
       schema: MANIFEST_SCHEMA,
       generatedAt: null,

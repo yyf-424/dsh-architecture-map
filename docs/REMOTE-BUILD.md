@@ -634,7 +634,7 @@ npm test
 | n12 | Remote content source | module | g-host | `src/host/remote/content.js` | W4 | 与本地对齐 |
 | n13 | Consent gate | module | g-host | `src/host/remote/consent.js` | W6 | 状态机测试 |
 | n14 | Remote read tools | module | g-host | `src/host/remote/tools.js` | W7 | 授权 + 工具测试 |
-| n15 | Remote indexer | module | g-host | `src/host/remote/indexer.js` | W8/W10 | 同步/轮询测试 |
+| n15 | Remote indexer | module | g-host | `src/host/remote/indexer.js` | W10 | 同步/轮询测试 |
 | n16 | Remote maintainer | module | g-host | `src/host/remote/maintainer.js` | W10 | 条件矩阵 + 子会话 |
 
 建议边（落地时按实际调用关系补）：
@@ -684,7 +684,7 @@ npm test
 | W5 | 2026-11-22 | 2026-11-22 | `node --test test/remote-project.test.mjs`；`npm run check && npm test` | 3/3 + 34/34 pass；远程建图锚点=远端 sha256；数据在 `.archmap/projects/staging/`；doc/export 正常；假 SSH 日志无写命令；sync/commit 仍关闭 | ☑ | 远程内容只经哈希/元数据，不落源码 |
 | W6 | 2026-11-22 | 2026-11-22 | `node --test test/remote-consent.test.mjs`；`npm run check && npm test` | 6/6 + 40/40 pass；首次问一次、始终写入 index、拒绝/跳过零授权、无 userQuestions 失败关闭、撤销、子会话继承、自动维护仅 workspace 授权 | ☑ | 问题只含 host/root，不含文件内容 |
 | W7 | 2026-11-22 | 2026-11-22 | `node --test test/remote-tools.test.mjs`；`node --test test/plugin-registration.test.mjs`；`npm run check && npm test` | 5/5 + 1/1 + 46/46 pass；list/status 不询问；tree/read/grep 首次询问；拒绝/无服务时零内容；skill 与双 README 已更新 | ☑ | 讨论子会话限制在 W12 手工确认 |
-| W8 | | | `node --test test/remote-sync.test.mjs` | | ☐ | |
+| W8 | 2026-11-22 | 2026-11-22 | `node --test test/remote-sync.test.mjs`；`npm run check && npm test` | 1/1 + 46/46 pass；远程 full/list/hash/commit；changed/added/deleted；stale+refreshAnchors；同步日志无 cat/sed/head；manifest 在本地 | ☑ | 只哈希 manifest 文件；未知二进制扩展可能报 added，W11 细化 |
 | W9 | | | `node --check client.js` + 手工矩阵 | | ☐ | |
 | W10 | | | `node --test test/remote-{indexer,commands,maintainer}.test.mjs` | | ☐ | |
 | W11 | | | `node --test test/remote-{nongit,security}.test.mjs` | | ☐ | |

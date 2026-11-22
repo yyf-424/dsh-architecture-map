@@ -174,10 +174,6 @@ test('stores keep the legacy local layout while an index exists', async () => {
     assert.equal(await readFile(path.join(dir, '.archmap', 'projects', 'staging', 'overview.md'), 'utf8'), '# Remote\n')
     assert.equal((await memory.getDoc('remote:staging', 'overview', remoteContext)).found, true)
 
-    await assert.rejects(
-      () => memory.sync('remote:staging', {}, remoteContext),
-      /REMOTE_SYNC_UNAVAILABLE/,
-    )
 
     const exported = await exporter.export('remote:staging', { format: 'mermaid' }, remoteContext)
     assert.equal(exported.path, '.archmap/projects/staging/export/architecture.mmd')
