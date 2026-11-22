@@ -10,7 +10,7 @@ Host implementation (plain ESM) and the hand-written client bundle.
 - `host/content/index.js` — read-only content contract shared by local and future remote sources.
 - `host/content/local.js` — local content source: scan, anchor hashes, describe, bounded reads.
 - `host/remote/ssh.js` — read-only SSH transport: fixed options, ControlMaster, POSIX quoting, timeouts, output caps and capability probe.
-- `host/remote/content.js` — remote content source: list, batch hash, describe, bounded reads, grep and change fingerprint.
+- `host/remote/content.js` — remote content source: list, batch hash, describe, bounded reads, grep and change fingerprint; enforces root containment and uses metadata-only non-git fingerprints.
 - `host/remote/consent.js` — blocking consent gate for remote content: session grant, durable workspace grant, revoke and child inheritance.
 - `host/remote/tools.js` — `arch_remote_list/status/tree/read/grep` handlers; content reads pass the consent gate.
 - `host/remote/state.js` — `remote-state.json`: fingerprint, pending counts, polling state and maintenance time.

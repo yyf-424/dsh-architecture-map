@@ -20,4 +20,5 @@ This repository is both the plugin and its first fixture. The graph is intention
 
 - The panel follows the session workspace; positions are browser-local and stored per source.
 - Mermaid is vendored; `renderMermaid:auto` disables it when `dsh-mermaid-plus` is enabled.
-- Remote projects are a developer preview: register/read/sync/poll/commands/auto-maintenance are wired; the real-remote 60-second refresh and spawned maintenance child are the remaining W12 acceptance.
+- Remote reads are confined to the registered root: path escapes and symlinks pointing outside are rejected; non-git change detection is metadata-only.
+- Remote projects are a developer preview: register/read/sync/poll/commands/auto-maintenance are wired; the real-remote 60-second refresh, maintenance child and security re-check are the remaining W12 acceptance.

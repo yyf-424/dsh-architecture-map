@@ -95,6 +95,30 @@ export function createRemoteContent(config = {}) {
     throw contentError('HASH_UNAVAILABLE', 'remote needs sha256sum or shasum -a 256')
   }
 
+  let rootRealPromise
+  async function canonicalRoot() {
+    if (!rootRealPromise) {
+      rootRealPromise = (async () => {
+        try {
+          const { stdout } = await client.exec(['readlink', '-f', '--', root])
+          const value = stdout.trim()
+          return value === '' ? root : value
+        } catch {
+          return root
+        }
+      })()
+    }
+    return rootRealPromise
+  }
+
+  /** Require `$f` to resolve inside the canonical remote root. */
+  function containmentSnippet(rootReal, onFail = 'exit') {
+    const prefix = `${rootReal === '/' ? '' : rootReal}/`
+    const failure = onFail === 'continue' ? 'continue' : 'exit 6'
+    const missing = onFail === 'continue' ? 'continue' : 'exit 5'
+    return `f_real=$(readlink -f -- "$f" 2>/dev/null) || ${missing}; case "$f_real" in ${shQuote(prefix)}*) ;; *) ${failure} ;; esac;`
+  }
+
   async function detectVcs() {
     if (configuredVcs !== 'auto') return configuredVcs
     if (!vcsPromise) {
@@ -144,12 +168,13 @@ export function createRemoteContent(config = {}) {
     const wanted = [...new Set((rels ?? []).map(rel => assertRelative(rel)))]
     if (wanted.length === 0) return new Map()
     const command = await hashCommand()
+    const check = containmentSnippet(await canonicalRoot(), 'continue')
     const hashes = new Map()
     const chunkSize = DEFAULTS.hashChunk
     for (let offset = 0; offset < wanted.length; offset += chunkSize) {
       const chunk = wanted.slice(offset, offset + chunkSize)
       const words = chunk.map(rel => shQuote(rel)).join(' ')
-      const script = `cd ${shQuote(root)} && for f in ${words}; do if [ -f "$f" ]; then h=$(${command} -- "$f" | cut -d' ' -f1); printf '%s\\0%s\\0' "$f" "$h"; fi; done`
+      const script = `cd ${shQuote(root)} && for f in ${words}; do if [ -f "$f" ]; then ${check} h=$(${command} -- "$f" | cut -d' ' -f1); printf '%s\\0%s\\0' "$f" "$h"; fi; done`
       const { stdout } = await client.execShell(script)
       for (const [rel, hash] of parseNulPairs(stdout)) {
         if (/^[0-9a-f]{64}$/.test(hash)) hashes.set(rel, hash)
@@ -162,8 +187,16 @@ export function createRemoteContent(config = {}) {
     const target = assertRelative(rel)
     const limit = Number.isInteger(options.maxFileBytes) ? options.maxFileBytes : maxFileBytes
     const command = await hashCommand()
-    const script = `cd ${shQuote(root)} && f=${shQuote(target)}; if [ ! -e "$f" ]; then printf 'missing\\n'; elif [ ! -f "$f" ]; then printf 'not-file\\n'; else s=$(wc -c < "$f" | tr -d ' '); if [ "$s" -gt ${limit} ]; then printf 'oversized %s\\n' "$s"; else t=$(tr -d '\\0' < "$f" | wc -c | tr -d ' '); if [ "$t" -ne "$s" ]; then printf 'binary %s\\n' "$s"; else h=$(${command} -- "$f" | cut -d' ' -f1); printf 'text %s %s\\n' "$s" "$h"; fi; fi; fi`
-    const { stdout } = await client.execShell(script)
+    const check = containmentSnippet(await canonicalRoot())
+    const script = `cd ${shQuote(root)} && f=${shQuote(target)}; ${check} if [ ! -e "$f" ]; then printf 'missing\\n'; elif [ ! -f "$f" ]; then printf 'not-file\\n'; else s=$(wc -c < "$f" | tr -d ' '); if [ "$s" -gt ${limit} ]; then printf 'oversized %s\\n' "$s"; else t=$(tr -d '\\0' < "$f" | wc -c | tr -d ' '); if [ "$t" -ne "$s" ]; then printf 'binary %s\\n' "$s"; else h=$(${command} -- "$f" | cut -d' ' -f1); printf 'text %s %s\\n' "$s" "$h"; fi; fi; fi`
+    let stdout
+    try {
+      ({ stdout } = await client.execShell(script))
+    } catch (error) {
+      if (error?.exitCode === 5) return { kind: 'missing' }
+      if (error?.exitCode === 6) throw contentError('PATH_ESCAPE', `"${target}" escapes the remote root`)
+      throw error
+    }
     const fields = stdout.trim().split(/\s+/)
     const kind = fields[0]
     if (kind === 'text') {
@@ -178,12 +211,14 @@ export function createRemoteContent(config = {}) {
   async function readText(rel, options = {}) {
     const target = assertRelative(rel)
     const limit = Number.isInteger(options.maxBytes) ? options.maxBytes : maxFileBytes
-    const script = `cd ${shQuote(root)} && f=${shQuote(target)}; if [ ! -f "$f" ]; then exit 4; fi; s=$(wc -c < "$f" | tr -d ' '); if [ "$s" -gt ${limit} ]; then exit 3; fi; cat -- "$f"`
+    const check = containmentSnippet(await canonicalRoot())
+    const script = `cd ${shQuote(root)} && f=${shQuote(target)}; ${check} if [ ! -f "$f" ]; then exit 4; fi; s=$(wc -c < "$f" | tr -d ' '); if [ "$s" -gt ${limit} ]; then exit 3; fi; cat -- "$f"`
     try {
       const { stdout } = await client.execShell(script)
       return stdout
     } catch (error) {
-      if (error?.exitCode === 3 || error?.exitCode === 4) return null
+      if (error?.exitCode === 3 || error?.exitCode === 4 || error?.exitCode === 5) return null
+      if (error?.exitCode === 6) throw contentError('PATH_ESCAPE', `"${target}" escapes the remote root`)
       throw error
     }
   }
@@ -192,7 +227,8 @@ export function createRemoteContent(config = {}) {
     const target = assertRelative(rel)
     const offset = Number.isInteger(range.offset) && range.offset >= 0 ? range.offset : 0
     const length = Number.isInteger(range.length) && range.length > 0 ? range.length : maxFileBytes
-    const script = `cd ${shQuote(root)} && f=${shQuote(target)}; if [ ! -f "$f" ]; then exit 4; fi; s=$(wc -c < "$f" | tr -d ' '); printf '%s\\n' "$s" >&2; tail -c +$(( ${offset} + 1 )) "$f" | head -c ${length}`
+    const check = containmentSnippet(await canonicalRoot())
+    const script = `cd ${shQuote(root)} && f=${shQuote(target)}; ${check} if [ ! -f "$f" ]; then exit 4; fi; s=$(wc -c < "$f" | tr -d ' '); printf '%s\\n' "$s" >&2; tail -c +$(( ${offset} + 1 )) "$f" | head -c ${length}`
     try {
       const { stdout, stderr } = await client.execShell(script)
       const size = Number(String(stderr).trim().split(/\s+/)[0])
@@ -204,7 +240,8 @@ export function createRemoteContent(config = {}) {
         eof: Number.isFinite(size) ? offset + bytes >= size : false,
       }
     } catch (error) {
-      if (error?.exitCode === 4) return { text: '', offset, bytes: 0, eof: true }
+      if (error?.exitCode === 4 || error?.exitCode === 5) return { text: '', offset, bytes: 0, eof: true }
+      if (error?.exitCode === 6) throw contentError('PATH_ESCAPE', `"${target}" escapes the remote root`)
       throw error
     }
   }
@@ -256,8 +293,16 @@ export function createRemoteContent(config = {}) {
 
   async function stat(rel) {
     const target = assertRelative(rel)
-    const script = `cd ${shQuote(root)} && f=${shQuote(target)}; if [ -f "$f" ]; then printf 'file %s\\n' "$(wc -c < "$f" | tr -d ' ')"; elif [ -d "$f" ]; then printf 'directory 0\\n'; else printf 'missing\\n'; fi`
-    const { stdout } = await client.execShell(script)
+    const check = containmentSnippet(await canonicalRoot())
+    const script = `cd ${shQuote(root)} && f=${shQuote(target)}; ${check} if [ -f "$f" ]; then printf 'file %s\\n' "$(wc -c < "$f" | tr -d ' ')"; elif [ -d "$f" ]; then printf 'directory 0\\n'; else printf 'missing\\n'; fi`
+    let stdout
+    try {
+      ({ stdout } = await client.execShell(script))
+    } catch (error) {
+      if (error?.exitCode === 5) return null
+      if (error?.exitCode === 6) throw contentError('PATH_ESCAPE', `"${target}" escapes the remote root`)
+      throw error
+    }
     const fields = stdout.trim().split(/\s+/)
     if (fields[0] === 'file') return { type: 'file', size: Number(fields[1]) }
     if (fields[0] === 'directory') return { type: 'directory', size: 0 }
@@ -282,16 +327,27 @@ export function createRemoteContent(config = {}) {
         digest: sha256(`${head ?? ''}\0${status.stdout}`),
       }
     }
-    const tree = await listTree()
-    const hashes = await hashMany(tree.entries.map(entry => entry.path))
+    // Non-git fingerprints use path + size + mtime metadata only. No content is
+    // read or hashed for change detection.
+    const prune = [...IGNORED_DIRS].map(name => `-name ${shQuote(name)}`).join(' -o ')
+    const script = `cd ${shQuote(root)} || exit 1; if find . -maxdepth 0 -printf '' >/dev/null 2>&1; then find . \\( ${prune} \\) -prune -o -type f -printf '%P\\0%s\\0%T@\\0'; elif stat -c '%n' . >/dev/null 2>&1; then find . \\( ${prune} \\) -prune -o -type f -exec stat -c '%n\\0%s\\0%Y\\0' {} +; else find . \\( ${prune} \\) -prune -o -type f -exec stat -f '%N\\0%z\\0%m\\0' {} +; fi`
+    const { stdout } = await client.execShell(script)
+    const parts = stdout.split('\0')
+    const entries = []
+    for (let index = 0; index + 2 < parts.length; index += 3) {
+      const rel = stripDotSlash(parts[index])
+      if (rel === '' || ignored(rel) || /[\0\n\r]/.test(rel)) continue
+      entries.push({ path: rel, size: parts[index + 1], mtime: parts[index + 2] })
+    }
     return {
       vcs: 'none',
       head: null,
       dirty: null,
-      digest: sha256(tree.entries
-        .map(entry => `${entry.path}\0${hashes.get(entry.path) ?? ''}`)
+      digest: sha256(entries
+        .map(entry => `${entry.path}\0${entry.size}\0${entry.mtime}`)
         .sort()
         .join('\0')),
+      entries: entries.length,
     }
   }
 

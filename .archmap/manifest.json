@@ -1,6 +1,6 @@
 {
   "schema": 1,
-  "generatedAt": "2026-11-22T17:16:12.906Z",
+  "generatedAt": "2026-11-22T17:18:23.171Z",
   "root": ".",
   "files": {
     ".github/workflows/ci.yml": {
@@ -99,14 +99,14 @@
       "signature": "6a6090e7fffbdb99a287ae69d5e083199b11f31c3c5d8052f50583ba9ef96f35"
     },
     "README.md": {
-      "sha256": "069bcb09541af61ec06d880fa7d6ba70925739a93b297901af5dd239e4199198",
-      "size": 18484,
-      "signature": "6fa9ab2aa3e61279d7876ee485ced8d5337feddc8289a5817d214b98ee1198e3"
+      "sha256": "d10df733eb2502e25bb8e1589fd579c88c1e5339c5013b1abee9fd6f9451c11b",
+      "size": 18748,
+      "signature": "8effd30a5275ba8f9882bb92dee925ddba6b1b59bd57baa207287b359a33badf"
     },
     "README.zh.md": {
-      "sha256": "fccd3c84b74a9196e60d4f278e0d7ef9e0c6bfe17a6515201f394fe3e6cff10a",
-      "size": 16179,
-      "signature": "ee8f98efaa6575414a23acf47a3b9c35ad6e261e327686eead7ef2b90afa7ec0"
+      "sha256": "ef56550e771ac2bc79bd01a6632a61c24921580e3b7373ba541d4a676f8e5e24",
+      "size": 16436,
+      "signature": "0480e1d269f1e88b4f5ea5608c728ddee247edc7fd670769dbd2b18b4e487765"
     },
     "skills/architecture-map/references/bootstrap.md": {
       "sha256": "7ea7bf5d25f73a7607078717f71bcd47e04c857761e19a5f71e4f4bfb3c9f817",
@@ -159,9 +159,9 @@
       "signature": "c9a03f949839b8fa84f9ab29c7273478d6b84f87a0cdfd88182c401dfbd9c7e6"
     },
     "src/README.md": {
-      "sha256": "de88cae1cea92788e5f970a15c2179382521d31d5fb094eabc425f398df24ae2",
-      "size": 2449,
-      "signature": "b4ae1041decb4f28c07e0d46c20d7d5227fa6c19eac1452a1e44f96bfba77398"
+      "sha256": "7376ac8df6e1fe2522f634356494bbd0d196eac1b0374933ee454217b1db2cfd",
+      "size": 2520,
+      "signature": "8cb1eb570574c609cf299c12a20bba651f4c4d409cbb0816d44a469a18f85a5d"
     },
     "test/export.test.mjs": {
       "sha256": "fb03011566a1b3817b56893d35f2a3508fb8ec287ec92274ca9a7860cae6e3d6",
@@ -199,9 +199,9 @@
       "signature": "91c874d4ec7c1d595ff89f60b765f3cd8d9f4351744aa0be2a2c60c8e5f314c9"
     },
     "docs/REMOTE-BUILD.md": {
-      "sha256": "29f7f9004baed61e1331e1cfac0ff1867f7f2eeabe269884247f89847682e770",
-      "size": 31830,
-      "signature": "96d9202ca2b1af1aad68d8de54a6668b69ffd027dfa30ba5c1c475a969ea21a7"
+      "sha256": "abd5d29f19e5145443c9b376a509c7d735cd150bd91aba33f70b88a37c9806a0",
+      "size": 32093,
+      "signature": "086176f68d2b0782fc55f4a03fa5159f82981892ad5d81763c35fd792e4cb400"
     },
     "docs/REMOTE-PLAN.md": {
       "sha256": "2fe3b9548abef3434099bdcacec4560d0a02a5667040f5aa58673423ebbf8043",
@@ -239,9 +239,9 @@
       "signature": "35c650c7eead09686dfe71dfadf3b99409224919c6bc8ed354b9b9eca5ede347"
     },
     "src/host/remote/content.js": {
-      "sha256": "b699394e51b8f794b9114060b226a9f27fb7940f241bff46e4650e1515c23e2f",
-      "size": 12076,
-      "signature": "c239969c924fd5ed708c889200c6aab8d50df5caf72084d63438bd74db949150"
+      "sha256": "038fb026a8a78bc97b0ba1858103ea89016be9ddcab2930beb89dcd00428430c",
+      "size": 14905,
+      "signature": "6463ab47b03b6767aee5923d3a15f665266ccc8a7c5da64077b38be9404bb61c"
     },
     "test/remote-content.test.mjs": {
       "sha256": "81e30d035646e6a55956b70e66781637c5f448df47e341a779c5752d8dc3f275",
@@ -322,6 +322,16 @@
       "sha256": "2d71967e7329cd03876c05f6085f068f5e755d3b59c359eb3dfb5613322da581",
       "size": 5567,
       "signature": "fc97accf1d1eabdea2a3effacc1b340bf069443abbf14feb2e1910db0bc1319a"
+    },
+    "test/remote-nongit.test.mjs": {
+      "sha256": "65d6a3dafbb53fd5acb058f54e226884d9e38fb589655631f12f14c2b3d725bb",
+      "size": 2682,
+      "signature": "6f0507f49ea92f58e2a00deab8357a74ce24d5d0c6e4bc67adc8973b2042d674"
+    },
+    "test/remote-security.test.mjs": {
+      "sha256": "52e42f5e6f73bf1824e302f31442576478c0250b939707df808b277d9d72e8e1",
+      "size": 3308,
+      "signature": "5323256a5bdb1d48e20882513932d5cc27954495a0d2e61c53098d481a1a9c5a"
     }
   }
 }
