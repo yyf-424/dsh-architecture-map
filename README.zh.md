@@ -115,7 +115,7 @@ Architecture map 把「项目架构」变成 harness 里**可寻址的一等对�
 4. 打开 `/arch`，在面板顶部的来源选择器里切换 **本地 / staging**。状态条显示 host/root/vcs/授权；远程项目没有图时会显示对应的空状态。
 5. 选中远程来源会开始轮询。`/arch remote sync staging` 立即检查一次，`/arch remote update staging` 启维护子会话，`/arch remote list` 列项目，`/arch remote grant/revoke/remove` 管理授权和登记。
 
-自动维护只在“始终允许”后运行，最多 50 个变更文件、最多每 10 分钟一次；超限只标 stale。真远程端到端验收是发布前最后一步。
+自动维护只在“始终允许”后运行，最多 50 个变更文件、最多每 10 分钟一次；超限只标 stale。真远程端到端验收已在 Linux 主机上完成；父会话空闲时自动维护会跳过（可用 `/arch remote update` 强制），维护后本地 pending 计数暂未清零。
 
 远程读取被限制在登记的 root 内：`..`、绝对路径逃逸和指向 root 外的符号链接都会被拒绝。git 项目用 HEAD + `git status`，并哈希已修改/未跟踪路径，保证脏文件再次编辑也能被检测到；非 git 项目用 path/size/mtime 元数据，只有已分析文件才会被哈希。
 
@@ -166,7 +166,7 @@ npm pack --dry-run
 - 画布是手写 SVG + 分层布局，不是 React Flow。
 - Mermaid 默认 `auto` 开启；`renderMermaid: off` 可关；检测到已知的 `dsh-mermaid-plus` 时 `auto` 会关闭本插件渲染。
 - pre-alpha，API 和文件 schema 仍可能变化。
-- 远程仓库是开发者预览：登记、读取、同步、轮询、命令和自动维护都已接上；还差一次真远程端到端验收。
+- 远程仓库是开发者预览：登记、读取、同步、轮询、命令和维护都已接上，并在真实 Linux 主机上验收；空闲父会话的自动维护和 pending 清零仍是粗糙边缘。
 
 ## 安装
 

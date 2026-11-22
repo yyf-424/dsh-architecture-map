@@ -132,7 +132,7 @@ The plugin can map a repository on a remote Linux host over your existing SSH co
 4. Open `/arch` and pick **Local** or **staging** in the source selector in the panel header. The status line shows host/root/vcs/consent; a remote project without a graph shows its own empty state.
 5. Picking a remote source starts polling. `/arch remote sync staging` checks immediately, `/arch remote update staging` starts a maintenance child, `/arch remote list` lists projects, and `/arch remote grant/revoke/remove` manage consent and registration.
 
-Auto maintenance runs only after a durable “always allow”, for at most 50 changed files, at most once per 10 minutes. Larger changes only mark affected nodes stale. Real remote end-to-end verification is the remaining pre-release step.
+Auto maintenance runs only after a durable “always allow”, for at most 50 changed files, at most once per 10 minutes. Larger changes only mark affected nodes stale. Real remote end-to-end verification was completed on a Linux host; auto maintenance still skips an idle parent (use `/arch remote update` to force it), and a maintenance run does not yet clear the local pending counter.
 
 Remote reads are confined to the registered root: `..`, absolute escapes, and symlinks pointing outside are rejected. Git projects use HEAD plus `git status`, and hash changed/untracked paths so a second edit to an already-dirty file still moves the fingerprint; non-git projects use path/size/mtime metadata, and only analyzed files are hashed.
 
@@ -200,7 +200,7 @@ There is no separate "start" button or left-sidebar icon. The plugin adds a righ
 - The canvas is hand-written SVG with a layered layout, not React Flow.
 - Mermaid rendering is on by default (`auto`) but can be disabled with `renderMermaid: off`; a known `dsh-mermaid-plus` installation makes `auto` disable ours.
 - This is pre-alpha; the API and file schema can still change.
-- Remote repositories are a developer preview: register, read, sync, polling, commands and auto maintenance are wired; a real remote end-to-end run remains.
+- Remote repositories are a developer preview: register, read, sync, polling, commands and maintenance are wired and were verified on a real Linux host; auto maintenance on an idle parent and pending-counter clearing remain rough edges.
 
 ## FAQ
 

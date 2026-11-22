@@ -263,4 +263,6 @@ ssh <host> 'ln -sf /etc/hostname /tmp/archmap-acceptance/leak.txt'
 | 修复 | readRange 的 SSH stderr 噪音；dirty git 文件二次编辑漏检 |
 | 测试 | 65/65 |
 | GUI | omen-acceptance 来源可打开；workspace 始终允许；17:40:08 检测 version 2，n2 stale（38s） |
-| 待办 | 父会话空闲时自动维护未启动；待手动 `/arch remote update` 或活跃父会话下触发 |
+| 真实维护 | 图 rev3、n2 fresh、modules/n2 doc、manifest version2 更新；远程仍只有 version.js 修改，无插件写入 |
+| 接受 caveat | 维护后 `remote-state.pending` 仍为 1；父会话空闲时自动维护不启动，手动 `/arch remote update` 兜底 |
+| 结论 | 2026-11-22 用户接受 W12 |

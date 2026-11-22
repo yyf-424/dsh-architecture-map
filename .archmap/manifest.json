@@ -1,6 +1,6 @@
 {
   "schema": 1,
-  "generatedAt": "2026-11-22T17:33:15.874Z",
+  "generatedAt": "2026-11-22T18:00:15.556Z",
   "root": ".",
   "files": {
     ".github/workflows/ci.yml": {
@@ -99,14 +99,14 @@
       "signature": "b0e26be774958d637bb365041e1e447f14bb6188d5a3fe071b328d5a34647e96"
     },
     "README.md": {
-      "sha256": "25807c46a57d92a8aad6ae7007604f0718d06cda5e36eeec0731b42b0cb9f007",
-      "size": 18831,
-      "signature": "55026d0864f90d1d3dacf7f5609a8fccc1cdbf7494ba2cd325a2042d7075b522"
+      "sha256": "048e34d82cb65ac0b8576baaf31d636d512bcf0bb720946f3f1469e79be29b7b",
+      "size": 19060,
+      "signature": "2c83df57d3959708cc902ae1c723210e35a0ef8e5492aaa4c5f736a06dae1854"
     },
     "README.zh.md": {
-      "sha256": "4b38f811554833ebcacfe753bafa9fd68cbdc451e00fa8b4c138b51100da978e",
-      "size": 16508,
-      "signature": "1974ced43f3b778af194ff310ff15d7517b819bad8a2e95d99e0c451c5c8fdda"
+      "sha256": "83f3d053def54c8647a9de1cbb5702932dd723540d5984c6ca318def245e93d2",
+      "size": 16701,
+      "signature": "fb06f41e9cfc741b5440ad7fc2c3f96a68173bbeed2687060f1097434b2786de"
     },
     "skills/architecture-map/references/bootstrap.md": {
       "sha256": "7ea7bf5d25f73a7607078717f71bcd47e04c857761e19a5f71e4f4bfb3c9f817",
@@ -199,9 +199,9 @@
       "signature": "91c874d4ec7c1d595ff89f60b765f3cd8d9f4351744aa0be2a2c60c8e5f314c9"
     },
     "docs/REMOTE-BUILD.md": {
-      "sha256": "be244a0af26ee367694433addd4c6db05440a4bbf5e479d4e4181ea56b2e56b5",
-      "size": 32600,
-      "signature": "72db5bf9a939bb23fe82fdf28f2d9a316318bf8e713381cbed24fd9b149104f1"
+      "sha256": "d77c1d79cdd30dae02208c68db554714d6436452ec88299fd075d802bc73a6c1",
+      "size": 32516,
+      "signature": "632bb92df44005b2afafbe326d836b454929b03e6111320a5f9ed0f7fdbd05c5"
     },
     "docs/REMOTE-PLAN.md": {
       "sha256": "2fe3b9548abef3434099bdcacec4560d0a02a5667040f5aa58673423ebbf8043",
@@ -334,9 +334,9 @@
       "signature": "5323256a5bdb1d48e20882513932d5cc27954495a0d2e61c53098d481a1a9c5a"
     },
     "docs/REMOTE-ACCEPTANCE.md": {
-      "sha256": "cb84d2670b205c2ce759171a9d19a64057c79f39e059ec352792d99f679fa573",
-      "size": 8026,
-      "signature": "b8f3d123d8b954c530533edfb58a258d9a3b23ef0abbf6b918267ffbfce84f47"
+      "sha256": "e4b189b9f9ac0bdd78f46020f6d930151697c014227580fbbbc401c73216fdbd",
+      "size": 8379,
+      "signature": "9deef1b07e751923c55d396a1bb7b1bdf25103d3b23647a51bd1ac3944152b7b"
     },
     "scripts/w12-smoke.mjs": {
       "sha256": "f321778b6f9fd3e45189105d67a592323ca8ac38a428495b6dc9493918bdc0ce",

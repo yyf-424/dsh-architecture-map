@@ -688,7 +688,7 @@ npm test
 | W9 | 2026-11-22 | 2026-11-22 | `node --check client.js`；`node --test test/client-sources.test.mjs`；`npm test` + 用户 GUI 复验 | 4/4 + 50/50 pass；本地/远程切换、状态行、缺 index 静默回退、持久化、坏 index 回退全部通过 | ☑ | 坏 index 保留技术解析错误文本，功能正确 |
 | W10 | 2026-11-22 | 2026-11-22 | `node --test test/remote-{indexer,maintainer,commands}.test.mjs`；`npm test` | 3+4+3 + 61/61 pass；baseline/change/backoff/state；命令 add/list/select/sync/update/grant/revoke/remove；授权/50 文件/10 分钟/单实例/失败矩阵；客户端选中远程自动 select | ☑ | 真远程 60s 刷新与自动子会话在 W12 验收 |
 | W11 | 2026-11-22 | 2026-11-22 | `node --test test/remote-{nongit,security}.test.mjs`；`npm run check && npm test` | 1+2 + 64/64 pass；非 git 指纹只用 path/size/mtime（日志无哈希/内容命令）；root 外符号链接、`..`、绝对路径全部拒绝；root 内符号链接仍可读 | ☑ | 真远程安全复验并入 W12 |
-| W12 | 2026-11-22 | 验收中 | [REMOTE-ACCEPTANCE.md](REMOTE-ACCEPTANCE.md) + `scripts/w12-smoke.mjs` + omen 真远程 | omen Linux：smoke/host pipeline/真实工具+授权/security/non-git PASS；真实 GUI：workspace 始终允许、自动跟踪、17:40:08 检测 version 2（38s）、n2 stale；父会话空闲时自动维护未启动；65/65 | ☐ | 待手动 `/arch remote update` 或活跃父会话下的自动触发 |
+| W12 | 2026-11-22 | 2026-11-22 | [REMOTE-ACCEPTANCE.md](REMOTE-ACCEPTANCE.md) + `scripts/w12-smoke.mjs` + omen 真远程 | omen Linux：smoke/host pipeline/真实工具+授权/security/non-git PASS；GUI：始终允许、跟踪、38s 检测、n2 stale；真实维护后图 rev3、n2 fresh、modules/n2 doc、manifest version2，远程未写；65/65 | ☑ | 用户接受两项 caveat：维护后 pending 未清零；空闲父会话不自动起子会话，手动 update 兜底 |
 
 ---
 
