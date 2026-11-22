@@ -216,3 +216,20 @@ test('remote content rejects unsafe paths and configuration', { skip: SKIP }, as
     await cleanup(item)
   }
 })
+
+test('readRange ignores SSH connection noise on stderr', async () => {
+  const client = {
+    async exec() { return { stdout: '/srv/app\n', stderr: '' } },
+    async execShell() {
+      return {
+        stdout: 'abc',
+        stderr: 'Connection to 192.0.2.1 port 22 [tcp/ssh] succeeded!\n3\n',
+      }
+    },
+  }
+  const content = createRemoteContent({ client, root: '/srv/app', vcs: 'none' })
+  const range = await content.readRange('a.ts', { offset: 0, length: 10 })
+  assert.equal(range.text, 'abc')
+  assert.equal(range.bytes, 3)
+  assert.equal(range.eof, true)
+})

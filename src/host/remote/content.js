@@ -231,7 +231,8 @@ export function createRemoteContent(config = {}) {
     const script = `cd ${shQuote(root)} && f=${shQuote(target)}; ${check} if [ ! -f "$f" ]; then exit 4; fi; s=$(wc -c < "$f" | tr -d ' '); printf '%s\\n' "$s" >&2; tail -c +$(( ${offset} + 1 )) "$f" | head -c ${length}`
     try {
       const { stdout, stderr } = await client.execShell(script)
-      const size = Number(String(stderr).trim().split(/\s+/)[0])
+      const sizeLines = [...String(stderr).matchAll(/^\s*(\d+)\s*$/gm)]
+      const size = sizeLines.length > 0 ? Number(sizeLines[sizeLines.length - 1][1]) : Number.NaN
       const bytes = Math.max(0, Math.min(length, Number.isFinite(size) ? size - offset : length))
       return {
         text: stdout,
