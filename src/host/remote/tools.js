@@ -29,6 +29,7 @@ function clamp(value, min, max, fallback) {
 export function createRemoteTools(options = {}) {
   const config = options.config ?? {}
   const consent = options.consent
+  const onUse = options.onUse
   const dir = normalizeDataDir(config.dir)
 
   async function hubRoot(args, exec) {
@@ -48,6 +49,7 @@ export function createRemoteTools(options = {}) {
     }
     const ws = await resolveWorkspace(`remote:${id}`, exec, config)
     if (ws.kind !== 'remote') throw remoteError('INVALID_PROJECT', `project "${id}" is not remote`)
+    if (typeof onUse === 'function') onUse(ws, exec)
     return ws
   }
 

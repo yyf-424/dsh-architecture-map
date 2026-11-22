@@ -16,6 +16,9 @@ import { createExporter } from './export.js'
 import { resolveWorkspace } from './workspace.js'
 import { createConsentGate } from './remote/consent.js'
 import { createRemoteTools } from './remote/tools.js'
+import { createRemoteIndexer } from './remote/indexer.js'
+import { createRemoteCommands } from './remote/commands.js'
+import { createMaintainer, buildMaintainerPrompt } from './remote/maintainer.js'
 
 export const name = 'architecture-map'
 
@@ -283,6 +286,8 @@ export function apply(ctx, config = {}) {
       : mermaidMode === 'auto'
         ? !hasOtherMermaidPlugin(ctx)
         : true
+  let agents = null
+  let subagents = null
   const store = createGraphStore(config)
   const markStaleNodes = async (workspace, ids, context) => {
     for (let attempt = 0; attempt < 3; attempt += 1) {
@@ -316,7 +321,37 @@ export function apply(ctx, config = {}) {
     return () => { userQuestions = null }
   })
   const consent = createConsentGate({ getUserQuestions: () => userQuestions })
-  const remoteTools = createRemoteTools({ config, consent })
+  const maintainer = createMaintainer({
+    consent,
+    startChild: async ({ ws, agent, counts }) => {
+      if (subagents === null) throw new Error('remote maintenance needs the subagents service')
+      const childId = randomUUID()
+      discussionIds.add(childId)
+      discussionRemoteIds.add(childId)
+      const activation = await subagents.startActivation({
+        provider: 'spawn',
+        childId,
+        label: `Maintain remote ${ws.id}`,
+        name: `remote-${ws.id}-maint`,
+        prompt: [{ type: 'text', text: buildMaintainerPrompt(ws, counts) }],
+        parent: agent,
+        delivery: 'caller',
+      })
+      restrictDiscussionChildSoon(activation.childId, REMOTE_DISCUSSION_DENY)
+      void activation.result.catch(() => {})
+      return activation
+    },
+  })
+  const remoteIndexer = createRemoteIndexer({ memory, maintainer })
+  const remoteTools = createRemoteTools({
+    config,
+    consent,
+    onUse: (ws, context) => remoteIndexer.track(ws, context),
+  })
+  const remoteCommands = createRemoteCommands({ config, consent, indexer: remoteIndexer, maintainer })
+  if (typeof ctx.effect === 'function') {
+    ctx.effect(() => () => remoteIndexer.dispose(), 'architecture-map: remote indexer timers')
+  }
 
   ctx.tools.register({
     name: 'arch_hello',
@@ -737,9 +772,6 @@ export function apply(ctx, config = {}) {
 
   // Per-node side conversations are optional: a minimal profile may not
   // compose the subagent service. When it is present, register the tool.
-  let agents = null
-  let subagents = null
-
   ctx.inject(['agents'], scope => {
     agents = scope.agents
     return () => { agents = null }
@@ -1058,6 +1090,9 @@ export function apply(ctx, config = {}) {
       if (extra === '' || extra === 'open') {
         return { kind: 'success', text: 'Architecture map opened in the right sidebar.' }
       }
+      if (extra === 'remote' || extra.startsWith('remote ')) {
+        return await remoteCommands.handle(extra.slice('remote'.length).trim(), agent)
+      }
       const discuss = /^discuss\s+((?:node|edge):[a-z][a-z0-9_-]*)(?:\s+(fork|lite))?\s*$/.exec(extra)
       if (discuss) {
         try {
@@ -1083,7 +1118,7 @@ export function apply(ctx, config = {}) {
       }
       return {
         kind: 'error',
-        text: '用法：/arch 或 /arch open（打开面板）；/arch discuss node:<id> [fork|lite]（开节点讨论）。要调用图工具，请直接发送“调用 arch_graph_get”。',
+        text: '用法：/arch 或 /arch open（打开面板）；/arch discuss node:<id> [fork|lite]（开节点讨论）；/arch remote add|list|select|sync|update|grant|revoke|remove ...（远程仓库）。要调用图工具，请直接发送“调用 arch_graph_get”。',
       }
     },
   })

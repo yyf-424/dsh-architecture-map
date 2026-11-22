@@ -1,7 +1,7 @@
 {
   "schema": 1,
-  "rev": 23,
-  "updatedAt": "2026-11-22T17:04:23.692Z",
+  "rev": 25,
+  "updatedAt": "2026-11-22T17:15:39.515Z",
   "layout": {
     "mode": "layered",
     "direction": "LR"
@@ -34,7 +34,7 @@
           "hash": "8a2a338257db277eeac9b399b12f7efe879b0012475e2f633602dd8398996052"
         }
       ],
-      "status": "fresh"
+      "status": "stale"
     },
     {
       "id": "n2",
@@ -86,12 +86,12 @@
       "title": "Sidebar panel",
       "kind": "module",
       "group": "g-client",
-      "summary": "Sidebar panel reads .archmap/graph.json or the selected project graph via workspaceFiles, offers a local/remote source picker with a remote status line, and polls the selected source every 2s before delegating to the canvas.",
+      "summary": "Sidebar panel reads .archmap/index.json or the selected project graph via workspaceFiles, offers a local/remote source picker with a remote status line, and polls the selected source every 2s before delegating to the canvas. A missing index or graph is an empty state, not an error.",
       "anchors": [
         {
           "path": "client.js",
           "symbol": "createGraphTab",
-          "hash": "607fa43650eb3e233dc0362e3663d13fc5b4e90e51559e2063bd1707be33f885"
+          "hash": "1281cc85f4f7d9486bfd55b5972323a1575b61c93cc3d681d18c790bef74e835"
         }
       ],
       "status": "stale"
@@ -106,7 +106,7 @@
         {
           "path": "client.js",
           "symbol": "NodeShape",
-          "hash": "607fa43650eb3e233dc0362e3663d13fc5b4e90e51559e2063bd1707be33f885"
+          "hash": "1281cc85f4f7d9486bfd55b5972323a1575b61c93cc3d681d18c790bef74e835"
         }
       ],
       "status": "stale"
@@ -121,7 +121,7 @@
         {
           "path": "client.js",
           "symbol": "MermaidFence",
-          "hash": "607fa43650eb3e233dc0362e3663d13fc5b4e90e51559e2063bd1707be33f885"
+          "hash": "1281cc85f4f7d9486bfd55b5972323a1575b61c93cc3d681d18c790bef74e835"
         }
       ],
       "status": "stale"
@@ -221,7 +221,7 @@
           "hash": "33fa0ebe6bdf7e75c343ea0c3609baac6524c2e728593adfe638ceafead5b99e"
         }
       ],
-      "status": "fresh"
+      "status": "stale"
     },
     {
       "id": "n14",
@@ -235,7 +235,7 @@
           "hash": "941445358c1b3b0d2f5aa778aa4d70721fcedbe0d3f334e78d5f77a54853551f"
         }
       ],
-      "status": "fresh"
+      "status": "stale"
     }
   ],
   "edges": [

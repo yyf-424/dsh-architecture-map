@@ -13,6 +13,10 @@ Host implementation (plain ESM) and the hand-written client bundle.
 - `host/remote/content.js` — remote content source: list, batch hash, describe, bounded reads, grep and change fingerprint.
 - `host/remote/consent.js` — blocking consent gate for remote content: session grant, durable workspace grant, revoke and child inheritance.
 - `host/remote/tools.js` — `arch_remote_list/status/tree/read/grep` handlers; content reads pass the consent gate.
+- `host/remote/state.js` — `remote-state.json`: fingerprint, pending counts, polling state and maintenance time.
+- `host/remote/indexer.js` — fingerprint polling, change sync, backoff and auto-maintenance handoff.
+- `host/remote/commands.js` — `/arch remote add/list/select/sync/update/grant/revoke/remove` handlers.
+- `host/remote/maintainer.js` — consent/count/cooldown/single-flight policy and the maintenance child prompt.
 - `host/graph.js` — graph schema/validation, store, rev, atomic writes, backup, anchor hashes.
 - `host/memory.js` — manifest, incremental sync (local scan; remote path list + manifest-only hashes), cosmetic signatures, stale marking, dossier docs.
 - `host/export.js` — deterministic Mermaid/SVG/Markdown exports.

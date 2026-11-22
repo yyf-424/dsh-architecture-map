@@ -612,6 +612,7 @@ window.__ModuleLoader__.load({
         const svgRef = React.useRef(null)
         const panRef = React.useRef(null)
         const fittedRef = React.useRef(false)
+        const trackedRef = React.useRef(null)
         const storageKey = cwd ? `${POSITIONS_KEY}${cwd}:${sourceId ?? 'local'}` : undefined
 
         React.useEffect(() => {
@@ -664,6 +665,19 @@ window.__ModuleLoader__.load({
         React.useEffect(() => {
           if (sourceId) writeSavedSource(cwd, sourceId)
         }, [sourceId, cwd])
+
+        // Selecting a remote source starts the host-side change poller once per
+        // session + project. The command returns immediately; failures surface
+        // through remote-state.json rather than blocking the panel.
+        React.useEffect(() => {
+          if (!sessionId || !sourceId) return
+          const selected = sources.find(item => item.id === sourceId)
+          if (!selected || selected.kind !== 'remote') return
+          const key = `${sessionId}:${selected.id}`
+          if (trackedRef.current === key) return
+          trackedRef.current = key
+          Promise.resolve(ctx.remote.commands.execute(sessionId, `/arch remote select ${selected.id}`, [])).catch(() => {})
+        }, [sessionId, sourceId, sources])
 
         React.useEffect(() => {
           setState({ status: 'loading', graph: null, error: null })

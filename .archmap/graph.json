@@ -1,7 +1,7 @@
 {
   "schema": 1,
-  "rev": 24,
-  "updatedAt": "2026-11-22T17:04:25.717Z",
+  "rev": 26,
+  "updatedAt": "2026-11-22T17:15:46.398Z",
   "layout": {
     "mode": "layered",
     "direction": "LR"
@@ -26,12 +26,12 @@
       "title": "Host entry",
       "kind": "entry",
       "group": "g-host",
-      "summary": "Registers graph, memory, export, discussion and remote read tools; owns the /arch command, Mermaid static route, bundled skill and optional remote consent gate.",
+      "summary": "Registers graph, memory, export, discussion, remote read tools and the /arch remote commands; owns command routing, the Mermaid route, bundled skill and optional consent gate.",
       "anchors": [
         {
           "path": "src/host/plugin.js",
           "symbol": "apply",
-          "hash": "8a2a338257db277eeac9b399b12f7efe879b0012475e2f633602dd8398996052"
+          "hash": "4c7b18914a756493f85b1633bc1165179e4aca47e05d77d26aaa7553d421858c"
         }
       ],
       "status": "fresh"
@@ -86,12 +86,12 @@
       "title": "Sidebar panel",
       "kind": "module",
       "group": "g-client",
-      "summary": "Sidebar panel reads .archmap/index.json or the selected project graph via workspaceFiles, offers a local/remote source picker with a remote status line, and polls the selected source every 2s before delegating to the canvas. A missing index or graph is an empty state, not an error.",
+      "summary": "Sidebar panel reads .archmap/index.json or the selected graph, offers a local/remote source picker with remote status, and starts host polling when a remote source is selected. A missing index or graph is an empty state, not an error.",
       "anchors": [
         {
           "path": "client.js",
           "symbol": "createGraphTab",
-          "hash": "1281cc85f4f7d9486bfd55b5972323a1575b61c93cc3d681d18c790bef74e835"
+          "hash": "d676cf3950b706656f435a5c3fabf6fe43fbf12f14961a3acb46b1072404465f"
         }
       ],
       "status": "fresh"
@@ -106,7 +106,7 @@
         {
           "path": "client.js",
           "symbol": "NodeShape",
-          "hash": "1281cc85f4f7d9486bfd55b5972323a1575b61c93cc3d681d18c790bef74e835"
+          "hash": "d676cf3950b706656f435a5c3fabf6fe43fbf12f14961a3acb46b1072404465f"
         }
       ],
       "status": "fresh"
@@ -121,7 +121,7 @@
         {
           "path": "client.js",
           "symbol": "MermaidFence",
-          "hash": "1281cc85f4f7d9486bfd55b5972323a1575b61c93cc3d681d18c790bef74e835"
+          "hash": "d676cf3950b706656f435a5c3fabf6fe43fbf12f14961a3acb46b1072404465f"
         }
       ],
       "status": "fresh"
@@ -214,11 +214,11 @@
       "title": "Consent gate",
       "kind": "module",
       "group": "g-host",
-      "summary": "Blocks remote content behind an approval question: session grant (including children) or durable workspace grant in index.json; no answerer fails closed; revoke clears grants.",
+      "summary": "Blocks remote content behind an approval question and exposes a durable grant for /arch remote grant: session grants cover children, workspace grants persist in index.json, no answerer fails closed.",
       "anchors": [
         {
           "path": "src/host/remote/consent.js",
-          "hash": "33fa0ebe6bdf7e75c343ea0c3609baac6524c2e728593adfe638ceafead5b99e"
+          "hash": "48846f320c64185c7ed12573357f828bc93a28e675b3124d985aa8b438b57bfc"
         }
       ],
       "status": "fresh"
@@ -228,11 +228,57 @@
       "title": "Remote read tools",
       "kind": "module",
       "group": "g-host",
-      "summary": "arch_remote_list/status/tree/read/grep handlers. List and status expose metadata only; tree/read/grep pass the consent gate before touching remote content. Remote discussions deny local read/grep/glob.",
+      "summary": "arch_remote_list/status/tree/read/grep handlers. List and status expose metadata only; tree/read/grep pass consent; every remote workspace use also starts host change polling.",
       "anchors": [
         {
           "path": "src/host/remote/tools.js",
-          "hash": "941445358c1b3b0d2f5aa778aa4d70721fcedbe0d3f334e78d5f77a54853551f"
+          "hash": "44e1e89f182c8d0fe059f76d80ebaddd12329d39ef84287715074b0cb990d276"
+        }
+      ],
+      "status": "fresh"
+    },
+    {
+      "id": "n15",
+      "title": "Remote indexer",
+      "kind": "module",
+      "group": "g-host",
+      "summary": "Polls tracked remote projects with a cheap fingerprint, runs manifest-only sync when it changes, writes remote-state.json with pending counts, backs off on errors and hands changes to the maintainer.",
+      "anchors": [
+        {
+          "path": "src/host/remote/indexer.js",
+          "hash": "933bda3e8528fcd2ac2a26bf1a0c0cee434e86ed2f87039a605eb547a6ef0c94"
+        },
+        {
+          "path": "src/host/remote/state.js",
+          "hash": "410d743858736deac1c4a9bfdb2bb3a43565282dd90c75b1c35e41222cf8575a"
+        }
+      ],
+      "status": "fresh"
+    },
+    {
+      "id": "n16",
+      "title": "Remote maintainer",
+      "kind": "module",
+      "group": "g-host",
+      "summary": "Auto-maintenance policy: durable workspace consent, at most 50 changed files, ten-minute cooldown and single-flight; builds the remote-only prompt for a spawned maintenance child.",
+      "anchors": [
+        {
+          "path": "src/host/remote/maintainer.js",
+          "hash": "71c3e2dd15b52bf6b7cd07de21903cc9660c58e5176953e5fb677f8a7bbb4029"
+        }
+      ],
+      "status": "fresh"
+    },
+    {
+      "id": "n17",
+      "title": "Remote commands",
+      "kind": "module",
+      "group": "g-host",
+      "summary": "User-driven /arch remote add/list/select/sync/update/grant/revoke/remove: writes the project index, starts or stops tracking, and delegates consent and maintenance.",
+      "anchors": [
+        {
+          "path": "src/host/remote/commands.js",
+          "hash": "1d22dec26bf2cccd910ef530839ee80c2ccfa10c2fd38f129734d019a073aa82"
         }
       ],
       "status": "fresh"
@@ -412,6 +458,102 @@
       "from": "n14",
       "to": "n12",
       "label": "reads remote content",
+      "kind": "dependency",
+      "status": "fresh"
+    },
+    {
+      "id": "e23",
+      "from": "n1",
+      "to": "n17",
+      "label": "registers /arch remote commands",
+      "kind": "call",
+      "status": "fresh"
+    },
+    {
+      "id": "e24",
+      "from": "n17",
+      "to": "n9",
+      "label": "reads and writes project index",
+      "kind": "dependency",
+      "status": "fresh"
+    },
+    {
+      "id": "e25",
+      "from": "n17",
+      "to": "n13",
+      "label": "grants and revokes consent",
+      "kind": "dependency",
+      "status": "fresh"
+    },
+    {
+      "id": "e26",
+      "from": "n17",
+      "to": "n15",
+      "label": "selects and syncs projects",
+      "kind": "dependency",
+      "status": "fresh"
+    },
+    {
+      "id": "e27",
+      "from": "n17",
+      "to": "n16",
+      "label": "starts maintenance",
+      "kind": "dependency",
+      "status": "fresh"
+    },
+    {
+      "id": "e28",
+      "from": "n15",
+      "to": "n12",
+      "label": "fingerprints remote content",
+      "kind": "dependency",
+      "status": "fresh"
+    },
+    {
+      "id": "e29",
+      "from": "n15",
+      "to": "n3",
+      "label": "runs remote sync",
+      "kind": "dependency",
+      "status": "fresh"
+    },
+    {
+      "id": "e30",
+      "from": "n15",
+      "to": "n16",
+      "label": "hands changes to maintainer",
+      "kind": "dependency",
+      "status": "fresh"
+    },
+    {
+      "id": "e31",
+      "from": "n16",
+      "to": "n13",
+      "label": "requires workspace consent",
+      "kind": "dependency",
+      "status": "fresh"
+    },
+    {
+      "id": "e32",
+      "from": "n14",
+      "to": "n15",
+      "label": "starts polling on use",
+      "kind": "dependency",
+      "status": "fresh"
+    },
+    {
+      "id": "e33",
+      "from": "n5",
+      "to": "n17",
+      "label": "starts polling via select",
+      "kind": "call",
+      "status": "fresh"
+    },
+    {
+      "id": "e34",
+      "from": "n15",
+      "to": "n9",
+      "label": "resolves tracked project",
       "kind": "dependency",
       "status": "fresh"
     }

@@ -208,6 +208,7 @@ export function createConsentGate(config = {}) {
     allowSession,
     inherit,
     revoke,
+    grantWorkspace,
     autoMaintenanceAllowed,
     workspaceConsent,
     sessionGrant,
