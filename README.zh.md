@@ -4,7 +4,7 @@
 
 **DeepSeek Harness 的架构工作台：可交互的语义架构图、按节点开启的侧栏子对话、增量架构记忆。**
 
-> 状态：**pre-alpha，可工作的骨架**。Host 工具、右侧栏画布、节点位置本地记忆、架构记忆、按节点子对话、确定性导出、内置 Mermaid 渲染和远程读取工具（开发者预览）都已可用；共享位置、远程 sync/自动刷新和发布打磨是下一步。设计文档保存在本地，不纳入版本跟踪。
+> 状态：**0.2.0 开发者预览**。Host 工具、右侧栏画布、架构记忆、按节点子对话、确定性导出、内置 Mermaid 渲染和通过 SSH 只读查看远程 Linux 仓库都已可用；共享位置仍待实现，空闲父会话自动维护和 pending 清零是已知粗糙边缘。
 
 ---
 
@@ -52,13 +52,12 @@ Architecture map 把「项目架构」变成 harness 里**可寻址的一等对�
 - **确定性导出**：`arch_export` 把 Mermaid flowchart、独立 SVG 或 Markdown 档案摘要写到 `.archmap/export/`；不改变 graph rev，也不改源文件。
 - **内置 Mermaid 渲染**：assistant 消息里的 ` ```mermaid ` 块用 vendored Mermaid 12.2.0 渲染，runtime 由本插件 Host 路由提供，不依赖 CDN，也不依赖 `dsh-mermaid-plus`。流式时保留代码块，语法错误回退代码块 + 错误行；`renderMermaid:false` 可关闭。
 - **按节点子对话**：`arch_discuss` 为 `node:<id>` 或 `edge:<id>` 开子会话；`fork` 继承主对话已完成轮次，`lite` 只靠图和档案。结果只走 caller，不污染主对话；结论写进 `notes/<id>`。节点详情里还有 `Discuss (fork)` / `Lite` 按钮，通过 `subagentchat` resource 在右侧栏打开子会话。子会话受提示词约束；shell 和通用源码写调用在执行时会被拒绝（fork 可能仍显示继承的工具 schema）；改图仍需你确认。
-- **远程读取工具（开发者预览）**：`arch_remote_list/status/tree/read/grep` 通过 SSH 查看已登记的远程 Linux 仓库，不 clone；读内容前要授权，远程 `arch_sync`/`arch_manifest_commit` 只哈希已分析文件，变更轮询和 `/arch remote ...` 命令可用，面板可切换本地/远程来源，图和档案留在 `.archmap/projects/<id>/`，远程文件不被修改。
+- **远程 Linux 仓库（开发者预览）**：`arch_remote_list/status/tree/read/grep` 通过 SSH 查看已登记仓库，不 clone；读内容前要授权，远程 `arch_sync`/`arch_manifest_commit` 只哈希已分析文件，变更轮询和 `/arch remote ...` 命令可用，面板可切换本地/远程来源，图和档案留在 `.archmap/projects/<id>/`，远程文件不被修改。
 
 ## 下一步计划
 
-- 内置 Mermaid 渲染，聊天里的 ` ```mermaid ` 代码块不再依赖其他插件。
 - 位置共享/写回图数据、右侧栏导出按钮、发布打磨（CI、打包、GIF）。
-- **远程仓库（开发中）**：通过 SSH 只读查看远程仓库架构，图和档案存放在本地项目的 `.archmap/projects/<id>/` 下。
+- 远程维护打磨：空闲父会话自动启动，维护后清零本地 pending。
 
 ## 不是什么
 
@@ -165,12 +164,12 @@ npm pack --dry-run
 - 父对话主动 `send_message` 给讨论子会话时，DSH 会在主对话里投递 native settlement notice（含子会话 closing text）。初次 `arch_discuss` 是 caller-only，子会话完整 transcript 不会进主日志；需要继续聊请在子会话侧栏里发。
 - 画布是手写 SVG + 分层布局，不是 React Flow。
 - Mermaid 默认 `auto` 开启；`renderMermaid: off` 可关；检测到已知的 `dsh-mermaid-plus` 时 `auto` 会关闭本插件渲染。
-- pre-alpha，API 和文件 schema 仍可能变化。
+- 这是 0.2.0 开发者预览，API 和文件 schema 仍可能变化。
 - 远程仓库是开发者预览：登记、读取、同步、轮询、命令和维护都已接上，并在真实 Linux 主机上验收；空闲父会话的自动维护和 pending 清零仍是粗糙边缘。
 
 ## 安装
 
-尚未发布。v0.1 发布后：
+开发者预览；现在可安装本地 bundle，0.2.0 发布到 npm 后也可直接安装：
 
 1. 通过 **Plugins → Add plugin**（本地目录）或插件管理器安装 bundle。
 2. 安装后**重启一次 DSH**，让 Client 半进入浏览器 boot graph。

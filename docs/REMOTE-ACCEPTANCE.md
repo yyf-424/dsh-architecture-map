@@ -1,7 +1,8 @@
 # 远程仓库端到端验收（W12）
 
-> 适用：main `aad374b`（W0–W11 已完成）
+> 适用：0.2.0（远程开发者预览）
 > 前置：完全退出并重开 DSH；一台**非生产** Linux 机器；SSH key/known_hosts 已配好；本地 hub 工作区。
+> 下文 `<remote-home>` 表示远程 `$HOME` 的绝对路径（例如 `/home/alice`）；远程命令里的 `$HOME` 由远程 shell 展开。
 
 本清单验证真实远程上的只读读取、授权、建图、增量刷新、自动维护、撤销、重启和非 git 兜底。每一步记录“通过/失败 + 现象”。
 
@@ -13,9 +14,9 @@
 
 ```sh
 ssh <host> '
-  rm -rf /tmp/archmap-acceptance
-  mkdir -p /tmp/archmap-acceptance/src
-  cd /tmp/archmap-acceptance
+  rm -rf $HOME/archmap-acceptance
+  mkdir -p $HOME/archmap-acceptance/src
+  cd $HOME/archmap-acceptance
   printf "# Acceptance\n" > README.md
   printf "export function greet(name) { return \"hi \" + name }\n" > src/app.js
   printf "export const version = 1\n" > src/version.js
@@ -32,10 +33,10 @@ ssh <host> '
 
 ```sh
 ssh <host> '
-  rm -rf /tmp/archmap-acceptance-nongit
-  mkdir -p /tmp/archmap-acceptance-nongit
-  printf "export const a = 1\n" > /tmp/archmap-acceptance-nongit/a.js
-  printf "export const b = 2\n" > /tmp/archmap-acceptance-nongit/b.js
+  rm -rf $HOME/archmap-acceptance-nongit
+  mkdir -p $HOME/archmap-acceptance-nongit
+  printf "export const a = 1\n" > $HOME/archmap-acceptance-nongit/a.js
+  printf "export const b = 2\n" > $HOME/archmap-acceptance-nongit/b.js
 '
 ```
 
@@ -52,7 +53,7 @@ ssh <host> 'command -v git; command -v sha256sum; command -v readlink; command -
 在本地仓库执行：
 
 ```sh
-node scripts/w12-smoke.mjs <host> /tmp/archmap-acceptance /tmp/archmap-acceptance-nongit
+node scripts/remote-smoke.mjs <host> <remote-home>/archmap-acceptance <remote-home>/archmap-acceptance-nongit
 ```
 
 它只做 probe、tree、fingerprint、describe、read、readRange、grep、stat，不修改远程。全部 PASS 后，再继续下面的授权/建图/刷新步骤。
@@ -64,7 +65,7 @@ node scripts/w12-smoke.mjs <host> /tmp/archmap-acceptance /tmp/archmap-acceptanc
 1. 本地仓库：
 
 ```sh
-cd /Users/yyf/project/dsh-architecture-map
+cd <repo>
 npm run check && npm test
 ```
 
@@ -73,13 +74,13 @@ npm run check && npm test
 2. 打开一个本地 hub 工作区（空目录即可）：
 
 ```
-/Users/yyf/project/remote-acceptance-hub
+<hub workspace>
 ```
 
 3. 在 hub 会话里执行：
 
 ```
-/arch remote add acceptance <host> /tmp/archmap-acceptance
+/arch remote add acceptance <host> <remote-home>/archmap-acceptance
 ```
 
 预期：返回 `vcs git`；`.archmap/index.json` 出现 `acceptance`。
@@ -91,7 +92,7 @@ npm run check && npm test
 /arch remote list
 ```
 
-预期：`acceptance · ssh <host>:/tmp/archmap-acceptance · vcs git · consent none`。
+预期：`acceptance · ssh <host>:<remote-home>/archmap-acceptance · vcs git · consent none`。
 
 ---
 
@@ -137,7 +138,7 @@ arch_manifest_commit({ workspace: "remote:acceptance", paths: ["README.md","src/
 
 - 图出现在 `/arch` 的 `acceptance` 来源；
 - 数据在本地 hub 的 `.archmap/projects/acceptance/`；
-- 远程 `ssh <host> 'cd /tmp/archmap-acceptance && git status --porcelain'` 仍然无输出；
+- 远程 `ssh <host> 'cd "$HOME/archmap-acceptance" && git status --porcelain'` 仍然无输出；
 - 本地 hub 不出现远程源码副本（只有 graph/manifest/dossiers/state）。
 
 ---
@@ -148,7 +149,7 @@ arch_manifest_commit({ workspace: "remote:acceptance", paths: ["README.md","src/
 2. 修改远程一个已分析文件：
 
 ```sh
-ssh <host> 'cd /tmp/archmap-acceptance && printf "export const version = 2\n" > src/version.js'
+ssh <host> 'cd "$HOME/archmap-acceptance" && printf "export const version = 2\n" > src/version.js'
 ```
 
 3. 等待 ≤60 秒，或执行：
@@ -192,7 +193,7 @@ ssh <host> 'cd /tmp/archmap-acceptance && printf "export const version = 2\n" > 
 
 ## 8. 非 git 兜底
 
-1. `/arch remote add nongit <host> /tmp/archmap-acceptance-nongit`
+1. `/arch remote add nongit <host> <remote-home>/archmap-acceptance-nongit`
 2. 读取、建图、修改远程 `a.js`。
 3. 等待轮询或 `/arch remote sync nongit`：
 
@@ -205,7 +206,7 @@ ssh <host> 'cd /tmp/archmap-acceptance && printf "export const version = 2\n" > 
 1. 远程创建指向 root 外的符号链接：
 
 ```sh
-ssh <host> 'ln -sf /etc/hostname /tmp/archmap-acceptance/leak.txt'
+ssh <host> 'ln -sf /etc/hostname "$HOME/archmap-acceptance/leak.txt"'
 ```
 
 2. 调用 `arch_remote_read` 读 `leak.txt`：
@@ -244,25 +245,3 @@ ssh <host> 'ln -sf /etc/hostname /tmp/archmap-acceptance/leak.txt'
 ## 回传
 
 把每一步的结果、失败步骤的现象（截图/错误文本）发回来；如果有一步失败，W12 不通过，回到对应节点修复后重跑。
-
-
----
-
-## 2026-11-22 omen 实测记录
-
-| 项 | 结果 |
-|---|---|
-| host | `omen` · Linux · `/home/dave` |
-| 测试目录 | `/home/dave/archmap-acceptance`（git）· `/home/dave/archmap-acceptance-nongit`（非 git） |
-| seeed 只读 | `/home/dave/seeed/B601_example` smoke PASS；`git status` 前后哈希一致 |
-| smoke | git / 非 git / seeed 全部 PASS |
-| host pipeline | anchors、manifest commit、clean sync、change sync、n2 stale、indexer、maintainer 交接、`remote-state.json`、consent 持久化 PASS |
-| 真实工具 | 拒绝 → `REMOTE_CONSENT_REQUIRED`；始终允许 → tree/read/grep；workspace consent 持久化 PASS |
-| 安全 | 指向 root 外的 symlink 在 describe/read/readRange/stat 全部 `PATH_ESCAPE`；hashMany 跳过 |
-| 非 git | metadata 指纹检测到真实修改 PASS（恢复内容后 mtime 变化仍会产生新指纹，这是预期） |
-| 修复 | readRange 的 SSH stderr 噪音；dirty git 文件二次编辑漏检 |
-| 测试 | 65/65 |
-| GUI | omen-acceptance 来源可打开；workspace 始终允许；17:40:08 检测 version 2，n2 stale（38s） |
-| 真实维护 | 图 rev3、n2 fresh、modules/n2 doc、manifest version2 更新；远程仍只有 version.js 修改，无插件写入 |
-| 接受 caveat | 维护后 `remote-state.pending` 仍为 1；父会话空闲时自动维护不启动，手动 `/arch remote update` 兜底 |
-| 结论 | 2026-11-22 用户接受 W12 |

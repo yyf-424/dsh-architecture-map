@@ -1,4 +1,23 @@
-# Changelog
+## 0.2.0 — 2026-11-22
+
+### Added
+
+- Read-only remote Linux repositories over SSH: `.archmap/index.json` projects, `remote:<id>` workspaces, a project source picker and a remote status line.
+- `arch_remote_list/status/tree/read/grep` tools, a blocking consent card (session / always / reject), and durable workspace consent.
+- `/arch remote add/list/select/sync/update/grant/revoke/remove` commands.
+- Fingerprint polling, `remote-state.json`, manifest-only incremental sync, stale marking and maintenance handoff.
+- Non-git metadata fingerprints, root-containment checks for escapes/symlink escapes, and a read-only remote smoke script.
+
+### Fixed
+
+- `readRange` no longer treats SSH connection diagnostics as the file size.
+- Repeated edits to an already-dirty git file now move the fingerprint.
+
+### Developer preview notes
+
+- A maintenance run does not clear the local `remote-state.pending` counter yet.
+- Auto maintenance does not start from an idle parent session; `/arch remote update <id>` is the manual fallback.
+- 65 tests pass; real SSH/host/tool/consent flows were verified on a non-production Linux host.
 
 ## 0.1.0 — 2026-11-21
 

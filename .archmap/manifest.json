@@ -1,6 +1,6 @@
 {
   "schema": 1,
-  "generatedAt": "2026-11-22T18:00:15.556Z",
+  "generatedAt": "2026-11-22T18:04:37.711Z",
   "root": ".",
   "files": {
     ".github/workflows/ci.yml": {
@@ -14,9 +14,9 @@
       "signature": "14847619b8929f9210686c6ffa4cacbfd6bd7b3e50e901492f568f9596c116fd"
     },
     "CHANGELOG.md": {
-      "sha256": "939fdb4b3dba0c97b1bbcc1307ea4b01a4df762cc432172ee0aa5354fcfa4b8f",
-      "size": 685,
-      "signature": "743f53152a86e1b5d0d0fa356f8b9d5eaf96c937a1b66ced60a93a6049607eb1"
+      "sha256": "0a57a4ea2a2555b585a8a6abd2ce1f68f252010e60ddd3ec60f0817ab1a48137",
+      "size": 1793,
+      "signature": "dfafe089fe7a69960a6f3474a27d8e882ea6cc8ba8861afc00ac98afabd0e13a"
     },
     "client.js": {
       "sha256": "ad56e1ede2a0be93748f6c4f53b7715d28bbb2f9145b01960544ea5d2279fdde",
@@ -44,14 +44,14 @@
       "signature": "0931d13ed0ee98a24d685b29b2ea343c926c0741895a2a1e20c535ad8c6b6332"
     },
     "docs/DETAIL.md": {
-      "sha256": "384cececf001d4c8af8f1baa9c1c1e2673c8be8054bc044996befab9110687dc",
-      "size": 4133,
-      "signature": "9a54ecf7b8d9e22535ad4219e20107da772eb2b0c8a527fe709f040491e7951e"
+      "sha256": "11ac6f0e4c7a939596da5cba390e9eed80198f0cc09d468770dc99af01d28c14",
+      "size": 5247,
+      "signature": "04f6265565a8bfb09052939364ccb46673d58b1de6a06ebcfda7ceeb5cee067e"
     },
     "docs/DETAIL.zh.md": {
-      "sha256": "63724a80b6ecd08962aa8c8495543d14befabd24dab060d56a99c1bc8a20ddb1",
-      "size": 3731,
-      "signature": "385f82114e755fef654a0bad8529b44e99eaab7391e26e65c180fc420817d8a5"
+      "sha256": "5ef1960eda5b4acef40073ae1d9c178fa76308e267722466ad126b12cf275eca",
+      "size": 4721,
+      "signature": "025809709f9ecc611552b3d18fde12311a97f62239005a28cb201cf832343019"
     },
     "docs/M0-FINDINGS.md": {
       "sha256": "d4699811302db4806fea68b5681a308de9266948e8b1c86b47a5a721a95ccde3",
@@ -94,19 +94,19 @@
       "signature": "67c8a61bf7fd569e25af652ef079e069573ab2442d368e3b0d05c290fb1802fa"
     },
     "package.json": {
-      "sha256": "bfcfe0e765c406c8019aec9511f08a1b38bf0c191c4941d8e606674a2c386945",
-      "size": 1849,
-      "signature": "b0e26be774958d637bb365041e1e447f14bb6188d5a3fe071b328d5a34647e96"
+      "sha256": "08d74149f872a5c91303e698a19abe4be2be123d81a781ccbe543785ce93a501",
+      "size": 1923,
+      "signature": "abffcc3e86730c80014e7088ded1cb8d12263fe68b73ca28d781b4ed5d9466a6"
     },
     "README.md": {
-      "sha256": "048e34d82cb65ac0b8576baaf31d636d512bcf0bb720946f3f1469e79be29b7b",
-      "size": 19060,
-      "signature": "2c83df57d3959708cc902ae1c723210e35a0ef8e5492aaa4c5f736a06dae1854"
+      "sha256": "d8a75b1ba3959ffe8b1539ff43768342429808bee583df968a7dcb290048e0a6",
+      "size": 18998,
+      "signature": "a083bfdfe6aea3204fc61f5443b2df7463113c0a5719fad0c615b0566dfe8ea9"
     },
     "README.zh.md": {
-      "sha256": "83f3d053def54c8647a9de1cbb5702932dd723540d5984c6ca318def245e93d2",
-      "size": 16701,
-      "signature": "fb06f41e9cfc741b5440ad7fc2c3f96a68173bbeed2687060f1097434b2786de"
+      "sha256": "562e21662f63d10d1698f200d4ec839b24eb38095dd9d3b7f488f7abd82da803",
+      "size": 16551,
+      "signature": "6f90f29fb149478d9558bc6fb6a0630cc76722387b1a873c508da83aa8f5d069"
     },
     "skills/architecture-map/references/bootstrap.md": {
       "sha256": "7ea7bf5d25f73a7607078717f71bcd47e04c857761e19a5f71e4f4bfb3c9f817",
@@ -199,9 +199,9 @@
       "signature": "91c874d4ec7c1d595ff89f60b765f3cd8d9f4351744aa0be2a2c60c8e5f314c9"
     },
     "docs/REMOTE-BUILD.md": {
-      "sha256": "d77c1d79cdd30dae02208c68db554714d6436452ec88299fd075d802bc73a6c1",
-      "size": 32516,
-      "signature": "632bb92df44005b2afafbe326d836b454929b03e6111320a5f9ed0f7fdbd05c5"
+      "sha256": "5badc425a0982ee0209111eb7f01b6e1c0f1dc9a7bdc6264d38918d66c8ba9ed",
+      "size": 32525,
+      "signature": "e059f391a9d619f0216111586d73d83b21d7428070576c1395062d3b3d6558dc"
     },
     "docs/REMOTE-PLAN.md": {
       "sha256": "2fe3b9548abef3434099bdcacec4560d0a02a5667040f5aa58673423ebbf8043",
@@ -334,14 +334,14 @@
       "signature": "5323256a5bdb1d48e20882513932d5cc27954495a0d2e61c53098d481a1a9c5a"
     },
     "docs/REMOTE-ACCEPTANCE.md": {
-      "sha256": "e4b189b9f9ac0bdd78f46020f6d930151697c014227580fbbbc401c73216fdbd",
-      "size": 8379,
-      "signature": "9deef1b07e751923c55d396a1bb7b1bdf25103d3b23647a51bd1ac3944152b7b"
+      "sha256": "3da54459a8640b18432b11f2af5f2a9f65512e348c0ad6939ff0b84e7953487e",
+      "size": 7096,
+      "signature": "5f565bdfb8fbd5c2de3c42fc207be2af4efccdada0ea6d1659c9df1533943fbe"
     },
-    "scripts/w12-smoke.mjs": {
-      "sha256": "f321778b6f9fd3e45189105d67a592323ca8ac38a428495b6dc9493918bdc0ce",
-      "size": 4018,
-      "signature": "7a8015f67af34bc1e0190ed06c936285e4d7bec8e58b2d1f5030cdda7c0f9956"
+    "scripts/remote-smoke.mjs": {
+      "sha256": "e9d35bbb1c1850f06cc99114a61ba7359be13cbdb57d72eaae07a3020066688f",
+      "size": 4071,
+      "signature": "9ed58d89d6b35bdd5636eb730dab3656af50f90218e5c0886a0a725a94e24415"
     }
   }
 }

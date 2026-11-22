@@ -1,13 +1,13 @@
 #!/usr/bin/env node
 /**
- * W12 read-only smoke test for a real remote repository.
+ * Read-only smoke test for a real remote repository.
  *
  * Usage:
- *   node scripts/w12-smoke.mjs <host> <remote-root> [nongit-root]
+ *   node scripts/remote-smoke.mjs <host> <remote-root> [nongit-root]
  *
  * Environment:
- *   W12_SSH_BINARY  optional SSH binary override (tests use the fake fixture)
- *   W12_SSH_LOG     optional fake-ssh command log
+ *   REMOTE_SMOKE_SSH_BINARY  optional SSH binary override (tests use the fake fixture)
+ *   REMOTE_SMOKE_SSH_LOG     optional fake-ssh command log
  *
  * It never writes to the remote: only probe, tree, hash, describe, read, grep
  * and fingerprint are exercised. Exit code 0 means every check passed.
@@ -70,12 +70,12 @@ async function checkRemote(client, label, remoteRoot, expectedVcs) {
 
 async function main() {
   if (!host || !root) {
-    console.error('usage: node scripts/w12-smoke.mjs <host> <remote-root> [nongit-root]')
+    console.error('usage: node scripts/remote-smoke.mjs <host> <remote-root> [nongit-root]')
     process.exit(2)
   }
-  const binary = process.env.W12_SSH_BINARY || undefined
+  const binary = process.env.REMOTE_SMOKE_SSH_BINARY || undefined
   const env = binary
-    ? { FAKE_SSH_ROOT: root, ...(process.env.W12_SSH_LOG ? { FAKE_SSH_LOG: process.env.W12_SSH_LOG } : {}) }
+    ? { FAKE_SSH_ROOT: root, ...(process.env.REMOTE_SMOKE_SSH_LOG ? { FAKE_SSH_LOG: process.env.REMOTE_SMOKE_SSH_LOG } : {}) }
     : undefined
   const client = createSshClient({ host, ...(binary ? { binary } : {}), ...(env ? { env } : {}) })
 
@@ -88,9 +88,9 @@ async function main() {
   if (nongitRoot) await checkRemote(client, 'nongit', nongitRoot, 'none')
 
   if (process.exitCode && process.exitCode !== 0) {
-    console.error('\nW12 smoke failed.')
+    console.error('\nremote smoke failed.')
   } else {
-    console.log('\nW12 smoke passed (read-only).')
+    console.log('\nremote smoke passed (read-only).')
   }
 }
 

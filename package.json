@@ -1,7 +1,7 @@
 {
   "name": "dsh-architecture-map",
-  "version": "0.1.0",
-  "description": "Architecture map for DeepSeek Harness: a semantic architecture graph with per-node side conversations and incremental architecture memory.",
+  "version": "0.2.0",
+  "description": "Architecture map for DeepSeek Harness: a semantic architecture graph with per-node side conversations, incremental architecture memory and read-only remote repositories over SSH.",
   "type": "module",
   "license": "MIT",
   "keywords": [
@@ -10,12 +10,14 @@
     "deepseek-harness",
     "architecture",
     "diagram",
-    "subagent"
+    "subagent",
+    "ssh",
+    "remote"
   ],
   "scripts": {
-    "check": "node --check index.js && node --check client.js && node --check src/host/plugin.js && node --check src/host/graph.js && node --check src/host/memory.js && node --check src/host/export.js && node --check src/host/signature.js && node --check scripts/w12-smoke.mjs",
+    "check": "node --check index.js && node --check client.js && node --check src/host/plugin.js && node --check src/host/graph.js && node --check src/host/memory.js && node --check src/host/export.js && node --check src/host/signature.js && node --check scripts/remote-smoke.mjs",
     "test": "node --test",
-    "w12-smoke": "node scripts/w12-smoke.mjs"
+    "remote-smoke": "node scripts/remote-smoke.mjs"
   },
   "exports": {
     ".": "./index.js",

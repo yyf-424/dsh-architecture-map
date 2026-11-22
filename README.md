@@ -4,7 +4,7 @@ English | [中文](README.zh.md)
 
 **中文名：架构地图** · An architecture workbench for DeepSeek Harness: a live semantic architecture graph, per-node side conversations, and incremental architecture memory.
 
-> Status: **pre-alpha, working skeleton.** The Host tools, sidebar canvas, local node positions, architecture memory, per-node discussions, deterministic exports, built-in Mermaid rendering and remote read tools (developer preview) work today. Shared positions, remote sync/auto-refresh and release polish are next. Design notes are kept locally and intentionally not tracked.
+> Status: **0.2.0 developer preview.** The Host tools, sidebar canvas, architecture memory, per-node discussions, deterministic exports, built-in Mermaid rendering and read-only remote Linux repositories over SSH work today. Shared positions remain planned; remote auto-maintenance on an idle parent and pending-counter clearing are the known rough edges.
 
 ---
 
@@ -52,12 +52,12 @@ A static feature preview is included. A recorded 30-second demo GIF is not part 
 - **Deterministic exports** — `arch_export` writes Mermaid flowchart source, a standalone SVG, or a Markdown dossier digest to `.archmap/export/`; graph revision and files stay unchanged.
 - **Built-in Mermaid rendering** — assistant ` ```mermaid ` fences render with a vendored Mermaid 12.2.0 runtime served from the plugin's own Host route. No CDN and no `dsh-mermaid-plus` dependency. Streaming keeps the code block; parse errors fall back to code plus an error line. `renderMermaid: false` disables it.
 - **Per-node side conversations** — `arch_discuss` starts a child for `node:<id>` or `edge:<id>`: `fork` inherits the main conversation's completed turns; `lite` starts fresh with the graph and dossier. Delivery is caller-only, so the main conversation is not polluted; conclusions go to `notes/<id>`. The node detail also has `Discuss (fork)` / `Lite` buttons that open the child in the right sidebar through the `subagentchat` resource. Discussion children are prompt-constrained; shell and generic source-write calls are denied at execution (inherited tool schemas may remain visible in a fork). Graph changes still require approval.
-- **Remote read tools (developer preview)** — `arch_remote_list/status/tree/read/grep` inspect a registered remote Linux repository over SSH without cloning it; content reads are consent-gated, remote `arch_sync`/`arch_manifest_commit` hash only analyzed files, change polling and `/arch remote ...` commands work, the panel can switch between local and remote sources, the graph/dossier stay under `.archmap/projects/<id>/`, and remote files are never modified.
+- **Remote Linux repositories (developer preview)** — `arch_remote_list/status/tree/read/grep` inspect a registered repository over SSH without cloning it. Content reads are consent-gated; remote `arch_sync`/`arch_manifest_commit` hash only analyzed files; change polling and `/arch remote ...` commands work; the panel switches local/remote sources; graph/dossier stay under `.archmap/projects/<id>/`; remote files are never modified.
 
 ## Planned next
 
-- Shared/persisted positions, direct export buttons in the panel, and release polish (CI, packaging, GIF).
-- **Remote repositories (in development)** — read-only architecture maps over SSH, with the graph and dossier stored beside the local project under `.archmap/projects/<id>/`.
+- Shared/persisted positions, direct export buttons in the panel, and release packaging polish (CI, packaging, GIF).
+- Remote maintenance polish: start from an idle parent and clear the local pending counter after a run.
 
 ## What it is not
 
@@ -168,7 +168,7 @@ npm pack --dry-run
 
 ## Installation
 
-Pre-alpha; the bundle is installed locally rather than from npm:
+Developer preview; install the local bundle now, or from npm once the 0.2.0 release is published:
 
 1. Install the bundle via **Plugins → Add plugin** (local directory) or add it as a `link:` dependency in the profile.
 2. Restart DSH once after installing so the client half joins the browser boot graph.
@@ -199,7 +199,7 @@ There is no separate "start" button or left-sidebar icon. The plugin adds a righ
 - A parent-initiated `send_message` to a discussion child produces DSH's native settlement notice (including the child's closing text) in the parent conversation. The initial `arch_discuss` is caller-only and the child's full transcript never enters the main log; use the child's sidebar chat for narrative follow-ups.
 - The canvas is hand-written SVG with a layered layout, not React Flow.
 - Mermaid rendering is on by default (`auto`) but can be disabled with `renderMermaid: off`; a known `dsh-mermaid-plus` installation makes `auto` disable ours.
-- This is pre-alpha; the API and file schema can still change.
+- This is a 0.2.0 developer preview; the API and file schema can still change.
 - Remote repositories are a developer preview: register, read, sync, polling, commands and maintenance are wired and were verified on a real Linux host; auto maintenance on an idle parent and pending-counter clearing remain rough edges.
 
 ## FAQ
