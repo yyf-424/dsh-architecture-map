@@ -1,6 +1,6 @@
 {
   "schema": 1,
-  "generatedAt": "2026-11-22T17:04:29.369Z",
+  "generatedAt": "2026-11-22T17:11:36.506Z",
   "root": ".",
   "files": {
     ".github/workflows/ci.yml": {
@@ -199,9 +199,9 @@
       "signature": "91c874d4ec7c1d595ff89f60b765f3cd8d9f4351744aa0be2a2c60c8e5f314c9"
     },
     "docs/REMOTE-BUILD.md": {
-      "sha256": "c60964dd19329d93202055e733ad2b89b714a43d057895ff7b0ddea68844c807",
-      "size": 31551,
-      "signature": "a55dea7453014b9b658b7500992ed8ffaefaa581061e02c9fb84336a9b85ba44"
+      "sha256": "94b3c60f7b7849a6591f32db20c97b2d446ef1703045759ecc5f878db710b1fb",
+      "size": 31545,
+      "signature": "f3dd6458727a8a5fb4ae490a782c166db0979cc23843e654505d0c38dbe732d1"
     },
     "docs/REMOTE-PLAN.md": {
       "sha256": "2fe3b9548abef3434099bdcacec4560d0a02a5667040f5aa58673423ebbf8043",
