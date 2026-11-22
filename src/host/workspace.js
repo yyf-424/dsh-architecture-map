@@ -9,6 +9,7 @@
 import { promises as fs } from 'node:fs'
 import path from 'node:path'
 import { LOCAL_PROJECT_ID, loadIndex, projectById } from './projects.js'
+import { createLocalContent } from './content/local.js'
 
 const DEFAULT_DIR = '.archmap'
 
@@ -90,6 +91,7 @@ export async function resolveWorkspace(raw, context, config = {}) {
       workspaceRoot: project.root,
       stateDir,
       pathBase: hub,
+      content: null,
       project,
       index,
     }
@@ -104,6 +106,7 @@ export async function resolveWorkspace(raw, context, config = {}) {
     workspaceRoot: root,
     stateDir,
     pathBase: root,
+    content: createLocalContent(root),
     project: null,
     index: null,
   }

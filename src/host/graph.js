@@ -11,7 +11,6 @@
 import { promises as fs } from 'node:fs'
 import path from 'node:path'
 import { randomBytes } from 'node:crypto'
-import { signatureOf } from './signature.js'
 import { normalizeDataDir, resolveWorkspace } from './workspace.js'
 
 export const GRAPH_SCHEMA = 1
@@ -633,34 +632,31 @@ export function createGraphStore(config = {}) {
   /**
    * Fill missing anchor hashes (and optionally refresh all of them) from the
    * current files. Existing hashes are preserved unless refreshAnchors is true,
-   * so a status-only patch cannot silently hide a stale anchor. Remote projects
-   * keep their anchors untouched until the remote content source is wired.
+   * so a status-only patch cannot silently hide a stale anchor. The content
+   * source owns the hash algorithm, so a remote project can use the remote
+   * digest instead of a local file read.
    */
   async function refreshAnchorHashes(ws, graph, refreshAll) {
-    let updated = 0
-    const nodes = []
+    const wanted = new Set()
     for (const node of graph.nodes) {
-      const anchors = []
       for (const anchor of node.anchors ?? []) {
-        if (!refreshAll && anchor.hash !== undefined) {
-          anchors.push(anchor)
-          continue
-        }
-        if (ws.kind === 'remote') {
-          anchors.push(anchor)
-          continue
-        }
-        try {
-          const content = await fs.readFile(path.join(ws.workspaceRoot, anchor.path))
-          anchors.push({ ...anchor, hash: signatureOf(anchor.path, content) })
-          updated += 1
-        } catch {
-          anchors.push(anchor)
-        }
+        if (refreshAll || anchor.hash === undefined) wanted.add(anchor.path)
       }
-      nodes.push({ ...node, anchors })
     }
-    graph.nodes = nodes
+    const hashes = wanted.size > 0 && ws.content && typeof ws.content.hashMany === 'function'
+      ? await ws.content.hashMany([...wanted])
+      : new Map()
+    let updated = 0
+    graph.nodes = graph.nodes.map(node => ({
+      ...node,
+      anchors: (node.anchors ?? []).map(anchor => {
+        if (!refreshAll && anchor.hash !== undefined) return anchor
+        const hash = hashes.get(anchor.path)
+        if (typeof hash !== 'string') return anchor
+        updated += 1
+        return { ...anchor, hash }
+      }),
+    }))
     return updated
   }
 

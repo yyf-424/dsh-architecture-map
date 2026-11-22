@@ -1,6 +1,6 @@
 {
   "schema": 1,
-  "generatedAt": "2026-11-22T09:16:34.379Z",
+  "generatedAt": "2026-11-22T09:20:14.525Z",
   "root": ".",
   "files": {
     ".github/workflows/ci.yml": {
@@ -139,14 +139,14 @@
       "signature": "19846b7a3b5277bf26f4adc9a1b7e12999dc2168b108226dac1d8c817b554d0f"
     },
     "src/host/graph.js": {
-      "sha256": "be2445fd33a26d81fe947271a990cb0bea80b482ef0056a0b2a9bbbd9b1422ae",
-      "size": 28463,
-      "signature": "87355d0c2ded35eb7176ffd4bdb982d8684179d76f81cfb9326a4f9e288f00e5"
+      "sha256": "08ac0099081d32e82599d0e2446e73121c4e291e4ab0438f080f10ec93e4f5ff",
+      "size": 28490,
+      "signature": "e4f4d9751d5ecaebe1d8b7a04eb91458b4c5d3357829e7cfc6a8fdca3a60f782"
     },
     "src/host/memory.js": {
-      "sha256": "ae2ac865c38d44a3bfa3a57e7b6c4ab8c62a95327e088140beff2ce266ec70b6",
-      "size": 14812,
-      "signature": "1b6505f82fe185c6017b111354d236bfb290d5d9e5252bbb940059aa3de3db30"
+      "sha256": "f594528d0fe7e37633e6b15c1cd98f21cbd9f3cb76af316c1dd49a9ed0a8ddb3",
+      "size": 12724,
+      "signature": "4fcf4283b2ae1af853e313c478f59fa5cb6f5b602765b29ccab35bc99a132246"
     },
     "src/host/plugin.js": {
       "sha256": "c4f9c62d464a6f0da27d2689688d54f2e5a71b3c795b8973ea05887ca9ce2c58",
@@ -159,9 +159,9 @@
       "signature": "c9a03f949839b8fa84f9ab29c7273478d6b84f87a0cdfd88182c401dfbd9c7e6"
     },
     "src/README.md": {
-      "sha256": "4cd049f6cc9d7fff25285559aa9a574ab7c1b3083cf0cd31525e088ba34135e1",
-      "size": 1121,
-      "signature": "0553b87b83fcf59ff4e71e77a38d23af38a89545a6095c06e4be7403c4805499"
+      "sha256": "181048184313f6c9a7edb40271c8cb8d3da2c891bd9c3adca7e0db63d2191cfa",
+      "size": 1319,
+      "signature": "45c64cfb098341bc6671890ed6fa1a4964cbd1e66eacdd7d1f44ed777107c25a"
     },
     "test/export.test.mjs": {
       "sha256": "fb03011566a1b3817b56893d35f2a3508fb8ec287ec92274ca9a7860cae6e3d6",
@@ -189,9 +189,9 @@
       "signature": "a9c9e6ec4bb312cebd55e53373100c2e4c270937e31745a9c43a911ced40ff38"
     },
     "src/host/workspace.js": {
-      "sha256": "6bbe732f1f8965145e95153e285c590d910b4ae1404e6fad3370c0b269366e58",
-      "size": 3924,
-      "signature": "d9ef6208d28fa6b02ef408402e2883cea47da14606077838d0011b54e0a77f51"
+      "sha256": "6426898f0b60224d30ebf6f8ce1a7cd93dc5294a7d9368c624b05574eecc19b1",
+      "size": 4040,
+      "signature": "9dedb19c3f051b6bd0c4312bd35b94ddceac2e672c51195804bab3dc05aa41c0"
     },
     "test/projects.test.mjs": {
       "sha256": "84adf344a809e59eb36826ade5a6ad69f31589e21e1c81473ddd7ccf34f94fc3",
@@ -199,14 +199,29 @@
       "signature": "392683268e187f32d88b100490bf86d2a821316c0e51a0ebb3ec63c41ef958b3"
     },
     "docs/REMOTE-BUILD.md": {
-      "sha256": "88d4fa0c4dc906c40114f160dbd87b7f23799b9de02b755004298388db5c6ae5",
-      "size": 29360,
-      "signature": "7d1c9053477ffd0d1e112c6ff43a11e9462aa3a85dc3a2a847f59e568809ce53"
+      "sha256": "7b62abf0ef062f23b707442c0a858eefc15e6a2b36be9b8607e253445bd16b57",
+      "size": 29576,
+      "signature": "4d7a2e53098b083b70098b31634dd3d3516042ab04bb53c548c1d10e86546449"
     },
     "docs/REMOTE-PLAN.md": {
       "sha256": "2fe3b9548abef3434099bdcacec4560d0a02a5667040f5aa58673423ebbf8043",
       "size": 22909,
       "signature": "2e85522fc5477c446d18180ac7fe24e8e119a4b2bd0b147469fb47fe99fc8a86"
+    },
+    "src/host/content/index.js": {
+      "sha256": "c7326e73173fd8ebe3d1b375274d1ecebee748ab6d852142f09291dc6d5bc7ee",
+      "size": 588,
+      "signature": "b2f7884e884b4ee981342144b7824db8d40cbb179001a6cad91693985ff6a1a2"
+    },
+    "src/host/content/local.js": {
+      "sha256": "8c13eb404c287f788795f198fad3de9d12e71ec8b1c26c6db0b9feabbaccc7eb",
+      "size": 7501,
+      "signature": "3cfc34b749b00c3221bd66bc063b8c34270b5b894425ffbbc8b3824a5aa61b37"
+    },
+    "test/content-local.test.mjs": {
+      "sha256": "9ddd0753aa531661c06a9b0dae6ac65274eb9451d4e5cf6e37d25e51c04270cc",
+      "size": 5838,
+      "signature": "b4ec1bca90336a649ad0c73ffd32b6ace0d88089a7a678b3845fd0247db64709"
     }
   }
 }

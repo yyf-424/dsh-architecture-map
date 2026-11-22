@@ -10,7 +10,6 @@
 import { promises as fs } from 'node:fs'
 import path from 'node:path'
 import { randomBytes } from 'node:crypto'
-import { hashBuffer, signatureOf } from './signature.js'
 import { normalizeDataDir, resolveWorkspace } from './workspace.js'
 
 const MANIFEST_SCHEMA = 1
@@ -21,17 +20,6 @@ const DEFAULT_LIMITS = Object.freeze({
   maxFileBytes: 256 * 1024,
   maxDocBytes: 32 * 1024,
 })
-
-const IGNORED_DIRS = new Set([
-  '.git', '.archmap', '.codegraph', 'node_modules', 'dist', 'build', 'out',
-  'vendor', 'coverage', '.next', '.turbo', '.cache',
-])
-
-const BINARY_EXTS = new Set([
-  '.png', '.jpg', '.jpeg', '.gif', '.webp', '.ico', '.pdf', '.zip', '.gz',
-  '.tar', '.wasm', '.node', '.mp4', '.mov', '.mp3', '.wav', '.woff', '.woff2',
-  '.ttf', '.otf', '.eot', '.class', '.so', '.dylib', '.dll', '.exe',
-])
 
 function fail(code, message) {
   const error = new Error(`${code}: ${message}`)
@@ -63,10 +51,6 @@ function docRelative(id) {
   return `${match[1]}/${match[2]}.md`
 }
 
-function looksTextual(buffer) {
-  return !buffer.includes(0)
-}
-
 export function createMemoryStore(config = {}, deps = {}) {
   const limits = { ...DEFAULT_LIMITS }
   for (const key of Object.keys(DEFAULT_LIMITS)) {
@@ -79,66 +63,14 @@ export function createMemoryStore(config = {}, deps = {}) {
 
   async function scan(rawWorkspace, context) {
     const ws = await resolveWorkspace(rawWorkspace, context, { dir: limits.dir })
-    if (ws.kind === 'remote') {
+    if (!ws.content || typeof ws.content.scan !== 'function') {
       fail('REMOTE_SYNC_UNAVAILABLE', 'remote sync is not wired yet; the local project still works')
     }
-    const root = ws.workspaceRoot
-    const files = new Map()
-    let truncated = false
-    let skipped = 0
-
-    const visit = async directory => {
-      if (files.size >= limits.maxFiles) {
-        truncated = true
-        return
-      }
-      let entries
-      try {
-        entries = await fs.readdir(directory, { withFileTypes: true })
-      } catch {
-        return
-      }
-      for (const entry of entries.sort((a, b) => a.name.localeCompare(b.name))) {
-        if (files.size >= limits.maxFiles) {
-          truncated = true
-          return
-        }
-        if (entry.isSymbolicLink()) continue
-        const abs = path.join(directory, entry.name)
-        if (entry.isDirectory()) {
-          if (IGNORED_DIRS.has(entry.name)) continue
-          await visit(abs)
-          continue
-        }
-        if (!entry.isFile()) continue
-        if (BINARY_EXTS.has(path.extname(entry.name).toLowerCase())) continue
-        let stat
-        try {
-          stat = await fs.stat(abs)
-        } catch {
-          continue
-        }
-        if (stat.size > limits.maxFileBytes) {
-          skipped += 1
-          continue
-        }
-        let buffer
-        try {
-          buffer = await fs.readFile(abs)
-        } catch {
-          continue
-        }
-        if (!looksTextual(buffer)) {
-          skipped += 1
-          continue
-        }
-        const rel = path.relative(root, abs).split(path.sep).join('/')
-        files.set(rel, { sha256: hashBuffer(buffer), size: stat.size, signature: signatureOf(rel, buffer) })
-      }
-    }
-
-    await visit(root)
-    return { ws, root, files, truncated, skipped }
+    const scanned = await ws.content.scan({
+      maxFiles: limits.maxFiles,
+      maxFileBytes: limits.maxFileBytes,
+    })
+    return { ws, root: ws.workspaceRoot, ...scanned }
   }
 
   async function readManifest(ws) {
@@ -303,7 +235,6 @@ export function createMemoryStore(config = {}, deps = {}) {
     if (ws.kind === 'remote') {
       fail('REMOTE_SYNC_UNAVAILABLE', 'remote commit is not wired yet; the local project still works')
     }
-    const root = ws.workspaceRoot
     const manifest = await readManifest(ws) ?? {
       schema: MANIFEST_SCHEMA,
       generatedAt: null,
@@ -315,21 +246,18 @@ export function createMemoryStore(config = {}, deps = {}) {
     let removed = 0
     for (const rawPath of input.paths) {
       const rel = normalizeRelative(rawPath)
-      const abs = path.join(root, rel)
       try {
-        const stat = await fs.stat(abs)
-        if (!stat.isFile() || stat.size > limits.maxFileBytes) {
+        const info = await ws.content.describe(rel, { maxFileBytes: limits.maxFileBytes })
+        if (info.kind !== 'text') {
           delete files[rel]
           removed += 1
           continue
         }
-        const buffer = await fs.readFile(abs)
-        if (!looksTextual(buffer)) {
-          delete files[rel]
-          removed += 1
-          continue
+        files[rel] = {
+          sha256: info.sha256,
+          size: info.size,
+          ...(info.signature === undefined ? {} : { signature: info.signature }),
         }
-        files[rel] = { sha256: hashBuffer(buffer), size: stat.size, signature: signatureOf(rel, buffer) }
         committed += 1
       } catch {
         if (rel in files) {

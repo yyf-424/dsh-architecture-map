@@ -677,7 +677,7 @@ npm test
 |---|---|---|---|---|---|---|
 | W0 | 2026-11-22 | 2026-11-22 | `npm run check && npm test` | 7/7 pass；基线 `d501c41`，graph rev 7 / 8 nodes / 8 edges | ☑ | worktree `feature/remote-source` |
 | W1 | 2026-11-22 | 2026-11-22 | `node --test test/projects.test.mjs`；`npm run check && npm test` | 5/5 + 12/12 pass；本地 graph rev 7 / 8 nodes / 8 edges 不变；远程项目落到 `.archmap/projects/staging/` | ☑ | 远程 sync/commit 仍失败关闭，W8 接 |
-| W2 | | | `node --test test/content-local.test.mjs` | | ☐ | |
+| W2 | 2026-11-22 | 2026-11-22 | `node --test test/content-local.test.mjs`；`npm run check && npm test`；新旧 scan 对拍 | 5/5 + 17/17 pass；旧 `memory.scan` 与新 `content.scan` 输出完全一致；13 个锚点 0 mismatch；`.git` worktree 文件被跳过 | ☑ | 纯重构；本地格式/行为未变 |
 | W3 | | | `node --test test/remote-ssh.test.mjs` | | ☐ | |
 | W4 | | | `node --test test/remote-content.test.mjs` | | ☐ | |
 | W5 | | | `node --test test/remote-project.test.mjs` | | ☐ | |

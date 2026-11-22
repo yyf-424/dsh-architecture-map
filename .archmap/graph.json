@@ -1,7 +1,7 @@
 {
   "schema": 1,
-  "rev": 8,
-  "updatedAt": "2026-11-22T09:16:23.488Z",
+  "rev": 10,
+  "updatedAt": "2026-11-22T09:19:59.742Z",
   "layout": {
     "mode": "layered",
     "direction": "LR"
@@ -31,7 +31,7 @@
         {
           "path": "src/host/plugin.js",
           "symbol": "apply",
-          "hash": "3f685fcf7c027533c42a5475f6e702c58bccb1718513dad79a11619838c46773"
+          "hash": "630ec7680f18ae5ee63ce1b2a82e2198f6507d60923ce71009abf399f5308e40"
         }
       ],
       "status": "fresh"
@@ -41,12 +41,12 @@
       "title": "Graph store",
       "kind": "store",
       "group": "g-host",
-      "summary": "Canonical .archmap/graph.json: schema validation, ordered ops, baseRev CAS, per-workspace lock, atomic write and backup.",
+      "summary": "Owns <stateDir>/graph.json: schema validation, ordered ops, baseRev compare-and-swap, per-project lock, atomic temp-file rename and backup. Anchor hashes come from the content source.",
       "anchors": [
         {
           "path": "src/host/graph.js",
           "symbol": "createGraphStore",
-          "hash": "6a22a2fd974a56e40a64ac931f77c999c735acf3cbbf6656fc0cc93df7e9d3bd"
+          "hash": "e4f4d9751d5ecaebe1d8b7a04eb91458b4c5d3357829e7cfc6a8fdca3a60f782"
         }
       ],
       "status": "fresh"
@@ -56,12 +56,12 @@
       "title": "Memory store",
       "kind": "module",
       "group": "g-host",
-      "summary": "Manifest, incremental sync, cosmetic signatures, stale marking, dossier docs and anchor-hash refresh.",
+      "summary": "Builds the manifest, classifies code vs cosmetic changes, reports affected nodes, marks stale status and refreshes anchors. Scans and describes files through the content source; serves the dossier.",
       "anchors": [
         {
           "path": "src/host/memory.js",
           "symbol": "createMemoryStore",
-          "hash": "c953b79b800f40d31dc2019c421c13aa2e9c15dac840ab7695397ccfa45c3d30"
+          "hash": "4fcf4283b2ae1af853e313c478f59fa5cb6f5b602765b29ccab35bc99a132246"
         }
       ],
       "status": "fresh"
@@ -71,12 +71,12 @@
       "title": "Exporter",
       "kind": "module",
       "group": "g-host",
-      "summary": "Deterministic Mermaid, SVG and Markdown exports under .archmap/export/.",
+      "summary": "Produces deterministic Mermaid, standalone SVG and Markdown digest files under the project stateDir. Exports never modify the graph or manifest.",
       "anchors": [
         {
           "path": "src/host/export.js",
           "symbol": "createExporter",
-          "hash": "ff881b604593be7d8e9674eb9bf11a3bc0363836fbf6939ea6ea85a0e266a66a"
+          "hash": "19846b7a3b5277bf26f4adc9a1b7e12999dc2168b108226dac1d8c817b554d0f"
         }
       ],
       "status": "fresh"
@@ -145,7 +145,7 @@
       "title": "Project index",
       "kind": "module",
       "group": "g-host",
-      "summary": "Resolves a local workspace path or remote:<id> into workspaceRoot + per-project stateDir; owns .archmap/index.json, project validation, and atomic index writes.",
+      "summary": "Resolves a local workspace path or remote:<id> into workspaceRoot + per-project stateDir; owns .archmap/index.json and attaches the local content source.",
       "anchors": [
         {
           "path": "src/host/projects.js",
@@ -153,12 +153,30 @@
         },
         {
           "path": "src/host/workspace.js",
-          "hash": "d9ef6208d28fa6b02ef408402e2883cea47da14606077838d0011b54e0a77f51"
+          "hash": "9dedb19c3f051b6bd0c4312bd35b94ddceac2e672c51195804bab3dc05aa41c0"
         },
         {
           "path": "src/host/graph.js",
           "symbol": "createGraphStore",
-          "hash": "87355d0c2ded35eb7176ffd4bdb982d8684179d76f81cfb9326a4f9e288f00e5"
+          "hash": "e4f4d9751d5ecaebe1d8b7a04eb91458b4c5d3357829e7cfc6a8fdca3a60f782"
+        }
+      ],
+      "status": "fresh"
+    },
+    {
+      "id": "n10",
+      "title": "Content source",
+      "kind": "module",
+      "group": "g-host",
+      "summary": "Read-only content contract: scan files, hash anchors, describe commit candidates and serve bounded reads. The local adapter preserves the previous memory scan semantics; a remote adapter arrives with the SSH source.",
+      "anchors": [
+        {
+          "path": "src/host/content/index.js",
+          "hash": "b2f7884e884b4ee981342144b7824db8d40cbb179001a6cad91693985ff6a1a2"
+        },
+        {
+          "path": "src/host/content/local.js",
+          "hash": "3cfc34b749b00c3221bd66bc063b8c34270b5b894425ffbbc8b3824a5aa61b37"
         }
       ],
       "status": "fresh"
@@ -258,6 +276,30 @@
       "from": "n4",
       "to": "n9",
       "label": "resolves project state",
+      "kind": "dependency",
+      "status": "fresh"
+    },
+    {
+      "id": "e13",
+      "from": "n2",
+      "to": "n10",
+      "label": "reads anchors and scans",
+      "kind": "dependency",
+      "status": "fresh"
+    },
+    {
+      "id": "e14",
+      "from": "n3",
+      "to": "n10",
+      "label": "scans and describes files",
+      "kind": "dependency",
+      "status": "fresh"
+    },
+    {
+      "id": "e15",
+      "from": "n9",
+      "to": "n10",
+      "label": "attaches local content",
       "kind": "dependency",
       "status": "fresh"
     }

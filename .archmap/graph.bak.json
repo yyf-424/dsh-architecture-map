@@ -1,7 +1,7 @@
 {
   "schema": 1,
-  "rev": 7,
-  "updatedAt": "2026-11-21T09:37:05.389Z",
+  "rev": 9,
+  "updatedAt": "2026-11-22T09:19:49.849Z",
   "layout": {
     "mode": "layered",
     "direction": "LR"
@@ -34,7 +34,7 @@
           "hash": "3f685fcf7c027533c42a5475f6e702c58bccb1718513dad79a11619838c46773"
         }
       ],
-      "status": "fresh"
+      "status": "stale"
     },
     {
       "id": "n2",
@@ -49,7 +49,7 @@
           "hash": "6a22a2fd974a56e40a64ac931f77c999c735acf3cbbf6656fc0cc93df7e9d3bd"
         }
       ],
-      "status": "fresh"
+      "status": "stale"
     },
     {
       "id": "n3",
@@ -64,7 +64,7 @@
           "hash": "c953b79b800f40d31dc2019c421c13aa2e9c15dac840ab7695397ccfa45c3d30"
         }
       ],
-      "status": "fresh"
+      "status": "stale"
     },
     {
       "id": "n4",
@@ -79,7 +79,7 @@
           "hash": "ff881b604593be7d8e9674eb9bf11a3bc0363836fbf6939ea6ea85a0e266a66a"
         }
       ],
-      "status": "fresh"
+      "status": "stale"
     },
     {
       "id": "n5",
@@ -139,6 +139,29 @@
         }
       ],
       "status": "fresh"
+    },
+    {
+      "id": "n9",
+      "title": "Project index",
+      "kind": "module",
+      "group": "g-host",
+      "summary": "Resolves a local workspace path or remote:<id> into workspaceRoot + per-project stateDir; owns .archmap/index.json, project validation, and atomic index writes.",
+      "anchors": [
+        {
+          "path": "src/host/projects.js",
+          "hash": "a9c9e6ec4bb312cebd55e53373100c2e4c270937e31745a9c43a911ced40ff38"
+        },
+        {
+          "path": "src/host/workspace.js",
+          "hash": "d9ef6208d28fa6b02ef408402e2883cea47da14606077838d0011b54e0a77f51"
+        },
+        {
+          "path": "src/host/graph.js",
+          "symbol": "createGraphStore",
+          "hash": "87355d0c2ded35eb7176ffd4bdb982d8684179d76f81cfb9326a4f9e288f00e5"
+        }
+      ],
+      "status": "stale"
     }
   ],
   "edges": [
@@ -204,6 +227,38 @@
       "to": "n7",
       "label": "serves Mermaid runtime",
       "kind": "data",
+      "status": "fresh"
+    },
+    {
+      "id": "e9",
+      "from": "n1",
+      "to": "n9",
+      "label": "resolves tool workspaces",
+      "kind": "call",
+      "status": "fresh"
+    },
+    {
+      "id": "e10",
+      "from": "n2",
+      "to": "n9",
+      "label": "resolves project state",
+      "kind": "dependency",
+      "status": "fresh"
+    },
+    {
+      "id": "e11",
+      "from": "n3",
+      "to": "n9",
+      "label": "resolves project state",
+      "kind": "dependency",
+      "status": "fresh"
+    },
+    {
+      "id": "e12",
+      "from": "n4",
+      "to": "n9",
+      "label": "resolves project state",
+      "kind": "dependency",
       "status": "fresh"
     }
   ]
