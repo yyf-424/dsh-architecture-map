@@ -682,7 +682,7 @@ npm test
 | W3 | 2026-11-22 | 2026-11-22 | `node --test test/remote-ssh.test.mjs`；`npm run check && npm test` | 7/7 + 24/24 pass；引号/超时/取消/输出上限/鉴权错误映射全过；假 SSH 不连网 | ☑ | 无远程写命令 |
 | W4 | 2026-11-22 | 2026-11-22 | `node --test test/remote-content.test.mjs`；`npm run check && npm test` | 7/7 + 31/31 pass；git/非 git 的 list、hash/describe、分页读、grep、fingerprint；只传哈希不传内容；无写命令 | ☑ | 非 git 指纹目前哈希全量文件，W11 优化 |
 | W5 | 2026-11-22 | 2026-11-22 | `node --test test/remote-project.test.mjs`；`npm run check && npm test` | 3/3 + 34/34 pass；远程建图锚点=远端 sha256；数据在 `.archmap/projects/staging/`；doc/export 正常；假 SSH 日志无写命令；sync/commit 仍关闭 | ☑ | 远程内容只经哈希/元数据，不落源码 |
-| W6 | | | `node --test test/remote-consent.test.mjs` | | ☐ | |
+| W6 | 2026-11-22 | 2026-11-22 | `node --test test/remote-consent.test.mjs`；`npm run check && npm test` | 6/6 + 40/40 pass；首次问一次、始终写入 index、拒绝/跳过零授权、无 userQuestions 失败关闭、撤销、子会话继承、自动维护仅 workspace 授权 | ☑ | 问题只含 host/root，不含文件内容 |
 | W7 | | | `node --test test/remote-tools.test.mjs` | | ☐ | |
 | W8 | | | `node --test test/remote-sync.test.mjs` | | ☐ | |
 | W9 | | | `node --check client.js` + 手工矩阵 | | ☐ | |

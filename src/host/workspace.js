@@ -99,12 +99,14 @@ export async function resolveWorkspace(raw, context, config = {}) {
     }
     if (project.kind !== 'remote') fail('INVALID_PROJECT', `project "${id}" is not remote`)
     const stateDir = stateDirUnder(hub, path.posix.join(dir, project.dir))
+    const dataDir = stateDirUnder(hub, dir)
     return {
       kind: 'remote',
       id,
       display: `remote:${id}`,
       workspaceRoot: project.root,
       stateDir,
+      dataDir,
       pathBase: hub,
       content: remoteContentFor(project, config),
       project,
@@ -120,6 +122,7 @@ export async function resolveWorkspace(raw, context, config = {}) {
     display: root,
     workspaceRoot: root,
     stateDir,
+    dataDir: stateDir,
     pathBase: root,
     content: createLocalContent(root),
     project: null,

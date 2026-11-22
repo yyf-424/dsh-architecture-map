@@ -14,6 +14,7 @@ import { createGraphStore, workspaceOf } from './graph.js'
 import { createMemoryStore } from './memory.js'
 import { createExporter } from './export.js'
 import { resolveWorkspace } from './workspace.js'
+import { createConsentGate } from './remote/consent.js'
 
 export const name = 'architecture-map'
 
@@ -292,6 +293,16 @@ export function apply(ctx, config = {}) {
     readGraph: store.readGraph,
     resolve: (raw, context) => resolveWorkspace(raw, context, config),
   })
+
+  // Remote content is gated by a blocking user question. The service is
+  // optional: a profile without userQuestions fails closed and remote reads
+  // stay unavailable until an explicit grant path exists.
+  let userQuestions = null
+  ctx.inject(['userQuestions'], scope => {
+    userQuestions = scope.userQuestions
+    return () => { userQuestions = null }
+  })
+  const consent = createConsentGate({ getUserQuestions: () => userQuestions })
 
   ctx.tools.register({
     name: 'arch_hello',

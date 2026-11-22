@@ -1,7 +1,7 @@
 {
   "schema": 1,
-  "rev": 14,
-  "updatedAt": "2026-11-22T09:26:20.371Z",
+  "rev": 16,
+  "updatedAt": "2026-11-22T09:28:08.755Z",
   "layout": {
     "mode": "layered",
     "direction": "LR"
@@ -26,12 +26,12 @@
       "title": "Host entry",
       "kind": "entry",
       "group": "g-host",
-      "summary": "Registers the graph, memory, export and discussion tools; owns the /arch command, Mermaid static route and bundled skill registration.",
+      "summary": "Registers the graph, memory, export and discussion tools; owns the /arch command, Mermaid static route, bundled skill registration and the optional remote consent gate.",
       "anchors": [
         {
           "path": "src/host/plugin.js",
           "symbol": "apply",
-          "hash": "630ec7680f18ae5ee63ce1b2a82e2198f6507d60923ce71009abf399f5308e40"
+          "hash": "69deb1e60ce8868461d1d071a05b4a67f2b538d9936930c367b04554a18bfd8b"
         }
       ],
       "status": "fresh"
@@ -145,7 +145,7 @@
       "title": "Project index",
       "kind": "module",
       "group": "g-host",
-      "summary": "Resolves a local workspace path or remote:<id> into workspaceRoot + per-project stateDir; owns .archmap/index.json and attaches the local or SSH remote content source.",
+      "summary": "Resolves a local workspace path or remote:<id> into workspaceRoot + per-project stateDir/dataDir; owns .archmap/index.json and attaches the local or SSH remote content source.",
       "anchors": [
         {
           "path": "src/host/projects.js",
@@ -153,7 +153,7 @@
         },
         {
           "path": "src/host/workspace.js",
-          "hash": "f1e4a34523fd1fce3e01d94fde7775636a5a56ff4163ab36742b7bb3c391e72a"
+          "hash": "ef1717fce146723d7d24205284ba8bcc8fbb719f9e91239425b183916339365f"
         },
         {
           "path": "src/host/graph.js",
@@ -205,6 +205,20 @@
         {
           "path": "src/host/remote/content.js",
           "hash": "c239969c924fd5ed708c889200c6aab8d50df5caf72084d63438bd74db949150"
+        }
+      ],
+      "status": "fresh"
+    },
+    {
+      "id": "n13",
+      "title": "Consent gate",
+      "kind": "module",
+      "group": "g-host",
+      "summary": "Blocks remote content behind an approval question: session grant (including children) or durable workspace grant in index.json; no answerer fails closed; revoke clears grants.",
+      "anchors": [
+        {
+          "path": "src/host/remote/consent.js",
+          "hash": "33fa0ebe6bdf7e75c343ea0c3609baac6524c2e728593adfe638ceafead5b99e"
         }
       ],
       "status": "fresh"
@@ -344,6 +358,22 @@
       "from": "n9",
       "to": "n12",
       "label": "attaches remote content",
+      "kind": "dependency",
+      "status": "fresh"
+    },
+    {
+      "id": "e18",
+      "from": "n1",
+      "to": "n13",
+      "label": "wires optional consent gate",
+      "kind": "dependency",
+      "status": "fresh"
+    },
+    {
+      "id": "e19",
+      "from": "n13",
+      "to": "n9",
+      "label": "reads and writes project consent",
       "kind": "dependency",
       "status": "fresh"
     }
