@@ -13,8 +13,9 @@
     "subagent"
   ],
   "scripts": {
-    "check": "node --check index.js && node --check client.js && node --check src/host/plugin.js && node --check src/host/graph.js && node --check src/host/memory.js && node --check src/host/export.js && node --check src/host/signature.js",
-    "test": "node --test"
+    "check": "node --check index.js && node --check client.js && node --check src/host/plugin.js && node --check src/host/graph.js && node --check src/host/memory.js && node --check src/host/export.js && node --check src/host/signature.js && node --check scripts/w12-smoke.mjs",
+    "test": "node --test",
+    "w12-smoke": "node scripts/w12-smoke.mjs"
   },
   "exports": {
     ".": "./index.js",

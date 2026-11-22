@@ -47,6 +47,18 @@ ssh <host> 'command -v git; command -v sha256sum; command -v readlink; command -
 
 ---
 
+## 0.1 快速只读 smoke（可选，替代重复手工探针）
+
+在本地仓库执行：
+
+```sh
+node scripts/w12-smoke.mjs <host> /tmp/archmap-acceptance /tmp/archmap-acceptance-nongit
+```
+
+它只做 probe、tree、fingerprint、describe、read、readRange、grep、stat，不修改远程。全部 PASS 后，再继续下面的授权/建图/刷新步骤。
+
+---
+
 ## 1. 本地基线与 hub
 
 1. 本地仓库：
