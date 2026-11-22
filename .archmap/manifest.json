@@ -1,6 +1,6 @@
 {
   "schema": 1,
-  "generatedAt": "2026-11-22T09:35:21.839Z",
+  "generatedAt": "2026-11-22T09:36:22.446Z",
   "root": ".",
   "files": {
     ".github/workflows/ci.yml": {
@@ -199,9 +199,9 @@
       "signature": "91c874d4ec7c1d595ff89f60b765f3cd8d9f4351744aa0be2a2c60c8e5f314c9"
     },
     "docs/REMOTE-BUILD.md": {
-      "sha256": "7621a01731c7d7433106ae990a386f02249a4a9a4629c334f1dbe2e5209ac4f6",
-      "size": 31442,
-      "signature": "890075a55192e70ac48905b7dc82eccf45fa219d2fc415e344b24f0b6ba10e8b"
+      "sha256": "048faaba2fb2a075ef1b915fd8d348ae7ab9ff92503d7230a901cba83fb12a56",
+      "size": 31490,
+      "signature": "9075e90f9a38efefe66f9f5c96e5cd92338673f22813e166f0e24a9ab4147df2"
     },
     "docs/REMOTE-PLAN.md": {
       "sha256": "2fe3b9548abef3434099bdcacec4560d0a02a5667040f5aa58673423ebbf8043",
@@ -282,6 +282,11 @@
       "sha256": "7cadc6d376e325c7a9a1710f4b53e749cdf4930878cb4b32d1d0afc192d7b3ed",
       "size": 5933,
       "signature": "4135a517afdbc2e2cf02815dcf27cf54d3469480f0a39a5a65d40bcd8da9832a"
+    },
+    "test/client-sources.test.mjs": {
+      "sha256": "2cb3f93caab0a0ed77e21f0a9d23126585be0aeccbd934b2e5efe499cb8386a0",
+      "size": 4389,
+      "signature": "2d2a596955ee5966ca3e6233ed678903ba075129b5d9cf80d4d3a9154d7de2fd"
     }
   }
 }

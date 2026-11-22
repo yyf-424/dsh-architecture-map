@@ -685,7 +685,7 @@ npm test
 | W6 | 2026-11-22 | 2026-11-22 | `node --test test/remote-consent.test.mjs`；`npm run check && npm test` | 6/6 + 40/40 pass；首次问一次、始终写入 index、拒绝/跳过零授权、无 userQuestions 失败关闭、撤销、子会话继承、自动维护仅 workspace 授权 | ☑ | 问题只含 host/root，不含文件内容 |
 | W7 | 2026-11-22 | 2026-11-22 | `node --test test/remote-tools.test.mjs`；`node --test test/plugin-registration.test.mjs`；`npm run check && npm test` | 5/5 + 1/1 + 46/46 pass；list/status 不询问；tree/read/grep 首次询问；拒绝/无服务时零内容；skill 与双 README 已更新 | ☑ | 讨论子会话限制在 W12 手工确认 |
 | W8 | 2026-11-22 | 2026-11-22 | `node --test test/remote-sync.test.mjs`；`npm run check && npm test` | 1/1 + 46/46 pass；远程 full/list/hash/commit；changed/added/deleted；stale+refreshAnchors；同步日志无 cat/sed/head；manifest 在本地 | ☑ | 只哈希 manifest 文件；未知二进制扩展可能报 added，W11 细化 |
-| W9 | 2026-11-22 | 2026-11-22（静态） | `node --check client.js`；`npm test` | 46/46 pass；source picker/回退/状态条代码完成；**GUI 手工矩阵待验证** | ☐ | 需切换 profile 或合并后点按 |
+| W9 | 2026-11-22 | 2026-11-22（静态+逻辑） | `node --check client.js`；`node --test test/client-sources.test.mjs`；`npm test` | 4/4 + 50/50 pass；source/path/readAll 逻辑覆盖；**GUI 手工矩阵待验证** | ☐ | 需切换 profile 或合并后点按 |
 | W10 | | | `node --test test/remote-{indexer,commands,maintainer}.test.mjs` | | ☐ | |
 | W11 | | | `node --test test/remote-{nongit,security}.test.mjs` | | ☐ | |
 | W12 | | | §4 W12 的 11 项 + 真远程 | | ☐ | |
