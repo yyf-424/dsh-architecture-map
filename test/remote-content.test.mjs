@@ -173,6 +173,15 @@ test('remote fingerprint tracks git head and dirty state', { skip: SKIP || !HAS_
     assert.equal(dirty.dirty, true)
     assert.equal(dirty.head, clean.head)
     assert.notEqual(dirty.digest, clean.digest)
+
+    // A dirty/untracked path can change again without changing git status.
+    await writeFile(path.join(item.root, 'new.ts'), 'export const n = 5\n')
+    const dirtyAgain = await item.content.fingerprint()
+    assert.notEqual(dirtyAgain.digest, dirty.digest)
+
+    await writeFile(path.join(item.root, 'a.ts'), 'export const a = 99\n')
+    const trackedDirty = await item.content.fingerprint()
+    assert.notEqual(trackedDirty.digest, dirtyAgain.digest)
   } finally {
     await cleanup(item)
   }

@@ -1,7 +1,7 @@
 {
   "schema": 1,
-  "rev": 29,
-  "updatedAt": "2026-11-22T17:29:52.064Z",
+  "rev": 31,
+  "updatedAt": "2026-11-22T17:31:42.598Z",
   "layout": {
     "mode": "layered",
     "direction": "LR"
@@ -204,7 +204,7 @@
       "anchors": [
         {
           "path": "src/host/remote/content.js",
-          "hash": "6463ab47b03b6767aee5923d3a15f665266ccc8a7c5da64077b38be9404bb61c"
+          "hash": "df3cb550c8305e83564c429fd28df8a61c7eb28fb9df6a43d5347bf4b866da3c"
         }
       ],
       "status": "stale"

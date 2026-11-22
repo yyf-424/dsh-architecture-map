@@ -134,7 +134,7 @@ The plugin can map a repository on a remote Linux host over your existing SSH co
 
 Auto maintenance runs only after a durable “always allow”, for at most 50 changed files, at most once per 10 minutes. Larger changes only mark affected nodes stale. Real remote end-to-end verification is the remaining pre-release step.
 
-Remote reads are confined to the registered root: `..`, absolute escapes, and symlinks pointing outside are rejected. Git projects use HEAD plus `git status` for change detection; non-git projects use path/size/mtime metadata, and only analyzed files are hashed.
+Remote reads are confined to the registered root: `..`, absolute escapes, and symlinks pointing outside are rejected. Git projects use HEAD plus `git status`, and hash changed/untracked paths so a second edit to an already-dirty file still moves the fingerprint; non-git projects use path/size/mtime metadata, and only analyzed files are hashed.
 
 ## How memory works (no extra plugin)
 

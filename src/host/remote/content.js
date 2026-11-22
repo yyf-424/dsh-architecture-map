@@ -321,11 +321,33 @@ export function createRemoteContent(config = {}) {
         head = null
       }
       const status = await client.exec(['git', '-C', root, 'status', '--porcelain=v1', '-z', '--untracked-files=all'])
+      // A dirty path can change again without changing `git status`; include
+      // content hashes for changed/untracked paths so the digest moves.
+      const changedPaths = []
+      try {
+        const changed = await client.exec(['git', '-C', root, 'diff', '--name-only', '-z', 'HEAD'])
+        changedPaths.push(...changed.stdout.split('\0').filter(Boolean))
+      } catch {}
+      try {
+        const untracked = await client.exec(['git', '-C', root, 'ls-files', '--others', '--exclude-standard', '-z'])
+        changedPaths.push(...untracked.stdout.split('\0').filter(Boolean))
+      } catch {}
+      const safePaths = [...new Set(changedPaths)].filter(rel =>
+        typeof rel === 'string'
+        && rel !== ''
+        && !rel.startsWith('/')
+        && !rel.split('/').includes('..')
+        && !/[\0\n\r]/.test(rel))
+      const hashes = await hashMany(safePaths)
+      const changedDigest = safePaths
+        .map(rel => `${rel}\0${hashes.get(rel) ?? ''}`)
+        .sort()
+        .join('\0')
       return {
         vcs: 'git',
         head,
         dirty: status.stdout !== '',
-        digest: sha256(`${head ?? ''}\0${status.stdout}`),
+        digest: sha256(`${head ?? ''}\0${status.stdout}\0${changedDigest}`),
       }
     }
     // Non-git fingerprints use path + size + mtime metadata only. No content is
