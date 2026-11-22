@@ -60,10 +60,11 @@ export function createMemoryStore(config = {}, deps = {}) {
   for (const key of ['maxFiles', 'maxFileBytes', 'maxDocBytes']) {
     if (!Number.isInteger(limits[key]) || limits[key] <= 0) limits[key] = DEFAULT_LIMITS[key]
   }
+  const resolveConfig = { dir: limits.dir, ssh: config.ssh }
 
   async function scan(rawWorkspace, context) {
-    const ws = await resolveWorkspace(rawWorkspace, context, { dir: limits.dir })
-    if (!ws.content || typeof ws.content.scan !== 'function') {
+    const ws = await resolveWorkspace(rawWorkspace, context, resolveConfig)
+    if (ws.kind === 'remote' || !ws.content || typeof ws.content.scan !== 'function') {
       fail('REMOTE_SYNC_UNAVAILABLE', 'remote sync is not wired yet; the local project still works')
     }
     const scanned = await ws.content.scan({
@@ -231,7 +232,7 @@ export function createMemoryStore(config = {}, deps = {}) {
     if (!Array.isArray(input.paths) || input.paths.length === 0) {
       fail('INVALID_PATH', 'paths must be a non-empty array of workspace-relative files')
     }
-    const ws = await resolveWorkspace(rawWorkspace, context, { dir: limits.dir })
+    const ws = await resolveWorkspace(rawWorkspace, context, resolveConfig)
     if (ws.kind === 'remote') {
       fail('REMOTE_SYNC_UNAVAILABLE', 'remote commit is not wired yet; the local project still works')
     }
@@ -281,7 +282,7 @@ export function createMemoryStore(config = {}, deps = {}) {
   }
 
   async function getDoc(rawWorkspace, id, context) {
-    const ws = await resolveWorkspace(rawWorkspace, context, { dir: limits.dir })
+    const ws = await resolveWorkspace(rawWorkspace, context, resolveConfig)
     const rel = docRelative(id)
     const file = path.join(ws.stateDir, rel)
     try {
@@ -299,7 +300,7 @@ export function createMemoryStore(config = {}, deps = {}) {
       fail('LIMIT_EXCEEDED', `content is ${input.content.length} characters; the limit is ${limits.maxDocBytes}`)
     }
     const mode = input.mode === 'append' ? 'append' : 'overwrite'
-    const ws = await resolveWorkspace(rawWorkspace, context, { dir: limits.dir })
+    const ws = await resolveWorkspace(rawWorkspace, context, resolveConfig)
     const rel = docRelative(input.id)
     const file = path.join(ws.stateDir, rel)
     await fs.mkdir(path.dirname(file), { recursive: true })

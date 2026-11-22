@@ -1,7 +1,7 @@
 {
   "schema": 1,
-  "rev": 12,
-  "updatedAt": "2026-11-22T09:25:14.230Z",
+  "rev": 14,
+  "updatedAt": "2026-11-22T09:26:20.371Z",
   "layout": {
     "mode": "layered",
     "direction": "LR"
@@ -46,7 +46,7 @@
         {
           "path": "src/host/graph.js",
           "symbol": "createGraphStore",
-          "hash": "e4f4d9751d5ecaebe1d8b7a04eb91458b4c5d3357829e7cfc6a8fdca3a60f782"
+          "hash": "68382499000a5d6bdf5b27e96365f196713299bf363f5c529b6429ad3ead85eb"
         }
       ],
       "status": "fresh"
@@ -61,7 +61,7 @@
         {
           "path": "src/host/memory.js",
           "symbol": "createMemoryStore",
-          "hash": "4fcf4283b2ae1af853e313c478f59fa5cb6f5b602765b29ccab35bc99a132246"
+          "hash": "efc0576bdaed2bdccfc85416ab6bd065aab1f6b888932bf25496f1908a5f8a39"
         }
       ],
       "status": "fresh"
@@ -76,7 +76,7 @@
         {
           "path": "src/host/export.js",
           "symbol": "createExporter",
-          "hash": "19846b7a3b5277bf26f4adc9a1b7e12999dc2168b108226dac1d8c817b554d0f"
+          "hash": "85e7ed30c9ec537a7ca1d9d1b5b641453866da67c369052e0963a75c2bebbb2f"
         }
       ],
       "status": "fresh"
@@ -145,7 +145,7 @@
       "title": "Project index",
       "kind": "module",
       "group": "g-host",
-      "summary": "Resolves a local workspace path or remote:<id> into workspaceRoot + per-project stateDir; owns .archmap/index.json and attaches the local content source.",
+      "summary": "Resolves a local workspace path or remote:<id> into workspaceRoot + per-project stateDir; owns .archmap/index.json and attaches the local or SSH remote content source.",
       "anchors": [
         {
           "path": "src/host/projects.js",
@@ -153,12 +153,12 @@
         },
         {
           "path": "src/host/workspace.js",
-          "hash": "9dedb19c3f051b6bd0c4312bd35b94ddceac2e672c51195804bab3dc05aa41c0"
+          "hash": "f1e4a34523fd1fce3e01d94fde7775636a5a56ff4163ab36742b7bb3c391e72a"
         },
         {
           "path": "src/host/graph.js",
           "symbol": "createGraphStore",
-          "hash": "e4f4d9751d5ecaebe1d8b7a04eb91458b4c5d3357829e7cfc6a8fdca3a60f782"
+          "hash": "68382499000a5d6bdf5b27e96365f196713299bf363f5c529b6429ad3ead85eb"
         }
       ],
       "status": "fresh"
@@ -190,7 +190,7 @@
       "anchors": [
         {
           "path": "src/host/remote/ssh.js",
-          "hash": "46480ec34b405e8b7c8f7df11e610572bd5204dcb691131b39d059342de95141"
+          "hash": "d7499ef5411ac5814a27a517ad6c30167ad515213e6f6739fdb2422e7ac248db"
         }
       ],
       "status": "fresh"
@@ -336,6 +336,14 @@
       "from": "n12",
       "to": "n11",
       "label": "runs read-only commands",
+      "kind": "dependency",
+      "status": "fresh"
+    },
+    {
+      "id": "e17",
+      "from": "n9",
+      "to": "n12",
+      "label": "attaches remote content",
       "kind": "dependency",
       "status": "fresh"
     }

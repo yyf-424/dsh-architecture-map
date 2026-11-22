@@ -567,9 +567,10 @@ export function createGraphStore(config = {}) {
   for (const key of ['maxNodes', 'maxEdges', 'maxGroups', 'maxSummary', 'maxAnchors']) {
     if (!Number.isInteger(limits[key]) || limits[key] <= 0) limits[key] = DEFAULTS[key]
   }
+  const resolveConfig = { dir: limits.dir, ssh: config.ssh }
 
   async function resolve(rawWorkspace, context) {
-    return resolveWorkspace(rawWorkspace, context, { dir: limits.dir })
+    return resolveWorkspace(rawWorkspace, context, resolveConfig)
   }
 
   async function readGraphAt(ws) {

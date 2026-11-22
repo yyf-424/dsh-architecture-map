@@ -20,4 +20,4 @@ This repository is both the plugin and its first fixture. The graph is intention
 - The panel follows the session workspace; open a session whose workspace is this repository to see this graph.
 - Node positions are browser-local.
 - Mermaid is vendored; `renderMermaid:auto` disables it when `dsh-mermaid-plus` is enabled.
-- Remote projects are in development: the project index, local content source, read-only SSH transport and remote content source exist; remote workspace wiring, consent and tools arrive later.
+- Remote projects are in development: the project index, local and remote content sources, SSH transport, and remote graph/doc/export wiring exist. Consent, remote read tools, sync and panel sources arrive later.

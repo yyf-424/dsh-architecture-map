@@ -644,7 +644,7 @@ npm test
 - `n12 → n11`（传输）；
 - `n15 → n12`（索引/哈希）、`n15 → n2`（标 stale）；
 - `n16 → n15`（变更驱动维护）、`n16 → n8`（沿用 skill）；
-- `n2 → n10`、`n3 → n10`、`n9 → n10`、`n5 → n9`。
+- `n2 → n10`、`n3 → n10`、`n9 → n10`、`n9 → n12`、`n5 → n9`。
 
 验证方法：
 
@@ -681,7 +681,7 @@ npm test
 | W2 | 2026-11-22 | 2026-11-22 | `node --test test/content-local.test.mjs`；`npm run check && npm test`；新旧 scan 对拍 | 5/5 + 17/17 pass；旧 `memory.scan` 与新 `content.scan` 输出完全一致；13 个锚点 0 mismatch；`.git` worktree 文件被跳过 | ☑ | 纯重构；本地格式/行为未变 |
 | W3 | 2026-11-22 | 2026-11-22 | `node --test test/remote-ssh.test.mjs`；`npm run check && npm test` | 7/7 + 24/24 pass；引号/超时/取消/输出上限/鉴权错误映射全过；假 SSH 不连网 | ☑ | 无远程写命令 |
 | W4 | 2026-11-22 | 2026-11-22 | `node --test test/remote-content.test.mjs`；`npm run check && npm test` | 7/7 + 31/31 pass；git/非 git 的 list、hash/describe、分页读、grep、fingerprint；只传哈希不传内容；无写命令 | ☑ | 非 git 指纹目前哈希全量文件，W11 优化 |
-| W5 | | | `node --test test/remote-project.test.mjs` | | ☐ | |
+| W5 | 2026-11-22 | 2026-11-22 | `node --test test/remote-project.test.mjs`；`npm run check && npm test` | 3/3 + 34/34 pass；远程建图锚点=远端 sha256；数据在 `.archmap/projects/staging/`；doc/export 正常；假 SSH 日志无写命令；sync/commit 仍关闭 | ☑ | 远程内容只经哈希/元数据，不落源码 |
 | W6 | | | `node --test test/remote-consent.test.mjs` | | ☐ | |
 | W7 | | | `node --test test/remote-tools.test.mjs` | | ☐ | |
 | W8 | | | `node --test test/remote-sync.test.mjs` | | ☐ | |

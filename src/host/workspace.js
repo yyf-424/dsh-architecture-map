@@ -10,8 +10,11 @@ import { promises as fs } from 'node:fs'
 import path from 'node:path'
 import { LOCAL_PROJECT_ID, loadIndex, projectById } from './projects.js'
 import { createLocalContent } from './content/local.js'
+import { createSshClient } from './remote/ssh.js'
+import { createRemoteContent } from './remote/content.js'
 
 const DEFAULT_DIR = '.archmap'
+const remoteContents = new Map()
 
 function fail(code, message) {
   const error = new Error(`${code}: ${message}`)
@@ -49,6 +52,18 @@ function stateDirUnder(root, relative) {
     fail('PATH_ESCAPE', 'project state directory escapes the workspace')
   }
   return stateDir
+}
+
+/** Reuse one client/content pair per remote + transport configuration. */
+function remoteContentFor(project, config) {
+  const ssh = config.ssh ?? {}
+  const key = JSON.stringify([project.host, project.root, project.vcs, ssh.binary ?? 'ssh', ssh.env ?? {}])
+  const cached = remoteContents.get(key)
+  if (cached) return cached
+  const client = createSshClient({ ...ssh, host: project.host })
+  const content = createRemoteContent({ client, root: project.root, vcs: project.vcs })
+  remoteContents.set(key, content)
+  return content
 }
 
 /**
@@ -91,7 +106,7 @@ export async function resolveWorkspace(raw, context, config = {}) {
       workspaceRoot: project.root,
       stateDir,
       pathBase: hub,
-      content: null,
+      content: remoteContentFor(project, config),
       project,
       index,
     }

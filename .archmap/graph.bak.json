@@ -1,7 +1,7 @@
 {
   "schema": 1,
-  "rev": 11,
-  "updatedAt": "2026-11-22T09:22:37.720Z",
+  "rev": 13,
+  "updatedAt": "2026-11-22T09:26:18.261Z",
   "layout": {
     "mode": "layered",
     "direction": "LR"
@@ -49,7 +49,7 @@
           "hash": "e4f4d9751d5ecaebe1d8b7a04eb91458b4c5d3357829e7cfc6a8fdca3a60f782"
         }
       ],
-      "status": "fresh"
+      "status": "stale"
     },
     {
       "id": "n3",
@@ -64,7 +64,7 @@
           "hash": "4fcf4283b2ae1af853e313c478f59fa5cb6f5b602765b29ccab35bc99a132246"
         }
       ],
-      "status": "fresh"
+      "status": "stale"
     },
     {
       "id": "n4",
@@ -79,7 +79,7 @@
           "hash": "19846b7a3b5277bf26f4adc9a1b7e12999dc2168b108226dac1d8c817b554d0f"
         }
       ],
-      "status": "fresh"
+      "status": "stale"
     },
     {
       "id": "n5",
@@ -161,7 +161,7 @@
           "hash": "e4f4d9751d5ecaebe1d8b7a04eb91458b4c5d3357829e7cfc6a8fdca3a60f782"
         }
       ],
-      "status": "fresh"
+      "status": "stale"
     },
     {
       "id": "n10",
@@ -191,6 +191,20 @@
         {
           "path": "src/host/remote/ssh.js",
           "hash": "46480ec34b405e8b7c8f7df11e610572bd5204dcb691131b39d059342de95141"
+        }
+      ],
+      "status": "stale"
+    },
+    {
+      "id": "n12",
+      "title": "Remote content source",
+      "kind": "module",
+      "group": "g-host",
+      "summary": "Implements the read-only content contract over SSH: git/non-git tree listing, batch sha256, describe (text/binary/oversized), bounded reads, grep and a change fingerprint. Contents stay remote; only hashes and metadata cross the connection.",
+      "anchors": [
+        {
+          "path": "src/host/remote/content.js",
+          "hash": "c239969c924fd5ed708c889200c6aab8d50df5caf72084d63438bd74db949150"
         }
       ],
       "status": "fresh"
@@ -314,6 +328,14 @@
       "from": "n9",
       "to": "n10",
       "label": "attaches local content",
+      "kind": "dependency",
+      "status": "fresh"
+    },
+    {
+      "id": "e16",
+      "from": "n12",
+      "to": "n11",
+      "label": "runs read-only commands",
       "kind": "dependency",
       "status": "fresh"
     }

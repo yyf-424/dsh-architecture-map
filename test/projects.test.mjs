@@ -160,15 +160,14 @@ test('stores keep the legacy local layout while an index exists', async () => {
     await store.patch('remote:staging', {
       baseRev: 0,
       ops: [
-        { op: 'add_node', node: { id: 'r1', title: 'Remote', anchors: [{ path: 'src/app.ts' }] } },
+        { op: 'add_node', node: { id: 'r1', title: 'Remote' } },
       ],
     }, remoteContext)
     const remote = await store.readGraph('remote:staging', remoteContext)
     assert.equal(remote.rev, 1)
     const remoteFile = path.join(dir, '.archmap', 'projects', 'staging', 'graph.json')
     assert.equal(JSON.parse(await readFile(remoteFile, 'utf8')).nodes[0].id, 'r1')
-    // W1 does not wire remote content, so the anchor hash is left for W5.
-    assert.equal(remote.nodes[0].anchors[0].hash, undefined)
+    assert.deepEqual(remote.nodes[0].anchors, [])
 
     const doc = await memory.putDoc('remote:staging', { id: 'overview', content: '# Remote\n' }, remoteContext)
     assert.ok(doc.bytes > 0)

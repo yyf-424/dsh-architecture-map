@@ -197,7 +197,7 @@ function svgSource(graph) {
 export function createExporter(deps = {}) {
   const resolve = typeof deps.resolve === 'function'
     ? deps.resolve
-    : (rawWorkspace, context) => resolveWorkspace(rawWorkspace, context, { dir: deps.dir ?? '.archmap' })
+    : (rawWorkspace, context) => resolveWorkspace(rawWorkspace, context, { dir: deps.dir ?? '.archmap', ssh: deps.ssh })
 
   async function run(rawWorkspace, input = {}, context) {
     if (typeof deps.readGraph !== 'function') fail('UNAVAILABLE', 'graph reader is not available')
