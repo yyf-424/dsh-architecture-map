@@ -1,7 +1,7 @@
 {
   "schema": 1,
-  "rev": 19,
-  "updatedAt": "2026-11-22T09:32:56.815Z",
+  "rev": 21,
+  "updatedAt": "2026-11-22T09:35:03.305Z",
   "layout": {
     "mode": "layered",
     "direction": "LR"
@@ -56,15 +56,15 @@
       "title": "Memory store",
       "kind": "module",
       "group": "g-host",
-      "summary": "Builds the manifest, classifies code vs cosmetic changes, reports affected nodes, marks stale status and refreshes anchors. Scans and describes files through the content source; serves the dossier.",
+      "summary": "Builds the manifest and incremental sync. Local scans hash/classify files; remote sync lists paths and hashes only manifest files, so no source content crosses the connection. Reports affected nodes, marks stale and serves the dossier.",
       "anchors": [
         {
           "path": "src/host/memory.js",
           "symbol": "createMemoryStore",
-          "hash": "efc0576bdaed2bdccfc85416ab6bd065aab1f6b888932bf25496f1908a5f8a39"
+          "hash": "b6b7fd98cd4265d2be0861ad03f38f76abb901945b43d596fae711f557589783"
         }
       ],
-      "status": "stale"
+      "status": "fresh"
     },
     {
       "id": "n4",
@@ -94,7 +94,7 @@
           "hash": "0a159584c825dd70b994f7b2281cc08eb7c31c28757646fde0b96ba8c93619da"
         }
       ],
-      "status": "fresh"
+      "status": "stale"
     },
     {
       "id": "n6",
@@ -109,7 +109,7 @@
           "hash": "0a159584c825dd70b994f7b2281cc08eb7c31c28757646fde0b96ba8c93619da"
         }
       ],
-      "status": "fresh"
+      "status": "stale"
     },
     {
       "id": "n7",
@@ -124,7 +124,7 @@
           "hash": "0a159584c825dd70b994f7b2281cc08eb7c31c28757646fde0b96ba8c93619da"
         }
       ],
-      "status": "fresh"
+      "status": "stale"
     },
     {
       "id": "n8",
@@ -168,7 +168,7 @@
       "title": "Content source",
       "kind": "module",
       "group": "g-host",
-      "summary": "Read-only content contract: scan files, hash anchors, describe commit candidates and serve bounded reads. The local adapter preserves the previous memory scan semantics; a remote adapter arrives with the SSH source.",
+      "summary": "Read-only content contract: scan, anchor hashes, describe commit candidates and bounded reads. Local adapter preserves the previous scan semantics and exports the shared binary-path filter; the remote adapter lives in n12.",
       "anchors": [
         {
           "path": "src/host/content/index.js",
@@ -176,10 +176,10 @@
         },
         {
           "path": "src/host/content/local.js",
-          "hash": "3cfc34b749b00c3221bd66bc063b8c34270b5b894425ffbbc8b3824a5aa61b37"
+          "hash": "d6bacab6efdbcdc2b0dd0f30cb0b3593e9afc7a383187820ea9d6e75d7fe9172"
         }
       ],
-      "status": "stale"
+      "status": "fresh"
     },
     {
       "id": "n11",

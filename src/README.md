@@ -22,7 +22,7 @@ Host implementation (plain ESM) and the hand-written client bundle.
 
 The client is the package-root `client.js` (hand-written, no build step):
 
-- right-sidebar panel and layered SVG canvas,
+- right-sidebar panel with a local/remote source picker and remote status line, plus a layered SVG canvas,
 - node dragging and local positions,
 - discussion buttons and the `subagentchat` resource,
 - the `mermaid` chat fence renderer.

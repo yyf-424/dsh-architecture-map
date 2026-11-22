@@ -14,8 +14,10 @@ window.__ModuleLoader__.load({
 
     const TYPE_ID = 'dsh-architecture-map/graph'
     const GRAPH_PATH = '.archmap/graph.json'
+    const INDEX_PATH = '.archmap/index.json'
     const POLL_MS = 2000
     const POSITIONS_KEY = 'dsh-architecture-map:positions:'
+    const SOURCE_KEY = 'dsh-architecture-map:source:'
     const MERMAID_CONFIG_URL = '/x-dsh-architecture-map/config'
     const LOCALE_NS = 'architecture-map'
     const EN = {
@@ -26,6 +28,12 @@ window.__ModuleLoader__.load({
       'panel.hint': 'drag to pan · wheel to zoom',
       'panel.empty': 'Click a node to see its summary, anchors and edges.',
       'panel.error': 'Graph unavailable',
+      'panel.noGraphRemote': 'No graph yet for this remote project.',
+      'panel.remoteHint': 'Ask the agent to create one with arch_graph_patch (workspace: remote:<id>).',
+      'panel.indexError': 'Project index unavailable; showing the local graph.',
+      'source.label': 'Source',
+      'source.local': 'Local',
+      'source.consent': 'consent',
       'legend.fresh': 'fresh',
       'legend.stale': 'stale',
       'legend.proposed': 'proposed',
@@ -47,6 +55,12 @@ window.__ModuleLoader__.load({
       'panel.hint': '拖动平移 · 滚轮缩放',
       'panel.empty': '点击节点查看摘要、锚点和边。',
       'panel.error': '图不可用',
+      'panel.noGraphRemote': '这个远程项目还没有图。',
+      'panel.remoteHint': '让 agent 用 arch_graph_patch（workspace: remote:<id>）创建一张。',
+      'panel.indexError': '项目索引不可用，已回退到本地图。',
+      'source.label': '来源',
+      'source.local': '本地',
+      'source.consent': '授权',
       'legend.fresh': '有效',
       'legend.stale': '过期',
       'legend.proposed': '提案',
@@ -97,6 +111,23 @@ window.__ModuleLoader__.load({
         padding: '3px 8px',
         fontSize: '12px',
         cursor: 'pointer',
+      },
+      select: {
+        border: '1px solid var(--dsw-alias-border-secondary, rgba(127,127,127,0.35))',
+        background: 'var(--dsw-alias-bg-secondary, rgba(127,127,127,0.08))',
+        color: 'inherit',
+        borderRadius: '6px',
+        padding: '3px 6px',
+        fontSize: '12px',
+        maxWidth: '220px',
+      },
+      sourceBar: {
+        fontSize: '11px',
+        opacity: 0.7,
+        margin: '-4px 0 10px',
+        overflow: 'hidden',
+        textOverflow: 'ellipsis',
+        whiteSpace: 'nowrap',
       },
       empty: {
         border: '1px dashed var(--dsw-alias-border-secondary, rgba(127,127,127,0.35))',
@@ -346,6 +377,68 @@ window.__ModuleLoader__.load({
       }
     }
 
+    function localSource() {
+      return { id: 'local', kind: 'local', label: t('source.local'), graphPath: GRAPH_PATH, meta: '' }
+    }
+
+    function sourcesFromIndex(index) {
+      const projects = Array.isArray(index?.projects) ? index.projects : []
+      const sources = []
+      for (const project of projects) {
+        if (!project || typeof project.id !== 'string') continue
+        if (project.kind === 'local') {
+          sources.push(localSource())
+          continue
+        }
+        if (!/^[a-z][a-z0-9_-]{0,63}$/.test(project.id)) continue
+        const safeDir = typeof project.dir === 'string'
+          && project.dir !== ''
+          && !project.dir.startsWith('/')
+          && !project.dir.split('/').includes('..')
+          ? project.dir
+          : `projects/${project.id}`
+        const parts = [
+          project.host,
+          project.root,
+          project.vcs,
+          `${t('source.consent')} ${project.consent?.scope ?? 'none'}`,
+        ].filter(Boolean)
+        sources.push({
+          id: project.id,
+          kind: 'remote',
+          label: project.title || project.id,
+          graphPath: `.archmap/${safeDir}/graph.json`,
+          meta: parts.join(' · '),
+        })
+      }
+      const local = sources.find(source => source.kind === 'local')
+      const rest = sources.filter(source => source.kind !== 'local')
+      return local ? [local, ...rest] : [localSource(), ...rest]
+    }
+
+    function isMissingFile(error) {
+      const text = `${error?.code ?? ''} ${error?.message ?? ''}`.toLowerCase()
+      return text.includes('enoent') || text.includes('not found') || text.includes('not_found') || text.includes('fs_not_found')
+    }
+
+    function readSavedSource(cwd) {
+      if (!cwd) return null
+      try {
+        return window.localStorage.getItem(SOURCE_KEY + cwd)
+      } catch {
+        return null
+      }
+    }
+
+    function writeSavedSource(cwd, id) {
+      if (!cwd) return
+      try {
+        window.localStorage.setItem(SOURCE_KEY + cwd, id)
+      } catch {
+        // Source choice is a view preference; the in-memory selection still works.
+      }
+    }
+
     function gridLayout(nodes) {
       const count = Math.max(nodes.length, 1)
       const cols = Math.min(2, Math.max(1, Math.ceil(Math.sqrt(count))))
@@ -437,26 +530,28 @@ window.__ModuleLoader__.load({
       return { positions, width, height }
     }
 
-    function readAll(ctx, sessionId, signal) {
+    function readAll(ctx, sessionId, filePath, signal) {
       return (async () => {
         let offset = 1
         let text = ''
         for (let page = 0; page < 100; page += 1) {
-          const result = await ctx.remote.workspaceFiles.read(sessionId, GRAPH_PATH, { offset }, signal)
+          const result = await ctx.remote.workspaceFiles.read(sessionId, filePath, { offset }, signal)
           if (!result || result.ok !== true) {
             const reason = result?.error?.message ?? result?.error?.code ?? 'read failed'
-            throw new Error(reason)
+            const error = new Error(reason)
+            error.code = result?.error?.code
+            throw error
           }
           text += (text === '' ? '' : '\n') + result.value.text
           if (result.value.eof) {
             return JSON.parse(text)
           }
           if (!Number.isInteger(result.value.lines) || result.value.lines <= 0) {
-            throw new Error('graph read made no progress')
+            throw new Error(`${filePath} read made no progress`)
           }
           offset += result.value.lines
         }
-        throw new Error('graph file is too large to read in one view')
+        throw new Error(`${filePath} is too large to read in one view`)
       })()
     }
 
@@ -498,16 +593,19 @@ window.__ModuleLoader__.load({
       return function GraphTab(props) {
         const sessionId = props?.sessionId
         const cwd = props.useSessions(sessions => sessions.byId[sessionId]?.cwd)
-        const storageKey = cwd ? POSITIONS_KEY + cwd : undefined
         const [state, setState] = React.useState({ status: 'loading', graph: null, error: null })
         const [selectedId, setSelectedId] = React.useState(null)
         const [discussState, setDiscussState] = React.useState({ status: 'idle', error: null })
         const [tick, setTick] = React.useState(0)
         const [view, setView] = React.useState({ zoom: 1, x: 0, y: 0 })
         const [positions, setPositions] = React.useState({})
+        const [sources, setSources] = React.useState([])
+        const [sourceId, setSourceId] = React.useState(null)
+        const [indexError, setIndexError] = React.useState(null)
         const svgRef = React.useRef(null)
         const panRef = React.useRef(null)
         const fittedRef = React.useRef(false)
+        const storageKey = cwd ? `${POSITIONS_KEY}${cwd}:${sourceId ?? 'local'}` : undefined
 
         React.useEffect(() => {
           setDiscussState({ status: 'idle', error: null })
@@ -515,16 +613,75 @@ window.__ModuleLoader__.load({
 
         React.useEffect(() => {
           if (!sessionId) {
+            setSources([localSource()])
+            setSourceId('local')
+            setIndexError(null)
+            return undefined
+          }
+          let disposed = false
+          let controller
+          const loadIndex = async () => {
+            if (controller) controller.abort()
+            controller = new AbortController()
+            try {
+              const index = await readAll(ctx, sessionId, INDEX_PATH, controller.signal)
+              if (!disposed) {
+                setSources(sourcesFromIndex(index))
+                setIndexError(null)
+              }
+            } catch (error) {
+              if (disposed || error?.name === 'AbortError') return
+              if (!disposed) {
+                setSources([localSource()])
+                setIndexError(isMissingFile(error) ? null : (error?.message ?? String(error)))
+              }
+            }
+          }
+          loadIndex()
+          return () => {
+            disposed = true
+            if (controller) controller.abort()
+          }
+        }, [sessionId, cwd, tick])
+
+        React.useEffect(() => {
+          if (sources.length === 0) return
+          setSourceId(current => {
+            if (current && sources.some(source => source.id === current)) return current
+            const saved = readSavedSource(cwd)
+            if (saved && sources.some(source => source.id === saved)) return saved
+            return sources.find(source => source.kind === 'local')?.id ?? sources[0].id
+          })
+        }, [sources, cwd])
+
+        React.useEffect(() => {
+          if (sourceId) writeSavedSource(cwd, sourceId)
+        }, [sourceId, cwd])
+
+        React.useEffect(() => {
+          setState({ status: 'loading', graph: null, error: null })
+          setSelectedId(null)
+          fittedRef.current = false
+        }, [sourceId])
+
+        React.useEffect(() => {
+          if (!sessionId) {
             setState({ status: 'error', graph: null, error: 'No session is bound to this tab.' })
             return undefined
           }
+          if (!sourceId) {
+            setState({ status: 'loading', graph: null, error: null })
+            return undefined
+          }
+          const source = sources.find(item => item.id === sourceId)
+          const graphPath = source?.graphPath ?? GRAPH_PATH
           let disposed = false
           let controller
           const load = async () => {
             if (controller) controller.abort()
             controller = new AbortController()
             try {
-              const graph = await readAll(ctx, sessionId, controller.signal)
+              const graph = await readAll(ctx, sessionId, graphPath, controller.signal)
               if (!disposed) {
                 setState(previous => previous.graph?.rev === graph.rev ? previous : { status: 'live', graph, error: null })
               }
@@ -544,9 +701,10 @@ window.__ModuleLoader__.load({
             clearInterval(timer)
             if (controller) controller.abort()
           }
-        }, [sessionId, tick])
+        }, [sessionId, tick, sourceId, sources])
 
         const graph = state.graph
+        const source = sources.find(item => item.id === sourceId) ?? null
         const nodes = Array.isArray(graph?.nodes) ? graph.nodes : []
         const edges = Array.isArray(graph?.edges) ? graph.edges : []
         const selected = nodes.find(node => node.id === selectedId)
@@ -722,10 +880,28 @@ window.__ModuleLoader__.load({
           panRef.current = null
         }
 
+        const sourcePicker = sources.length > 1
+          ? h('select', {
+              value: sourceId ?? '',
+              style: styles.select,
+              title: t('source.label'),
+              'aria-label': t('source.label'),
+              onChange: event => {
+                const next = event.target.value
+                setSourceId(next)
+                writeSavedSource(cwd, next)
+              },
+            }, sources.map(item => h('option', { key: item.id, value: item.id },
+              item.kind === 'local' ? t('source.local') : item.label)))
+          : null
+
         const header = h(
           'div',
           { style: styles.header },
-          h('h2', { style: styles.title }, t('panel.title')),
+          h('div', { style: { display: 'flex', alignItems: 'center', gap: '8px', minWidth: 0 } },
+            h('h2', { style: styles.title }, t('panel.title')),
+            sourcePicker,
+          ),
           h(
             'div',
             { style: { display: 'flex', alignItems: 'center', gap: '8px' } },
@@ -740,6 +916,12 @@ window.__ModuleLoader__.load({
             }, t('panel.refresh')),
           ),
         )
+
+        const sourceBar = indexError
+          ? h('div', { style: styles.sourceBar }, `${t('panel.indexError')} ${indexError}`)
+          : source?.kind === 'remote'
+            ? h('div', { style: styles.sourceBar, title: source.meta }, `${source.label} · ${source.meta}`)
+            : null
 
         const toolbar = nodes.length === 0
           ? null
@@ -760,8 +942,11 @@ window.__ModuleLoader__.load({
 
         const canvas = nodes.length === 0
           ? h('div', { style: styles.empty },
-            h('div', { style: { fontWeight: 600, marginBottom: '6px' } }, 'No graph yet'),
-            h('div', null, 'Ask the agent to create one with arch_graph_patch in this session workspace.'),
+            h('div', { style: { fontWeight: 600, marginBottom: '6px' } },
+              source?.kind === 'remote' ? t('panel.noGraphRemote') : 'No graph yet'),
+            h('div', null, source?.kind === 'remote'
+              ? t('panel.remoteHint').replace('<id>', source.id)
+              : 'Ask the agent to create one with arch_graph_patch in this session workspace.'),
             cwd ? h('div', { style: { ...styles.mono, marginTop: '8px', opacity: 0.65 } }, cwd) : null,
             state.error ? h('div', { style: { marginTop: '8px', opacity: 0.7 } }, state.error) : null)
           : h(
@@ -884,6 +1069,7 @@ window.__ModuleLoader__.load({
 
         return h('div', { style: styles.root },
           header,
+          sourceBar,
           state.status === 'error' && state.error
             ? h('div', { style: styles.error }, `${t('panel.error')}: ${state.error}`)
             : null,

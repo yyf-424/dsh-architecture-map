@@ -1,7 +1,7 @@
 {
   "schema": 1,
-  "rev": 20,
-  "updatedAt": "2026-11-22T09:32:58.874Z",
+  "rev": 22,
+  "updatedAt": "2026-11-22T09:35:05.562Z",
   "layout": {
     "mode": "layered",
     "direction": "LR"
@@ -86,12 +86,12 @@
       "title": "Sidebar panel",
       "kind": "module",
       "group": "g-client",
-      "summary": "Reads graph.json for the session workspace, polls every 2s, renders header/detail/discussion controls, and opens its right-sidebar tab when the Host /arch command succeeds.",
+      "summary": "Sidebar panel reads .archmap/graph.json or the selected project graph via workspaceFiles, offers a local/remote source picker with a remote status line, and polls the selected source every 2s before delegating to the canvas.",
       "anchors": [
         {
           "path": "client.js",
           "symbol": "createGraphTab",
-          "hash": "0a159584c825dd70b994f7b2281cc08eb7c31c28757646fde0b96ba8c93619da"
+          "hash": "607fa43650eb3e233dc0362e3663d13fc5b4e90e51559e2063bd1707be33f885"
         }
       ],
       "status": "fresh"
@@ -106,7 +106,7 @@
         {
           "path": "client.js",
           "symbol": "NodeShape",
-          "hash": "0a159584c825dd70b994f7b2281cc08eb7c31c28757646fde0b96ba8c93619da"
+          "hash": "607fa43650eb3e233dc0362e3663d13fc5b4e90e51559e2063bd1707be33f885"
         }
       ],
       "status": "fresh"
@@ -121,7 +121,7 @@
         {
           "path": "client.js",
           "symbol": "MermaidFence",
-          "hash": "0a159584c825dd70b994f7b2281cc08eb7c31c28757646fde0b96ba8c93619da"
+          "hash": "607fa43650eb3e233dc0362e3663d13fc5b4e90e51559e2063bd1707be33f885"
         }
       ],
       "status": "fresh"
