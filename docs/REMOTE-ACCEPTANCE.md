@@ -262,4 +262,5 @@ ssh <host> 'ln -sf /etc/hostname /tmp/archmap-acceptance/leak.txt'
 | 非 git | metadata 指纹检测到真实修改 PASS（恢复内容后 mtime 变化仍会产生新指纹，这是预期） |
 | 修复 | readRange 的 SSH stderr 噪音；dirty git 文件二次编辑漏检 |
 | 测试 | 65/65 |
-| 待办 | DSH GUI 授权卡点击、面板 stale、真实自动维护子会话 |
+| GUI | omen-acceptance 来源可打开；workspace 始终允许；17:40:08 检测 version 2，n2 stale（38s） |
+| 待办 | 父会话空闲时自动维护未启动；待手动 `/arch remote update` 或活跃父会话下触发 |
