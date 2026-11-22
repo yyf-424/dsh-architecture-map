@@ -1,6 +1,6 @@
 {
   "schema": 1,
-  "generatedAt": "2026-11-22T09:22:43.065Z",
+  "generatedAt": "2026-11-22T09:25:14.236Z",
   "root": ".",
   "files": {
     ".github/workflows/ci.yml": {
@@ -159,9 +159,9 @@
       "signature": "c9a03f949839b8fa84f9ab29c7273478d6b84f87a0cdfd88182c401dfbd9c7e6"
     },
     "src/README.md": {
-      "sha256": "2a6c94d5aac4ee4a8c40f5c234a996137aafbc6892880d63d0a9d9206a8dd3a3",
-      "size": 1460,
-      "signature": "8bc6c3835ec422c8c1e8607814f29dda8de83284c022e0066977f025bbc68529"
+      "sha256": "d5545801759b6543c5a01701b2ef6f5507b3def170bdf3651a9558bb5e4c7acf",
+      "size": 1586,
+      "signature": "bce7384cb676aca2240fa27a2bb7de5fc018dd04ce7f260f222009cf2cc43207"
     },
     "test/export.test.mjs": {
       "sha256": "fb03011566a1b3817b56893d35f2a3508fb8ec287ec92274ca9a7860cae6e3d6",
@@ -199,9 +199,9 @@
       "signature": "392683268e187f32d88b100490bf86d2a821316c0e51a0ebb3ec63c41ef958b3"
     },
     "docs/REMOTE-BUILD.md": {
-      "sha256": "25944c294e376c1846145d2cc25f897246865f181aa322b6baab0b29b5d5a79a",
-      "size": 29937,
-      "signature": "a88d89adc66e0440e558f89776062132a824abba5d7d19780de32ce91a633cc1"
+      "sha256": "0cb17081a8739299069d18865e4b51bbf2c03e7f47b61167440d6d72a485136b",
+      "size": 30172,
+      "signature": "2e8c8e237c6c7ac9ed2f7688f243b2502c01b545caf0e23b175f375ed60dd920"
     },
     "docs/REMOTE-PLAN.md": {
       "sha256": "2fe3b9548abef3434099bdcacec4560d0a02a5667040f5aa58673423ebbf8043",
@@ -224,9 +224,9 @@
       "signature": "b4ec1bca90336a649ad0c73ffd32b6ace0d88089a7a678b3845fd0247db64709"
     },
     "src/host/remote/ssh.js": {
-      "sha256": "31df0ccb64b47d258fb84b7a971b18b43e625301aa9ed1c0237f23dc52dbe903",
-      "size": 10784,
-      "signature": "46480ec34b405e8b7c8f7df11e610572bd5204dcb691131b39d059342de95141"
+      "sha256": "6ac2ad54d27e718cc0d52bf15e37a506c2ac167e37d3d2c30ea778ae31f9aacb",
+      "size": 10882,
+      "signature": "d7499ef5411ac5814a27a517ad6c30167ad515213e6f6739fdb2422e7ac248db"
     },
     "test/remote-ssh.test.mjs": {
       "sha256": "17b4effe82e75280128eb620ae900650057491010191efcd6375d5d5c71e12c5",
@@ -237,6 +237,16 @@
       "sha256": "6f7ed9432b9de1593f3f5f6a2b408270e168e7797a23493d35bdf1b2aacffcc2",
       "size": 822,
       "signature": "35c650c7eead09686dfe71dfadf3b99409224919c6bc8ed354b9b9eca5ede347"
+    },
+    "src/host/remote/content.js": {
+      "sha256": "b699394e51b8f794b9114060b226a9f27fb7940f241bff46e4650e1515c23e2f",
+      "size": 12076,
+      "signature": "c239969c924fd5ed708c889200c6aab8d50df5caf72084d63438bd74db949150"
+    },
+    "test/remote-content.test.mjs": {
+      "sha256": "81e30d035646e6a55956b70e66781637c5f448df47e341a779c5752d8dc3f275",
+      "size": 9232,
+      "signature": "d8f47e07edd422a845d50aef9492e92c7bf052118a14a513ba434e6b158abd75"
     }
   }
 }

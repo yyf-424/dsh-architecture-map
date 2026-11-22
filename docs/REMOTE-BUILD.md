@@ -680,7 +680,7 @@ npm test
 | W1 | 2026-11-22 | 2026-11-22 | `node --test test/projects.test.mjs`；`npm run check && npm test` | 5/5 + 12/12 pass；本地 graph rev 7 / 8 nodes / 8 edges 不变；远程项目落到 `.archmap/projects/staging/` | ☑ | 远程 sync/commit 仍失败关闭，W8 接 |
 | W2 | 2026-11-22 | 2026-11-22 | `node --test test/content-local.test.mjs`；`npm run check && npm test`；新旧 scan 对拍 | 5/5 + 17/17 pass；旧 `memory.scan` 与新 `content.scan` 输出完全一致；13 个锚点 0 mismatch；`.git` worktree 文件被跳过 | ☑ | 纯重构；本地格式/行为未变 |
 | W3 | 2026-11-22 | 2026-11-22 | `node --test test/remote-ssh.test.mjs`；`npm run check && npm test` | 7/7 + 24/24 pass；引号/超时/取消/输出上限/鉴权错误映射全过；假 SSH 不连网 | ☑ | 无远程写命令 |
-| W4 | | | `node --test test/remote-content.test.mjs` | | ☐ | |
+| W4 | 2026-11-22 | 2026-11-22 | `node --test test/remote-content.test.mjs`；`npm run check && npm test` | 7/7 + 31/31 pass；git/非 git 的 list、hash/describe、分页读、grep、fingerprint；只传哈希不传内容；无写命令 | ☑ | 非 git 指纹目前哈希全量文件，W11 优化 |
 | W5 | | | `node --test test/remote-project.test.mjs` | | ☐ | |
 | W6 | | | `node --test test/remote-consent.test.mjs` | | ☐ | |
 | W7 | | | `node --test test/remote-tools.test.mjs` | | ☐ | |

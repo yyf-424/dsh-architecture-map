@@ -1,7 +1,7 @@
 {
   "schema": 1,
-  "rev": 11,
-  "updatedAt": "2026-11-22T09:22:37.720Z",
+  "rev": 12,
+  "updatedAt": "2026-11-22T09:25:14.230Z",
   "layout": {
     "mode": "layered",
     "direction": "LR"
@@ -194,6 +194,20 @@
         }
       ],
       "status": "fresh"
+    },
+    {
+      "id": "n12",
+      "title": "Remote content source",
+      "kind": "module",
+      "group": "g-host",
+      "summary": "Implements the read-only content contract over SSH: git/non-git tree listing, batch sha256, describe (text/binary/oversized), bounded reads, grep and a change fingerprint. Contents stay remote; only hashes and metadata cross the connection.",
+      "anchors": [
+        {
+          "path": "src/host/remote/content.js",
+          "hash": "c239969c924fd5ed708c889200c6aab8d50df5caf72084d63438bd74db949150"
+        }
+      ],
+      "status": "fresh"
     }
   ],
   "edges": [
@@ -314,6 +328,14 @@
       "from": "n9",
       "to": "n10",
       "label": "attaches local content",
+      "kind": "dependency",
+      "status": "fresh"
+    },
+    {
+      "id": "e16",
+      "from": "n12",
+      "to": "n11",
+      "label": "runs read-only commands",
       "kind": "dependency",
       "status": "fresh"
     }

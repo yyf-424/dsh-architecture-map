@@ -225,7 +225,10 @@ export function createSshClient(config = {}) {
             const text = stderr.toString('utf8')
             const codeId = classify(text, code)
             const detail = stderrSummary(text) || `ssh exited ${code}`
-            finish(sshError(codeId, `${host}: ${detail}`))
+            const error = sshError(codeId, `${host}: ${detail}`)
+            error.exitCode = code
+            error.stderr = text
+            finish(error)
           })
 
           timer = setTimeout(() => {
