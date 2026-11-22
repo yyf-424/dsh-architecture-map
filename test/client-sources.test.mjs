@@ -77,7 +77,9 @@ test('sourcesFromIndex adds a local fallback and rejects unsafe entries', () => 
 test('isMissingFile recognizes a missing workspace file', () => {
   assert.equal(helpers.isMissingFile({ code: 'FS_NOT_FOUND', message: 'missing' }), true)
   assert.equal(helpers.isMissingFile({ message: 'ENOENT: no such file' }), true)
+  assert.equal(helpers.isMissingFile({ message: 'no entry at ".archmap/index.json"' }), true)
   assert.equal(helpers.isMissingFile({ code: 'FS_PERMISSION_DENIED', message: 'denied' }), false)
+  assert.equal(helpers.isMissingFile({ message: "Expected property name or '}' in JSON at position 1" }), false)
 })
 
 test('readAll reads the requested path, pages lines and preserves error codes', async () => {

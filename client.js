@@ -31,6 +31,7 @@ window.__ModuleLoader__.load({
       'panel.noGraphRemote': 'No graph yet for this remote project.',
       'panel.remoteHint': 'Ask the agent to create one with arch_graph_patch (workspace: remote:<id>).',
       'panel.indexError': 'Project index unavailable; showing the local graph.',
+      'panel.noGraph': 'no graph',
       'source.label': 'Source',
       'source.local': 'Local',
       'source.consent': 'consent',
@@ -58,6 +59,7 @@ window.__ModuleLoader__.load({
       'panel.noGraphRemote': '这个远程项目还没有图。',
       'panel.remoteHint': '让 agent 用 arch_graph_patch（workspace: remote:<id>）创建一张。',
       'panel.indexError': '项目索引不可用，已回退到本地图。',
+      'panel.noGraph': '暂无图',
       'source.label': '来源',
       'source.local': '本地',
       'source.consent': '授权',
@@ -418,7 +420,12 @@ window.__ModuleLoader__.load({
 
     function isMissingFile(error) {
       const text = `${error?.code ?? ''} ${error?.message ?? ''}`.toLowerCase()
-      return text.includes('enoent') || text.includes('not found') || text.includes('not_found') || text.includes('fs_not_found')
+      return text.includes('enoent')
+        || text.includes('not found')
+        || text.includes('not_found')
+        || text.includes('fs_not_found')
+        || text.includes('no entry at')
+        || text.includes('does not exist')
     }
 
     function readSavedSource(cwd) {
@@ -687,6 +694,10 @@ window.__ModuleLoader__.load({
               }
             } catch (error) {
               if (disposed || error?.name === 'AbortError') return
+              if (isMissingFile(error)) {
+                setState({ status: 'empty', graph: null, error: null })
+                return
+              }
               setState(previous => ({
                 status: previous.graph ? 'live' : 'error',
                 graph: previous.graph,
@@ -907,7 +918,7 @@ window.__ModuleLoader__.load({
             { style: { display: 'flex', alignItems: 'center', gap: '8px' } },
             h('span', { style: styles.meta, title: cwd ?? undefined }, graph
               ? `rev ${graph.rev} · ${nodes.length} nodes · ${edges.length} edges`
-              : 'loading…'),
+              : state.status === 'empty' ? t('panel.noGraph') : 'loading…'),
             h('button', {
               type: 'button',
               style: styles.button,
