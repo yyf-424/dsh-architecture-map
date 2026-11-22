@@ -1,7 +1,7 @@
 # 远程仓库架构查看 · 施工图（节点级）
 
 > 配套：[docs/REMOTE-PLAN.md](REMOTE-PLAN.md)
-> 状态：可施工
+> 状态：已完成并在 0.2.0 开发者预览中验收；保留为节点级施工记录。
 > 规则：**一个节点做完 → 验证 → 全部通过后才开始下一个节点**；验证结果记到 §7。
 
 ---
@@ -73,7 +73,7 @@ PATH="$PWD/test/fixtures/fake-ssh:$PATH" npm test
 准备一台**非生产** Linux 机器和一个小仓库：
 
 ```sh
-ssh <host> 'git -C /tmp/archmap-remote status --porcelain'
+ssh <host> 'git -C <remote-home>/archmap-remote status --porcelain'
 ```
 
 人工验收只在 W12 做；W1–W11 全部可以用假 SSH 验证。
@@ -605,10 +605,10 @@ npm test
 **步骤（人工）**
 
 1. 本地基线：`npm run check && npm test`，本地面板正常；
-2. 真远程添加：`/arch remote add staging <host> /tmp/archmap-remote`；
+2. 真远程添加：`/arch remote add staging <host> <remote-home>/archmap-remote`；
 3. 首次读：授权卡出现；**拒绝** → 无内容；**本次会话** → 可读；**始终允许** → index 记录；
 4. 建档：让 agent 读几个文件、建 3–5 个节点、写 overview；图落在 `.archmap/projects/staging/`；
-5. 远程无写入：`ssh <host> 'git -C /tmp/archmap-remote status --porcelain'` 与操作前一致；
+5. 远程无写入：`ssh <host> 'git -C <remote-home>/archmap-remote status --porcelain'` 与操作前一致；
 6. 变更刷新：在远程改一个文件 → 60 秒内面板出现 stale/pending；满足条件时自动维护子会话运行并更新图；
 7. 上限：一次改 >50 文件 → 只提示，不自动改图；
 8. 撤销：`/arch remote revoke staging` → 再读触发询问，自动维护停止；
@@ -672,7 +672,7 @@ npm test
 
 ## 7. 验证记录
 
-每完成一个节点，追加一行；**没有记录视为未验证，不得进入下一节点**。
+每完成一个节点，追加一行；**没有记录视为未验证，不得进入下一节点**。下表中的 7/12/17/…/64 是各节点当时的测试数，历史记录保留原值；0.2.0 最终为 **65/65**。
 
 | 节点 | 开始日期 | 验证日期 | 验证命令/步骤 | 结果摘要 | 通过 | 备注 |
 |---|---|---|---|---|---|---|
@@ -683,11 +683,11 @@ npm test
 | W4 | 2026-11-22 | 2026-11-22 | `node --test test/remote-content.test.mjs`；`npm run check && npm test` | 7/7 + 31/31 pass；git/非 git 的 list、hash/describe、分页读、grep、fingerprint；只传哈希不传内容；无写命令 | ☑ | 非 git 指纹目前哈希全量文件，W11 优化 |
 | W5 | 2026-11-22 | 2026-11-22 | `node --test test/remote-project.test.mjs`；`npm run check && npm test` | 3/3 + 34/34 pass；远程建图锚点=远端 sha256；数据在 `.archmap/projects/staging/`；doc/export 正常；假 SSH 日志无写命令；sync/commit 仍关闭 | ☑ | 远程内容只经哈希/元数据，不落源码 |
 | W6 | 2026-11-22 | 2026-11-22 | `node --test test/remote-consent.test.mjs`；`npm run check && npm test` | 6/6 + 40/40 pass；首次问一次、始终写入 index、拒绝/跳过零授权、无 userQuestions 失败关闭、撤销、子会话继承、自动维护仅 workspace 授权 | ☑ | 问题只含 host/root，不含文件内容 |
-| W7 | 2026-11-22 | 2026-11-22 | `node --test test/remote-tools.test.mjs`；`node --test test/plugin-registration.test.mjs`；`npm run check && npm test` | 5/5 + 1/1 + 46/46 pass；list/status 不询问；tree/read/grep 首次询问；拒绝/无服务时零内容；skill 与双 README 已更新 | ☑ | 讨论子会话限制在 W12 手工确认 |
+| W7 | 2026-11-22 | 2026-11-22 | `node --test test/remote-tools.test.mjs`；`node --test test/plugin-registration.test.mjs`；`npm run check && npm test` | 5/5 + 1/1 + 46/46 pass；list/status 不询问；tree/read/grep 首次询问；拒绝/无服务时零内容；skill 与双 README 已更新 | ☑ | 讨论子会话限制由工具/插件注册测试覆盖 |
 | W8 | 2026-11-22 | 2026-11-22 | `node --test test/remote-sync.test.mjs`；`npm run check && npm test` | 1/1 + 46/46 pass；远程 full/list/hash/commit；changed/added/deleted；stale+refreshAnchors；同步日志无 cat/sed/head；manifest 在本地 | ☑ | 只哈希 manifest 文件；未知二进制扩展可能报 added，W11 细化 |
 | W9 | 2026-11-22 | 2026-11-22 | `node --check client.js`；`node --test test/client-sources.test.mjs`；`npm test` + 用户 GUI 复验 | 4/4 + 50/50 pass；本地/远程切换、状态行、缺 index 静默回退、持久化、坏 index 回退全部通过 | ☑ | 坏 index 保留技术解析错误文本，功能正确 |
-| W10 | 2026-11-22 | 2026-11-22 | `node --test test/remote-{indexer,maintainer,commands}.test.mjs`；`npm test` | 3+4+3 + 61/61 pass；baseline/change/backoff/state；命令 add/list/select/sync/update/grant/revoke/remove；授权/50 文件/10 分钟/单实例/失败矩阵；客户端选中远程自动 select | ☑ | 真远程 60s 刷新与自动子会话在 W12 验收 |
-| W11 | 2026-11-22 | 2026-11-22 | `node --test test/remote-{nongit,security}.test.mjs`；`npm run check && npm test` | 1+2 + 64/64 pass；非 git 指纹只用 path/size/mtime（日志无哈希/内容命令）；root 外符号链接、`..`、绝对路径全部拒绝；root 内符号链接仍可读 | ☑ | 真远程安全复验并入 W12 |
+| W10 | 2026-11-22 | 2026-11-22 | `node --test test/remote-{indexer,maintainer,commands}.test.mjs`；`npm test` | 3+4+3 + 61/61 pass；baseline/change/backoff/state；命令 add/list/select/sync/update/grant/revoke/remove；授权/50 文件/10 分钟/单实例/失败矩阵；客户端选中远程自动 select | ☑ | 真远程 stale 已验证；自动维护在空闲父会话下跳过，手动 update 兜底 |
+| W11 | 2026-11-22 | 2026-11-22 | `node --test test/remote-{nongit,security}.test.mjs`；`npm run check && npm test` | 1+2 + 64/64 pass；非 git 指纹只用 path/size/mtime（日志无哈希/内容命令）；root 外符号链接、`..`、绝对路径全部拒绝；root 内符号链接仍可读 | ☑ | 真远程 symlink/路径逃逸在 W12 复验 |
 | W12 | 2026-11-22 | 2026-11-22 | [REMOTE-ACCEPTANCE.md](REMOTE-ACCEPTANCE.md) + `scripts/remote-smoke.mjs` + real Linux host | real Linux host：smoke/host pipeline/真实工具+授权/security/non-git PASS；GUI：始终允许、跟踪、38s 检测、n2 stale；真实维护后图 rev3、n2 fresh、modules/n2 doc、manifest version2，远程未写；65/65 | ☑ | 用户接受两项 caveat：维护后 pending 未清零；空闲父会话不自动起子会话，手动 update 兜底 |
 
 ---

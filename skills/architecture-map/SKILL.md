@@ -25,7 +25,7 @@ A workspace can be `remote:<id>`: the code is read over SSH from a registered re
 - `arch_remote_list` lists projects; `arch_remote_status` reports vcs, HEAD/dirty or non-git digest, and consent scope without reading files.
 - `arch_remote_tree`, `arch_remote_read` and `arch_remote_grep` are the only way to inspect remote code. The first content access asks the user for permission; if denied, stop and ask them to allow it. Never use local `read`, `grep`, `glob` or `bash` for these paths — they read the local machine.
 - Paths and anchors are remote-root-relative. Graph and dossier writes stay in the local `.archmap/projects/<id>/`; never write remote files.
-- `arch_sync` / `arch_manifest_commit` support remote in a later milestone. If they return `REMOTE_SYNC_UNAVAILABLE`, report it instead of inventing changes.
+- `arch_sync` / `arch_manifest_commit` work on `remote:<id>` in 0.2.0: sync hashes only manifest files and never pulls source locally. Use `/arch remote sync <id>` for an immediate check and `/arch remote update <id>` to start maintenance; auto maintenance may skip an idle parent session.
 
 ## First pass (bootstrap)
 

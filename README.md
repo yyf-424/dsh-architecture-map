@@ -56,7 +56,7 @@ A static feature preview is included. A recorded 30-second demo GIF is not part 
 
 ## Planned next
 
-- Shared/persisted positions, direct export buttons in the panel, and release packaging polish (CI, packaging, GIF).
+- Shared/persisted positions, direct export buttons in the panel, and a short animated demo (GIF).
 - Remote maintenance polish: start from an idle parent and clear the local pending counter after a run.
 
 ## What it is not
@@ -233,11 +233,11 @@ session workspace by design. Open a session whose workspace is the graph you wan
 | Version | Scope |
 |---|---|
 | 0.1 | graph core and tools, sidebar canvas, node dragging, local position memory, `arch_sync` + manifest + dossier docs, cosmetic diff + stale marking, bundled architecture skill, `arch_discuss`, sidebar discussion buttons, `arch_export`, built-in Mermaid fence rendering |
-| 0.2 | shared/persisted positions, direct export buttons, release polish |
+| 0.2 | read-only remote Linux repositories over SSH (source picker, consent, 60s polling, sync/commands, maintenance), release polish |
 | 0.3 | direct node→discussion bridge, shared/persisted positions, proposals, graph diff |
 | 0.4 | edge discussions, group collapse, Mermaid import, Office export |
 | 0.5 | multiple graphs, PR links, shared team maps |
-| 0.6 | remote repositories over SSH (read-only source, multi-project `.archmap`, automatic refresh) |
+| 0.6 | multiple remote repositories in parallel, remote sharing/export polish |
 
 ## Prior art & acknowledgements
 
@@ -258,7 +258,7 @@ Copied or adapted code keeps its original license header and is listed in [`THIR
 
 ## Design notes
 
-Design and construction notes are kept locally and intentionally not tracked. The tracked README is the public overview; implementation details live in the local `docs/` folder.
+Remote design and construction notes live under `docs/`; early design/planning notes are kept locally and intentionally ignored. The README is the public overview.
 
 ## License
 

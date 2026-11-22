@@ -1,10 +1,12 @@
-# 远程仓库端到端验收（W12）
+# 远程仓库端到端验收（0.2.0）
 
 > 适用：0.2.0（远程开发者预览）
 > 前置：完全退出并重开 DSH；一台**非生产** Linux 机器；SSH key/known_hosts 已配好；本地 hub 工作区。
 > 下文 `<remote-home>` 表示远程 `$HOME` 的绝对路径（例如 `/home/alice`）；远程命令里的 `$HOME` 由远程 shell 展开。
 
 本清单验证真实远程上的只读读取、授权、建图、增量刷新、自动维护、撤销、重启和非 git 兜底。每一步记录“通过/失败 + 现象”。
+
+> 0.2.0 已知偏差：父会话空闲时自动维护不启动，用 `/arch remote update <id>` 手动兜底；维护后本地 `remote-state.pending` 暂未清零。
 
 ---
 
@@ -69,7 +71,7 @@ cd <repo>
 npm run check && npm test
 ```
 
-预期：`64/64` 通过。
+预期：`65/65` 通过。
 
 2. 打开一个本地 hub 工作区（空目录即可）：
 
@@ -221,7 +223,7 @@ ssh <host> 'ln -sf /etc/hostname "$HOME/archmap-acceptance/leak.txt"'
 ## 10. 本地回归
 
 1. 打开原来的本地项目，`/arch` 本地图、档案、导出仍正常。
-2. `npm run check && npm test` 仍为 `64/64`。
+2. `npm run check && npm test` 仍为 `65/65`。
 3. 远程验收没有在本地生成源码副本。
 
 ---

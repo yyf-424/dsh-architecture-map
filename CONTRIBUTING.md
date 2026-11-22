@@ -1,6 +1,6 @@
 # Contributing
 
-Thanks for taking a look. This is a pre-alpha bundle; small, focused changes with tests are easiest to review.
+Thanks for taking a look. This is a 0.2.0 developer-preview bundle; small, focused changes with tests are easiest to review.
 
 ## Development
 
