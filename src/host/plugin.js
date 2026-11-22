@@ -15,6 +15,7 @@ import { createMemoryStore } from './memory.js'
 import { createExporter } from './export.js'
 import { resolveWorkspace } from './workspace.js'
 import { createConsentGate } from './remote/consent.js'
+import { createRemoteTools } from './remote/tools.js'
 
 export const name = 'architecture-map'
 
@@ -255,6 +256,18 @@ const GRAPH_OUTPUT = {
   render: (_args, value) => [{ type: 'text', text: value.text }],
 }
 
+const REMOTE_TEXT_OUTPUT = {
+  schema: {
+    type: 'object',
+    additionalProperties: false,
+    properties: {
+      text: { type: 'string' },
+    },
+    required: ['text'],
+  },
+  render: (_args, value) => [{ type: 'text', text: value.text }],
+}
+
 /**
  * Register the M0/M1 tools and the `/arch` command.
  * @param {import('@deepseek-ai/cordis').Context} ctx - Host plugin context.
@@ -303,6 +316,7 @@ export function apply(ctx, config = {}) {
     return () => { userQuestions = null }
   })
   const consent = createConsentGate({ getUserQuestions: () => userQuestions })
+  const remoteTools = createRemoteTools({ config, consent })
 
   ctx.tools.register({
     name: 'arch_hello',
@@ -563,6 +577,164 @@ export function apply(ctx, config = {}) {
     },
   })
 
+  ctx.tools.register({
+    name: 'arch_remote_list',
+    description:
+      'List local and remote architecture projects registered in this workspace\'s .archmap/index.json. '
+      + 'Metadata only: no remote file content and no consent question.',
+    parameters: {
+      type: 'object',
+      additionalProperties: false,
+      properties: {
+        workspace: {
+          type: 'string',
+          description: 'Absolute local hub workspace or remote:<id>; defaults to the session working directory.',
+        },
+      },
+    },
+    output: REMOTE_TEXT_OUTPUT,
+    async execute(args, exec) {
+      return remoteTools.list(args, exec)
+    },
+  })
+
+  ctx.tools.register({
+    name: 'arch_remote_status',
+    description:
+      'Report a remote project\'s SSH target, vcs, HEAD/dirty state or non-git digest, and consent scope. '
+      + 'Reads metadata only; no file content and no consent question.',
+    parameters: {
+      type: 'object',
+      additionalProperties: false,
+      properties: {
+        id: {
+          type: 'string',
+          pattern: '^[a-z][a-z0-9_-]{0,63}$',
+          description: 'Registered remote project id.',
+        },
+      },
+      required: ['id'],
+    },
+    output: REMOTE_TEXT_OUTPUT,
+    async execute(args, exec) {
+      return remoteTools.status(args, exec)
+    },
+  })
+
+  ctx.tools.register({
+    name: 'arch_remote_tree',
+    description:
+      'List paths in a remote project without reading file contents. Requires remote content consent; '
+      + 'the first call asks the user. Read-only.',
+    parameters: {
+      type: 'object',
+      additionalProperties: false,
+      properties: {
+        id: {
+          type: 'string',
+          pattern: '^[a-z][a-z0-9_-]{0,63}$',
+          description: 'Registered remote project id.',
+        },
+        maxEntries: {
+          type: 'integer',
+          minimum: 1,
+          maximum: 2000,
+          description: 'Maximum paths to print; default 500.',
+        },
+      },
+      required: ['id'],
+    },
+    output: REMOTE_TEXT_OUTPUT,
+    async execute(args, exec) {
+      return remoteTools.tree(args, exec)
+    },
+  })
+
+  ctx.tools.register({
+    name: 'arch_remote_read',
+    description:
+      'Read one remote file with line numbers. Requires remote content consent. '
+      + 'Use arch_remote_grep to locate code, then read ranges with offset/limit. Read-only.',
+    parameters: {
+      type: 'object',
+      additionalProperties: false,
+      properties: {
+        id: {
+          type: 'string',
+          pattern: '^[a-z][a-z0-9_-]{0,63}$',
+          description: 'Registered remote project id.',
+        },
+        path: {
+          type: 'string',
+          description: 'Remote-root-relative POSIX path.',
+        },
+        offset: {
+          type: 'integer',
+          minimum: 1,
+          description: 'First line, 1-based; default 1.',
+        },
+        limit: {
+          type: 'integer',
+          minimum: 1,
+          maximum: 400,
+          description: 'Maximum lines; default 200.',
+        },
+      },
+      required: ['id', 'path'],
+    },
+    output: REMOTE_TEXT_OUTPUT,
+    async execute(args, exec) {
+      return remoteTools.read(args, exec)
+    },
+  })
+
+  ctx.tools.register({
+    name: 'arch_remote_grep',
+    description:
+      'Search remote project files with rg (or grep when rg is unavailable). Requires remote content consent. '
+      + 'Read-only; results are capped.',
+    parameters: {
+      type: 'object',
+      additionalProperties: false,
+      properties: {
+        id: {
+          type: 'string',
+          pattern: '^[a-z][a-z0-9_-]{0,63}$',
+          description: 'Registered remote project id.',
+        },
+        pattern: {
+          type: 'string',
+          description: 'Regular expression passed to rg/grep.',
+        },
+        path: {
+          type: 'string',
+          description: 'Optional remote-root-relative directory to search; defaults to the whole root.',
+        },
+        include: {
+          type: 'string',
+          description: 'Optional glob (for example "*.ts").',
+        },
+        context: {
+          type: 'integer',
+          minimum: 0,
+          maximum: 5,
+          description: 'Context lines around a match; default 0.',
+        },
+        maxResults: {
+          type: 'integer',
+          minimum: 1,
+          maximum: 200,
+          description: 'Maximum matches; default 100.',
+        },
+      },
+      required: ['id', 'pattern'],
+    },
+    output: REMOTE_TEXT_OUTPUT,
+    async execute(args, exec) {
+      return remoteTools.grep(args, exec)
+    },
+  })
+
   // Per-node side conversations are optional: a minimal profile may not
   // compose the subagent service. When it is present, register the tool.
   let agents = null
@@ -575,13 +747,16 @@ export function apply(ctx, config = {}) {
 
   /** Best-effort child restriction: no shell and no generic source-file writes. */
   const DISCUSSION_DENY = ['bash', 'pwsh', 'terminal', 'write', 'edit', 'str_replace_editor', 'apply_patch']
+  /** Remote discussions must read through arch_remote_* instead of local files. */
+  const REMOTE_DISCUSSION_DENY = ['read', 'grep', 'glob']
   const discussionIds = new Set()
+  const discussionRemoteIds = new Set()
 
-  const restrictAgentTools = agent => {
+  const restrictAgentTools = (agent, extraDeny = []) => {
     if (!agent?.ctx?.tools || typeof agent.ctx.tools.restrict !== 'function') return 0
     let applied = 0
     let firstError
-    for (const name of DISCUSSION_DENY) {
+    for (const name of new Set([...DISCUSSION_DENY, ...extraDeny])) {
       try {
         agent.ctx.tools.restrict({ deny: [name] })
         applied += 1
@@ -595,12 +770,12 @@ export function apply(ctx, config = {}) {
     return applied
   }
 
-  const restrictDiscussionChild = childId => {
+  const restrictDiscussionChild = (childId, extraDeny = []) => {
     const id = String(childId)
     discussionIds.add(id)
     if (agents !== null && typeof agents.get === 'function') {
       const child = agents.get(id)
-      if (child) return restrictAgentTools(child)
+      if (child) return restrictAgentTools(child, extraDeny)
     }
     return 0
   }
@@ -622,17 +797,18 @@ export function apply(ctx, config = {}) {
     ctx.on('agent/created', ({ agent }) => {
       if (!agent || !isDiscussionAgent(agent)) return
       discussionIds.add(String(agent.id))
-      restrictAgentTools(agent)
+      const extraDeny = discussionRemoteIds.has(String(agent.id)) ? REMOTE_DISCUSSION_DENY : []
+      restrictAgentTools(agent, extraDeny)
     })
   }
 
   /** An inactive child has no live Agent yet; retry, then rely on agent/created. */
-  const restrictDiscussionChildSoon = childId => {
-    if (restrictDiscussionChild(childId) > 0) return
+  const restrictDiscussionChildSoon = (childId, extraDeny = []) => {
+    if (restrictDiscussionChild(childId, extraDeny) > 0) return
     let attempts = 0
     const timer = setInterval(() => {
       attempts += 1
-      const applied = restrictDiscussionChild(childId)
+      const applied = restrictDiscussionChild(childId, extraDeny)
       if (applied > 0 || attempts >= 10) {
         clearInterval(timer)
         if (applied === 0) console.warn('[architecture-map] discussion child is not live; restriction will apply when it starts')
@@ -676,6 +852,11 @@ export function apply(ctx, config = {}) {
   const startDiscussion = async ({ agent, workspace, target, mode, question, signal, context }) => {
     if (!agent) throw new Error('arch_discuss requires an owning agent session')
     if (subagents === null) throw new Error('arch_discuss requires the subagents service')
+    const remote = String(workspace).startsWith('remote:')
+    const remoteWorkspace = remote ? await resolveWorkspace(workspace, context, config) : null
+    if (remote && !consent.isAllowed(remoteWorkspace, context).allowed) {
+      throw new Error('REMOTE_CONSENT_REQUIRED: allow remote content before starting a discussion')
+    }
     const graph = await store.readGraph(workspace, context)
     const match = /^(node|edge):(.+)$/.exec(String(target ?? ''))
     if (!match) throw new Error('target must be node:<id> or edge:<id>')
@@ -702,7 +883,8 @@ export function apply(ctx, config = {}) {
 
     const existing = await findExisting()
     if (existing) {
-      restrictDiscussionChildSoon(existing.id)
+      if (remote) discussionRemoteIds.add(String(existing.id))
+      restrictDiscussionChildSoon(existing.id, remote ? REMOTE_DISCUSSION_DENY : [])
       return {
         text: `existing ${name} — open it from the subagent catalog.`,
         name: existing.name ?? name,
@@ -726,6 +908,7 @@ export function apply(ctx, config = {}) {
       '- Do not edit source code. Graph edits go through arch_graph_patch with the latest rev; prefer apply:false until the user says apply.',
       '- Do not message the parent agent. Write conclusions to notes/' + id + ' via arch_doc_put with mode "append".',
       '- If an anchor looks stale, call arch_sync and say so before concluding.',
+      remote ? '- This is a remote workspace: read code with arch_remote_tree/arch_remote_read/arch_remote_grep; local read, grep, glob and bash do not see it.' : '',
       chosenMode === 'lite' ? '- You do not inherit the parent conversation; rely on the graph and the dossier.' : '',
       typeof question === 'string' && question.trim() !== '' ? `\nThe user's initial question: ${question.trim()}` : '',
     ].filter(Boolean).join('\n')
@@ -734,6 +917,7 @@ export function apply(ctx, config = {}) {
     // first model turn runs.
     const childId = randomUUID()
     discussionIds.add(childId)
+    if (remote) discussionRemoteIds.add(childId)
     const activation = await subagents.startActivation({
       provider: chosenMode === 'fork' ? 'fork' : 'spawn',
       childId,
@@ -745,7 +929,8 @@ export function apply(ctx, config = {}) {
       delivery: 'caller',
     })
     // The child runs in the background; the caller does not await its result.
-    restrictDiscussionChildSoon(activation.childId)
+    if (remote) consent.inherit(remoteWorkspace, String(activation.childId), parentId)
+    restrictDiscussionChildSoon(activation.childId, remote ? REMOTE_DISCUSSION_DENY : [])
     void activation.result.catch(() => {})
     return {
       text: `started ${activation.name} (${chosenMode}) — open it from the subagent catalog in the session header.`,

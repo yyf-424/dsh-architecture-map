@@ -4,7 +4,7 @@ English | [中文](README.zh.md)
 
 **中文名：架构地图** · An architecture workbench for DeepSeek Harness: a live semantic architecture graph, per-node side conversations, and incremental architecture memory.
 
-> Status: **pre-alpha, working skeleton.** The Host tools, sidebar canvas, local node positions, architecture memory, per-node discussions, deterministic exports and built-in Mermaid rendering work today. Shared positions and release polish are next. Design notes are kept locally and intentionally not tracked.
+> Status: **pre-alpha, working skeleton.** The Host tools, sidebar canvas, local node positions, architecture memory, per-node discussions, deterministic exports, built-in Mermaid rendering and remote read tools (developer preview) work today. Shared positions, remote sync/auto-refresh and release polish are next. Design notes are kept locally and intentionally not tracked.
 
 ---
 
@@ -52,6 +52,7 @@ A static feature preview is included. A recorded 30-second demo GIF is not part 
 - **Deterministic exports** — `arch_export` writes Mermaid flowchart source, a standalone SVG, or a Markdown dossier digest to `.archmap/export/`; graph revision and files stay unchanged.
 - **Built-in Mermaid rendering** — assistant ` ```mermaid ` fences render with a vendored Mermaid 12.2.0 runtime served from the plugin's own Host route. No CDN and no `dsh-mermaid-plus` dependency. Streaming keeps the code block; parse errors fall back to code plus an error line. `renderMermaid: false` disables it.
 - **Per-node side conversations** — `arch_discuss` starts a child for `node:<id>` or `edge:<id>`: `fork` inherits the main conversation's completed turns; `lite` starts fresh with the graph and dossier. Delivery is caller-only, so the main conversation is not polluted; conclusions go to `notes/<id>`. The node detail also has `Discuss (fork)` / `Lite` buttons that open the child in the right sidebar through the `subagentchat` resource. Discussion children are prompt-constrained; shell and generic source-write calls are denied at execution (inherited tool schemas may remain visible in a fork). Graph changes still require approval.
+- **Remote read tools (developer preview)** — `arch_remote_list/status/tree/read/grep` inspect a registered remote Linux repository over SSH without cloning it; content reads are consent-gated, the graph/dossier stay under `.archmap/projects/<id>/`, and remote files are never modified.
 
 ## Planned next
 
@@ -102,6 +103,34 @@ All graph, manifest, dossier and export data lives in `<workspace>/.archmap/`. T
 directory contains only code, skill, vendor, docs and locale. The plugin does not modify a user project's
 `.gitignore`; commit `.archmap/` to share the map, or ignore it for local-only data. Uninstalling the plugin
 does not delete `.archmap/`. Node positions are browser-local and are not part of the graph.
+
+## Remote repositories (developer preview)
+
+The plugin can map a repository on a remote Linux host over your existing SSH config **without cloning it**. Reads are read-only, and the graph/dossier stay in the local workspace.
+
+1. Register the remote in `<workspace>/.archmap/index.json` (the `/arch remote add` command is not wired yet):
+
+```json
+{
+  "schema": 1,
+  "projects": [
+    { "id": "local", "kind": "local", "dir": "." },
+    {
+      "id": "staging", "kind": "remote", "dir": "projects/staging",
+      "transport": "ssh", "host": "build-01", "root": "/srv/app",
+      "vcs": "git", "autoRefresh": true
+    }
+  ]
+}
+```
+
+`host` is an OpenSSH destination from your SSH config; `root` must be an absolute remote path; use `"vcs": "none"` for a non-git directory.
+
+2. Ask the agent to use `arch_remote_list`, `arch_remote_status`, then `arch_remote_tree` / `arch_remote_read` / `arch_remote_grep`. The first content access shows an approval card (session / always / reject); nothing is read before you answer.
+
+3. Graph tools use `workspace: "remote:staging"`; state is written under `.archmap/projects/staging/`. Remote files are never modified.
+
+Remote `arch_sync` / `arch_manifest_commit`, change polling, auto maintenance and the panel source selector are still in progress.
 
 ## How memory works (no extra plugin)
 
@@ -167,6 +196,7 @@ There is no separate "start" button or left-sidebar icon. The plugin adds a righ
 - The canvas is hand-written SVG with a layered layout, not React Flow.
 - Mermaid rendering is on by default (`auto`) but can be disabled with `renderMermaid: off`; a known `dsh-mermaid-plus` installation makes `auto` disable ours.
 - This is pre-alpha; the API and file schema can still change.
+- Remote repositories are a developer preview: the add command, remote sync/auto-refresh and the panel source selector are not available yet.
 
 ## FAQ
 

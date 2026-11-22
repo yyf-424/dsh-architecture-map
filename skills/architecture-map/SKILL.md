@@ -18,12 +18,21 @@ Maintain one canonical graph at `.archmap/graph.json` plus a dossier under `.arc
 7. **Commit after analysis.** `arch_manifest_commit` records files you actually read; never commit files you did not inspect.
 8. **No general memory.** The dossier is only for this graph: overview, modules and node notes. Do not turn it into a conversation-summary store.
 
+## Remote workspaces
+
+A workspace can be `remote:<id>`: the code is read over SSH from a registered remote root and is not on the local disk.
+
+- `arch_remote_list` lists projects; `arch_remote_status` reports vcs, HEAD/dirty or non-git digest, and consent scope without reading files.
+- `arch_remote_tree`, `arch_remote_read` and `arch_remote_grep` are the only way to inspect remote code. The first content access asks the user for permission; if denied, stop and ask them to allow it. Never use local `read`, `grep`, `glob` or `bash` for these paths — they read the local machine.
+- Paths and anchors are remote-root-relative. Graph and dossier writes stay in the local `.archmap/projects/<id>/`; never write remote files.
+- `arch_sync` / `arch_manifest_commit` support remote in a later milestone. If they return `REMOTE_SYNC_UNAVAILABLE`, report it instead of inventing changes.
+
 ## First pass (bootstrap)
 
 1. `arch_sync({ full: true })` to inventory the workspace.
 2. `arch_graph_get` to see the existing graph (possibly empty).
 3. Plan **8–20 responsibility nodes** for a medium project; group large systems by layer/subsystem.
-4. Read representative files: entry points, routes, stores, clients, key services. Skip generated, binary, vendored and ignored files.
+4. Read representative files: entry points, routes, stores, clients, key services. Skip generated, binary, vendored and ignored files. For a remote workspace use `arch_remote_*` instead of local reads.
 5. Add nodes, then edges, in batches; prefer `apply:false` for the first batch.
 6. Write `overview` and `modules/<id>` with `arch_doc_put`.
 7. Commit analyzed files with `arch_manifest_commit`.
@@ -49,7 +58,7 @@ Use `arch_discuss` for a node/edge:
 - `fork` — inherits the main conversation's completed turns; use when the decision depends on conversation context.
 - `lite` — starts fresh from the graph/dossier; cheaper; use for narrow code questions.
 
-The child stays on its target, prefers `apply:false`, writes conclusions to `notes/<id>`, and does not message the parent. The sidebar `Discuss (fork)` / `Lite` buttons are the same operation. See `references/discussion.md`.
+The child stays on its target, prefers `apply:false`, writes conclusions to `notes/<id>`, and does not message the parent. The sidebar `Discuss (fork)` / `Lite` buttons are the same operation. Remote discussions read through `arch_remote_*`; local `read`/`grep`/`glob` are denied for them. See `references/discussion.md`.
 
 ## Graph quality
 

@@ -4,7 +4,7 @@
 
 **DeepSeek Harness 的架构工作台：可交互的语义架构图、按节点开启的侧栏子对话、增量架构记忆。**
 
-> 状态：**pre-alpha，可工作的骨架**。Host 工具、右侧栏画布、节点位置本地记忆、架构记忆、按节点子对话、确定性导出和内置 Mermaid 渲染都已可用；共享位置和发布打磨是下一步。设计文档保存在本地，不纳入版本跟踪。
+> 状态：**pre-alpha，可工作的骨架**。Host 工具、右侧栏画布、节点位置本地记忆、架构记忆、按节点子对话、确定性导出、内置 Mermaid 渲染和远程读取工具（开发者预览）都已可用；共享位置、远程 sync/自动刷新和发布打磨是下一步。设计文档保存在本地，不纳入版本跟踪。
 
 ---
 
@@ -52,6 +52,7 @@ Architecture map 把「项目架构」变成 harness 里**可寻址的一等对�
 - **确定性导出**：`arch_export` 把 Mermaid flowchart、独立 SVG 或 Markdown 档案摘要写到 `.archmap/export/`；不改变 graph rev，也不改源文件。
 - **内置 Mermaid 渲染**：assistant 消息里的 ` ```mermaid ` 块用 vendored Mermaid 12.2.0 渲染，runtime 由本插件 Host 路由提供，不依赖 CDN，也不依赖 `dsh-mermaid-plus`。流式时保留代码块，语法错误回退代码块 + 错误行；`renderMermaid:false` 可关闭。
 - **按节点子对话**：`arch_discuss` 为 `node:<id>` 或 `edge:<id>` 开子会话；`fork` 继承主对话已完成轮次，`lite` 只靠图和档案。结果只走 caller，不污染主对话；结论写进 `notes/<id>`。节点详情里还有 `Discuss (fork)` / `Lite` 按钮，通过 `subagentchat` resource 在右侧栏打开子会话。子会话受提示词约束；shell 和通用源码写调用在执行时会被拒绝（fork 可能仍显示继承的工具 schema）；改图仍需你确认。
+- **远程读取工具（开发者预览）**：`arch_remote_list/status/tree/read/grep` 通过 SSH 查看已登记的远程 Linux 仓库，不 clone；读内容前要授权，图和档案留在 `.archmap/projects/<id>/`，远程文件不被修改。
 
 ## 下一步计划
 
@@ -85,6 +86,34 @@ Architecture map 把「项目架构」变成 harness 里**可寻址的一等对�
 架构图、manifest、档案和导出都在 `<workspace>/.archmap/`；插件安装目录只有代码、skill、vendor、文档和 locale。
 插件不会修改用户项目的 `.gitignore`；想共享就提交 `.archmap/`，想只留本地就自己忽略。卸载插件不会删除
 `.archmap/`。节点位置只存在浏览器本地，不属于图数据。
+
+## 远程仓库（开发者预览）
+
+插件可以通过你现有的 SSH 配置，映射一台远程 Linux 上的仓库，**不需要 clone**。读取是只读的，图和档案保存在本地工作区。
+
+1. 在 `<workspace>/.archmap/index.json` 里登记远程项目（`/arch remote add` 命令还在后续节点）：
+
+```json
+{
+  "schema": 1,
+  "projects": [
+    { "id": "local", "kind": "local", "dir": "." },
+    {
+      "id": "staging", "kind": "remote", "dir": "projects/staging",
+      "transport": "ssh", "host": "build-01", "root": "/srv/app",
+      "vcs": "git", "autoRefresh": true
+    }
+  ]
+}
+```
+
+`host` 是你 SSH 配置里的 OpenSSH 目标；`root` 必须是远程绝对路径；非 git 目录把 `"vcs"` 设为 `"none"`。
+
+2. 让 agent 用 `arch_remote_list`、`arch_remote_status`，再用 `arch_remote_tree` / `arch_remote_read` / `arch_remote_grep`。第一次读取内容会弹授权卡（本次会话 / 始终允许 / 拒绝）；回答前不会读取任何内容。
+
+3. 图工具用 `workspace: "remote:staging"`；数据写在 `.archmap/projects/staging/` 下。远程文件永远不会被修改。
+
+远程 `arch_sync` / `arch_manifest_commit`、变更轮询、自动维护和面板来源选择还在后续节点。
 
 ## 记忆是怎么做的（不需要其他插件）
 
@@ -133,6 +162,7 @@ npm pack --dry-run
 - 画布是手写 SVG + 分层布局，不是 React Flow。
 - Mermaid 默认 `auto` 开启；`renderMermaid: off` 可关；检测到已知的 `dsh-mermaid-plus` 时 `auto` 会关闭本插件渲染。
 - pre-alpha，API 和文件 schema 仍可能变化。
+- 远程仓库是开发者预览：添加命令、远程 sync/自动刷新和面板来源选择还没接上。
 
 ## 安装
 
