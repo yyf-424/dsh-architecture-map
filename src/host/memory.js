@@ -11,6 +11,7 @@ import { promises as fs } from 'node:fs'
 import path from 'node:path'
 import { randomBytes } from 'node:crypto'
 import { hashBuffer, signatureOf } from './signature.js'
+import { normalizeDataDir, resolveWorkspace } from './workspace.js'
 
 const MANIFEST_SCHEMA = 1
 
@@ -52,25 +53,6 @@ function normalizeRelative(value) {
   return segments.join('/')
 }
 
-async function resolveRoot(raw, dir) {
-  if (typeof raw !== 'string' || raw.trim() === '') {
-    fail('WORKSPACE_REQUIRED', 'pass a workspace path or open a session with a working directory')
-  }
-  if (!path.isAbsolute(raw)) fail('INVALID_WORKSPACE', 'workspace must be an absolute path')
-  let real
-  try {
-    real = await fs.realpath(raw)
-  } catch {
-    fail('INVALID_WORKSPACE', `workspace "${raw}" does not exist`)
-  }
-  const stat = await fs.stat(real)
-  if (!stat.isDirectory()) fail('INVALID_WORKSPACE', `workspace "${raw}" is not a directory`)
-  const dataDir = path.resolve(real, dir)
-  const prefix = real.endsWith(path.sep) ? real : real + path.sep
-  if (dataDir !== real && !dataDir.startsWith(prefix)) fail('PATH_ESCAPE', 'data directory escapes the workspace')
-  return { root: real, dataDir }
-}
-
 function docRelative(id) {
   if (typeof id !== 'string' || id.trim() === '') fail('INVALID_DOC', 'id must be a non-empty string')
   if (id === 'overview') return 'overview.md'
@@ -90,15 +72,17 @@ export function createMemoryStore(config = {}, deps = {}) {
   for (const key of Object.keys(DEFAULT_LIMITS)) {
     if (config[key] !== undefined) limits[key] = config[key]
   }
-  if (typeof limits.dir !== 'string' || limits.dir.trim() === '' || path.isAbsolute(limits.dir) || limits.dir.split(/[\\/]/).includes('..')) {
-    limits.dir = DEFAULT_LIMITS.dir
-  }
+  limits.dir = normalizeDataDir(limits.dir)
   for (const key of ['maxFiles', 'maxFileBytes', 'maxDocBytes']) {
     if (!Number.isInteger(limits[key]) || limits[key] <= 0) limits[key] = DEFAULT_LIMITS[key]
   }
 
-  async function scan(rawWorkspace) {
-    const { root } = await resolveRoot(rawWorkspace, limits.dir)
+  async function scan(rawWorkspace, context) {
+    const ws = await resolveWorkspace(rawWorkspace, context, { dir: limits.dir })
+    if (ws.kind === 'remote') {
+      fail('REMOTE_SYNC_UNAVAILABLE', 'remote sync is not wired yet; the local project still works')
+    }
+    const root = ws.workspaceRoot
     const files = new Map()
     let truncated = false
     let skipped = 0
@@ -154,11 +138,11 @@ export function createMemoryStore(config = {}, deps = {}) {
     }
 
     await visit(root)
-    return { root, files, truncated, skipped }
+    return { ws, root, files, truncated, skipped }
   }
 
-  async function readManifest(root) {
-    const file = path.join(root, limits.dir, 'manifest.json')
+  async function readManifest(ws) {
+    const file = path.join(ws.stateDir, 'manifest.json')
     let text
     try {
       text = await fs.readFile(file, 'utf8')
@@ -178,20 +162,19 @@ export function createMemoryStore(config = {}, deps = {}) {
     return parsed
   }
 
-  async function writeManifest(root, manifest) {
-    const dataDir = path.join(root, limits.dir)
-    await fs.mkdir(dataDir, { recursive: true })
-    const file = path.join(dataDir, 'manifest.json')
-    const temp = path.join(dataDir, `manifest.tmp-${process.pid}-${randomBytes(6).toString('hex')}.json`)
+  async function writeManifest(ws, manifest) {
+    await fs.mkdir(ws.stateDir, { recursive: true })
+    const file = path.join(ws.stateDir, 'manifest.json')
+    const temp = path.join(ws.stateDir, `manifest.tmp-${process.pid}-${randomBytes(6).toString('hex')}.json`)
     await fs.writeFile(temp, JSON.stringify(manifest, null, 2) + '\n', 'utf8')
     await fs.rename(temp, file)
   }
 
-  async function affectedNodes(root, changedPaths, scannedFiles) {
+  async function affectedNodes(ws, changedPaths, scannedFiles, context) {
     if (typeof deps.readGraph !== 'function') return []
     let graph
     try {
-      graph = await deps.readGraph(root)
+      graph = await deps.readGraph(ws, context)
     } catch {
       return []
     }
@@ -210,9 +193,10 @@ export function createMemoryStore(config = {}, deps = {}) {
     return hits
   }
 
-  async function sync(rawWorkspace, input = {}) {
-    const scanned = await scan(rawWorkspace)
-    const manifest = await readManifest(scanned.root)
+  async function sync(rawWorkspace, input = {}, context) {
+    const scanned = await scan(rawWorkspace, context)
+    const ws = scanned.ws
+    const manifest = await readManifest(ws)
     let scannedFiles = scanned.files
     let baseFiles = manifest?.files ?? {}
 
@@ -252,12 +236,12 @@ export function createMemoryStore(config = {}, deps = {}) {
     deleted.sort()
     const cosmeticSet = new Set(cosmetic)
     const changedCode = changed.filter(file => !cosmeticSet.has(file))
-    const affected = await affectedNodes(scanned.root, new Set([...added, ...changedCode, ...deleted]), scanned.files)
+    const affected = await affectedNodes(ws, new Set([...added, ...changedCode, ...deleted]), scanned.files, context)
 
     let marked = []
     let graphRev = null
     const lines = [
-      `workspace: ${scanned.root}`,
+      `workspace: ${ws.display}`,
       `mode: ${mode}${manifest ? '' : ' (no manifest yet)'}`,
       `${scanned.files.size} scanned · ${added.length} added · ${changed.length} changed (${changedCode.length} code, ${cosmetic.length} cosmetic) · ${deleted.length} deleted`,
     ]
@@ -291,7 +275,7 @@ export function createMemoryStore(config = {}, deps = {}) {
       } else if (typeof deps.markStale !== 'function') {
         lines.push('markStale: graph writer unavailable; nodes were not marked.')
       } else {
-        const result = await deps.markStale(scanned.root, affected.map(node => node.id))
+        const result = await deps.markStale(ws, affected.map(node => node.id), context)
         marked = Array.isArray(result?.marked) ? result.marked : []
         graphRev = Number.isInteger(result?.rev) ? result.rev : null
         lines.push(`marked ${marked.length} node(s) stale${graphRev === null ? '' : ` (graph rev ${graphRev})`}`)
@@ -311,12 +295,16 @@ export function createMemoryStore(config = {}, deps = {}) {
     }
   }
 
-  async function commit(rawWorkspace, input = {}) {
+  async function commit(rawWorkspace, input = {}, context) {
     if (!Array.isArray(input.paths) || input.paths.length === 0) {
       fail('INVALID_PATH', 'paths must be a non-empty array of workspace-relative files')
     }
-    const { root } = await resolveRoot(rawWorkspace, limits.dir)
-    const manifest = await readManifest(root) ?? {
+    const ws = await resolveWorkspace(rawWorkspace, context, { dir: limits.dir })
+    if (ws.kind === 'remote') {
+      fail('REMOTE_SYNC_UNAVAILABLE', 'remote commit is not wired yet; the local project still works')
+    }
+    const root = ws.workspaceRoot
+    const manifest = await readManifest(ws) ?? {
       schema: MANIFEST_SCHEMA,
       generatedAt: null,
       root: '.',
@@ -356,7 +344,7 @@ export function createMemoryStore(config = {}, deps = {}) {
       root: '.',
       files,
     }
-    await writeManifest(root, next)
+    await writeManifest(ws, next)
     return {
       text: `manifest updated: ${committed} committed · ${removed} removed · ${Object.keys(files).length} tracked`,
       committed,
@@ -364,10 +352,10 @@ export function createMemoryStore(config = {}, deps = {}) {
     }
   }
 
-  async function getDoc(rawWorkspace, id) {
-    const { root } = await resolveRoot(rawWorkspace, limits.dir)
+  async function getDoc(rawWorkspace, id, context) {
+    const ws = await resolveWorkspace(rawWorkspace, context, { dir: limits.dir })
     const rel = docRelative(id)
-    const file = path.join(root, limits.dir, rel)
+    const file = path.join(ws.stateDir, rel)
     try {
       const text = await fs.readFile(file, 'utf8')
       return { text, found: true }
@@ -377,15 +365,15 @@ export function createMemoryStore(config = {}, deps = {}) {
     }
   }
 
-  async function putDoc(rawWorkspace, input = {}) {
+  async function putDoc(rawWorkspace, input = {}, context) {
     if (typeof input.content !== 'string') fail('INVALID_DOC', 'content must be a string')
     if (input.content.length > limits.maxDocBytes) {
       fail('LIMIT_EXCEEDED', `content is ${input.content.length} characters; the limit is ${limits.maxDocBytes}`)
     }
     const mode = input.mode === 'append' ? 'append' : 'overwrite'
-    const { root } = await resolveRoot(rawWorkspace, limits.dir)
+    const ws = await resolveWorkspace(rawWorkspace, context, { dir: limits.dir })
     const rel = docRelative(input.id)
-    const file = path.join(root, limits.dir, rel)
+    const file = path.join(ws.stateDir, rel)
     await fs.mkdir(path.dirname(file), { recursive: true })
     let content = input.content
     if (mode === 'append') {

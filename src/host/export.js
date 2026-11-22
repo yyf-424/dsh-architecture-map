@@ -8,6 +8,7 @@
 import { promises as fs } from 'node:fs'
 import path from 'node:path'
 import { randomBytes } from 'node:crypto'
+import { resolveWorkspace } from './workspace.js'
 
 const FORMATS = Object.freeze({
   mermaid: { file: 'architecture.mmd', label: 'Mermaid' },
@@ -25,22 +26,6 @@ function fail(code, message) {
   const error = new Error(`${code}: ${message}`)
   error.code = code
   throw error
-}
-
-async function resolveRoot(raw) {
-  if (typeof raw !== 'string' || raw.trim() === '') {
-    fail('WORKSPACE_REQUIRED', 'pass a workspace path or open a session with a working directory')
-  }
-  if (!path.isAbsolute(raw)) fail('INVALID_WORKSPACE', 'workspace must be an absolute path')
-  let root
-  try {
-    root = await fs.realpath(raw)
-  } catch {
-    fail('INVALID_WORKSPACE', `workspace "${raw}" does not exist`)
-  }
-  const stat = await fs.stat(root)
-  if (!stat.isDirectory()) fail('INVALID_WORKSPACE', `workspace "${raw}" is not a directory`)
-  return root
 }
 
 function xml(value) {
@@ -210,24 +195,28 @@ function svgSource(graph) {
 }
 
 export function createExporter(deps = {}) {
-  async function run(rawWorkspace, input = {}) {
+  const resolve = typeof deps.resolve === 'function'
+    ? deps.resolve
+    : (rawWorkspace, context) => resolveWorkspace(rawWorkspace, context, { dir: deps.dir ?? '.archmap' })
+
+  async function run(rawWorkspace, input = {}, context) {
     if (typeof deps.readGraph !== 'function') fail('UNAVAILABLE', 'graph reader is not available')
     const format = String(input.format ?? '')
     const spec = FORMATS[format]
     if (!spec) fail('INVALID_FORMAT', 'format must be mermaid, svg or markdown')
-    const root = await resolveRoot(rawWorkspace)
-    const graph = await deps.readGraph(root)
+    const ws = await resolve(rawWorkspace, context)
+    const graph = await deps.readGraph(ws, context)
     let content
     if (format === 'mermaid') content = mermaidSource(graph)
     else if (format === 'svg') content = svgSource(graph)
     else content = markdownSource(graph)
-    const dir = path.join(root, '.archmap', 'export')
+    const dir = path.join(ws.stateDir, 'export')
     await fs.mkdir(dir, { recursive: true })
     const file = path.join(dir, spec.file)
     const temp = `${file}.tmp-${process.pid}-${randomBytes(4).toString('hex')}`
     await fs.writeFile(temp, content, 'utf8')
     await fs.rename(temp, file)
-    const relative = path.posix.join('.archmap/export', spec.file)
+    const relative = path.relative(ws.pathBase, file).split(path.sep).join('/')
     return {
       text: `exported ${spec.label} to ${relative} (${Buffer.byteLength(content, 'utf8')} bytes)`,
       path: relative,

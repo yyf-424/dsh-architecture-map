@@ -12,6 +12,7 @@ import { promises as fs } from 'node:fs'
 import path from 'node:path'
 import { randomBytes } from 'node:crypto'
 import { signatureOf } from './signature.js'
+import { normalizeDataDir, resolveWorkspace } from './workspace.js'
 
 export const GRAPH_SCHEMA = 1
 
@@ -563,41 +564,17 @@ export function createGraphStore(config = {}) {
   for (const key of Object.keys(DEFAULTS)) {
     if (config[key] !== undefined) limits[key] = config[key]
   }
-  if (typeof limits.dir !== 'string' || limits.dir.trim() === '' || path.isAbsolute(limits.dir) || limits.dir.split(/[\\/]/).includes('..')) {
-    limits.dir = DEFAULTS.dir
-  }
+  limits.dir = normalizeDataDir(limits.dir)
   for (const key of ['maxNodes', 'maxEdges', 'maxGroups', 'maxSummary', 'maxAnchors']) {
     if (!Number.isInteger(limits[key]) || limits[key] <= 0) limits[key] = DEFAULTS[key]
   }
 
-  async function resolveRoot(raw) {
-    if (typeof raw !== 'string' || raw.trim() === '') {
-      fail('WORKSPACE_REQUIRED', 'pass a workspace path or open a session with a working directory')
-    }
-    if (!path.isAbsolute(raw)) fail('INVALID_WORKSPACE', 'workspace must be an absolute path')
-    let real
-    try {
-      real = await fs.realpath(raw)
-    } catch {
-      fail('INVALID_WORKSPACE', `workspace "${raw}" does not exist`)
-    }
-    const stat = await fs.stat(real)
-    if (!stat.isDirectory()) fail('INVALID_WORKSPACE', `workspace "${raw}" is not a directory`)
-    return real
+  async function resolve(rawWorkspace, context) {
+    return resolveWorkspace(rawWorkspace, context, { dir: limits.dir })
   }
 
-  function dataDir(root) {
-    const dir = path.resolve(root, limits.dir)
-    const prefix = root.endsWith(path.sep) ? root : root + path.sep
-    if (dir !== root && !dir.startsWith(prefix)) {
-      fail('PATH_ESCAPE', 'data directory escapes the workspace')
-    }
-    return dir
-  }
-
-  async function readGraph(root) {
-    const dir = dataDir(root)
-    const file = path.join(dir, 'graph.json')
+  async function readGraphAt(ws) {
+    const file = path.join(ws.stateDir, 'graph.json')
     let text
     try {
       text = await fs.readFile(file, 'utf8')
@@ -614,24 +591,27 @@ export function createGraphStore(config = {}) {
     return validateGraph(parsed, limits)
   }
 
-  async function writeGraph(root, graph) {
-    const dir = dataDir(root)
-    await fs.mkdir(dir, { recursive: true })
-    const file = path.join(dir, 'graph.json')
-    const backup = path.join(dir, 'graph.bak.json')
+  async function readGraph(rawWorkspace, context) {
+    return readGraphAt(await resolve(rawWorkspace, context))
+  }
+
+  async function writeGraph(ws, graph) {
+    await fs.mkdir(ws.stateDir, { recursive: true })
+    const file = path.join(ws.stateDir, 'graph.json')
+    const backup = path.join(ws.stateDir, 'graph.bak.json')
     try {
       await fs.copyFile(file, backup)
     } catch (error) {
       if (!error || error.code !== 'ENOENT') throw error
     }
-    const temp = path.join(dir, `graph.tmp-${process.pid}-${randomBytes(6).toString('hex')}.json`)
+    const temp = path.join(ws.stateDir, `graph.tmp-${process.pid}-${randomBytes(6).toString('hex')}.json`)
     await fs.writeFile(temp, JSON.stringify(graph, null, 2) + '\n', 'utf8')
     await fs.rename(temp, file)
   }
 
-  async function get(rawWorkspace, query = {}) {
-    const root = await resolveRoot(rawWorkspace)
-    const graph = await readGraph(root)
+  async function get(rawWorkspace, query = {}, context) {
+    const ws = await resolve(rawWorkspace, context)
+    const graph = await readGraphAt(ws)
     const limit = Math.min(Math.max(Number.isInteger(query.limit) ? query.limit : 50, 1), 200)
     const include = Array.isArray(query.include) ? query.include : []
     const depth = Math.min(Math.max(Number.isInteger(query.depth) ? query.depth : 1, 0), 3)
@@ -653,9 +633,10 @@ export function createGraphStore(config = {}) {
   /**
    * Fill missing anchor hashes (and optionally refresh all of them) from the
    * current files. Existing hashes are preserved unless refreshAnchors is true,
-   * so a status-only patch cannot silently hide a stale anchor.
+   * so a status-only patch cannot silently hide a stale anchor. Remote projects
+   * keep their anchors untouched until the remote content source is wired.
    */
-  async function refreshAnchorHashes(root, graph, refreshAll) {
+  async function refreshAnchorHashes(ws, graph, refreshAll) {
     let updated = 0
     const nodes = []
     for (const node of graph.nodes) {
@@ -665,8 +646,12 @@ export function createGraphStore(config = {}) {
           anchors.push(anchor)
           continue
         }
+        if (ws.kind === 'remote') {
+          anchors.push(anchor)
+          continue
+        }
         try {
-          const content = await fs.readFile(path.join(root, anchor.path))
+          const content = await fs.readFile(path.join(ws.workspaceRoot, anchor.path))
           anchors.push({ ...anchor, hash: signatureOf(anchor.path, content) })
           updated += 1
         } catch {
@@ -679,10 +664,10 @@ export function createGraphStore(config = {}) {
     return updated
   }
 
-  async function patch(rawWorkspace, input = {}) {
-    const root = await resolveRoot(rawWorkspace)
-    return withLock(root, async () => {
-      const current = await readGraph(root)
+  async function patch(rawWorkspace, input = {}, context) {
+    const ws = await resolve(rawWorkspace, context)
+    return withLock(ws.stateDir, async () => {
+      const current = await readGraphAt(ws)
       if (!Number.isInteger(input.baseRev) || input.baseRev < 0) {
         fail('INVALID_OP', 'baseRev must be a non-negative integer')
       }
@@ -699,10 +684,10 @@ export function createGraphStore(config = {}) {
           text: `validated ${input.ops.length} op(s), ${changes} change(s); no write (rev stays ${current.rev})\n${formatDiff(diff)}`,
         }
       }
-      const refreshed = await refreshAnchorHashes(root, next, input.refreshAnchors === true)
+      const refreshed = await refreshAnchorHashes(ws, next, input.refreshAnchors === true)
       next.rev = current.rev + 1
       next.updatedAt = new Date().toISOString()
-      await writeGraph(root, next)
+      await writeGraph(ws, next)
       const refreshLine = refreshed > 0 ? `\nanchors refreshed: ${refreshed}` : ''
       return {
         rev: next.rev,

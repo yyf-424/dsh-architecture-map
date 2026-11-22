@@ -56,6 +56,7 @@ A static feature preview is included. A recorded 30-second demo GIF is not part 
 ## Planned next
 
 - Shared/persisted positions, direct export buttons in the panel, and release polish (CI, packaging, GIF).
+- **Remote repositories (in development)** — read-only architecture maps over SSH, with the graph and dossier stored beside the local project under `.archmap/projects/<id>/`.
 
 ## What it is not
 
@@ -202,6 +203,7 @@ session workspace by design. Open a session whose workspace is the graph you wan
 | 0.3 | direct node→discussion bridge, shared/persisted positions, proposals, graph diff |
 | 0.4 | edge discussions, group collapse, Mermaid import, Office export |
 | 0.5 | multiple graphs, PR links, shared team maps |
+| 0.6 | remote repositories over SSH (read-only source, multi-project `.archmap`, automatic refresh) |
 
 ## Prior art & acknowledgements
 

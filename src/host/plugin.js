@@ -13,6 +13,7 @@ import { fileURLToPath } from 'node:url'
 import { createGraphStore, workspaceOf } from './graph.js'
 import { createMemoryStore } from './memory.js'
 import { createExporter } from './export.js'
+import { resolveWorkspace } from './workspace.js'
 
 export const name = 'architecture-map'
 
@@ -269,16 +270,16 @@ export function apply(ctx, config = {}) {
         ? !hasOtherMermaidPlugin(ctx)
         : true
   const store = createGraphStore(config)
-  const markStaleNodes = async (workspace, ids) => {
+  const markStaleNodes = async (workspace, ids, context) => {
     for (let attempt = 0; attempt < 3; attempt += 1) {
-      const graph = await store.readGraph(workspace)
+      const graph = await store.readGraph(workspace, context)
       const wanted = [...new Set(ids)].filter(id => graph.nodes.some(node => node.id === id && node.status !== 'stale'))
       if (wanted.length === 0) return { marked: [], rev: graph.rev }
       try {
         const result = await store.patch(workspace, {
           baseRev: graph.rev,
           ops: wanted.map(id => ({ op: 'update_node', id, patch: { status: 'stale' } })),
-        })
+        }, context)
         return { marked: wanted, rev: result.rev }
       } catch (error) {
         if (!String(error?.message).includes('STALE_REV') || attempt === 2) throw error
@@ -287,7 +288,10 @@ export function apply(ctx, config = {}) {
     return { marked: [], rev: 0 }
   }
   const memory = createMemoryStore(config, { readGraph: store.readGraph, markStale: markStaleNodes })
-  const exporter = createExporter({ readGraph: store.readGraph })
+  const exporter = createExporter({
+    readGraph: store.readGraph,
+    resolve: (raw, context) => resolveWorkspace(raw, context, config),
+  })
 
   ctx.tools.register({
     name: 'arch_hello',
@@ -346,13 +350,13 @@ export function apply(ctx, config = {}) {
         },
         workspace: {
           type: 'string',
-          description: 'Absolute workspace root; defaults to the session working directory.',
+          description: 'Absolute local workspace root or remote:<id>; defaults to the session working directory.',
         },
       },
     },
     output: GRAPH_OUTPUT,
     async execute(args, exec) {
-      return store.get(workspaceOf(args, exec), args)
+      return store.get(workspaceOf(args, exec), args, exec)
     },
   })
 
@@ -386,14 +390,14 @@ export function apply(ctx, config = {}) {
         },
         workspace: {
           type: 'string',
-          description: 'Absolute workspace root; defaults to the session working directory.',
+          description: 'Absolute local workspace root or remote:<id>; defaults to the session working directory.',
         },
       },
       required: ['baseRev', 'ops'],
     },
     output: GRAPH_OUTPUT,
     async execute(args, exec) {
-      return store.patch(workspaceOf(args, exec), args)
+      return store.patch(workspaceOf(args, exec), args, exec)
     },
   })
 
@@ -424,13 +428,13 @@ export function apply(ctx, config = {}) {
         },
         workspace: {
           type: 'string',
-          description: 'Absolute workspace root; defaults to the session working directory.',
+          description: 'Absolute local workspace root or remote:<id>; defaults to the session working directory.',
         },
       },
     },
     output: SYNC_OUTPUT,
     async execute(args, exec) {
-      return memory.sync(workspaceOf(args, exec), args)
+      return memory.sync(workspaceOf(args, exec), args, exec)
     },
   })
 
@@ -450,14 +454,14 @@ export function apply(ctx, config = {}) {
         },
         workspace: {
           type: 'string',
-          description: 'Absolute workspace root; defaults to the session working directory.',
+          description: 'Absolute local workspace root or remote:<id>; defaults to the session working directory.',
         },
       },
       required: ['paths'],
     },
     output: COMMIT_OUTPUT,
     async execute(args, exec) {
-      return memory.commit(workspaceOf(args, exec), args)
+      return memory.commit(workspaceOf(args, exec), args, exec)
     },
   })
 
@@ -475,14 +479,14 @@ export function apply(ctx, config = {}) {
         },
         workspace: {
           type: 'string',
-          description: 'Absolute workspace root; defaults to the session working directory.',
+          description: 'Absolute local workspace root or remote:<id>; defaults to the session working directory.',
         },
       },
       required: ['id'],
     },
     output: DOC_GET_OUTPUT,
     async execute(args, exec) {
-      return memory.getDoc(workspaceOf(args, exec), args.id)
+      return memory.getDoc(workspaceOf(args, exec), args.id, exec)
     },
   })
 
@@ -510,14 +514,14 @@ export function apply(ctx, config = {}) {
         },
         workspace: {
           type: 'string',
-          description: 'Absolute workspace root; defaults to the session working directory.',
+          description: 'Absolute local workspace root or remote:<id>; defaults to the session working directory.',
         },
       },
       required: ['id', 'content'],
     },
     output: DOC_PUT_OUTPUT,
     async execute(args, exec) {
-      return memory.putDoc(workspaceOf(args, exec), args)
+      return memory.putDoc(workspaceOf(args, exec), args, exec)
     },
   })
 
@@ -537,14 +541,14 @@ export function apply(ctx, config = {}) {
         },
         workspace: {
           type: 'string',
-          description: 'Absolute workspace root; defaults to the session working directory.',
+          description: 'Absolute local workspace root or remote:<id>; defaults to the session working directory.',
         },
       },
       required: ['format'],
     },
     output: EXPORT_OUTPUT,
     async execute(args, exec) {
-      return exporter.export(workspaceOf(args, exec), args)
+      return exporter.export(workspaceOf(args, exec), args, exec)
     },
   })
 
@@ -658,10 +662,10 @@ export function apply(ctx, config = {}) {
     }
   }
 
-  const startDiscussion = async ({ agent, workspace, target, mode, question, signal }) => {
+  const startDiscussion = async ({ agent, workspace, target, mode, question, signal, context }) => {
     if (!agent) throw new Error('arch_discuss requires an owning agent session')
     if (subagents === null) throw new Error('arch_discuss requires the subagents service')
-    const graph = await store.readGraph(workspace)
+    const graph = await store.readGraph(workspace, context)
     const match = /^(node|edge):(.+)$/.exec(String(target ?? ''))
     if (!match) throw new Error('target must be node:<id> or edge:<id>')
     const [, kind, id] = match
@@ -771,7 +775,7 @@ export function apply(ctx, config = {}) {
           },
           workspace: {
             type: 'string',
-            description: 'Absolute workspace root; defaults to the session working directory.',
+            description: 'Absolute local workspace root or remote:<id>; defaults to the session working directory.',
           },
         },
         required: ['target'],
@@ -785,6 +789,7 @@ export function apply(ctx, config = {}) {
           mode: args.mode,
           question: args.question,
           signal: exec.signal,
+          context: exec,
         })
         return {
           text: started.text,
@@ -870,6 +875,7 @@ export function apply(ctx, config = {}) {
             target: discuss[1],
             mode: discuss[2],
             signal,
+            context: { agent },
           })
           return {
             kind: 'success',

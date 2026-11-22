@@ -5,6 +5,8 @@ Host implementation (plain ESM) and the hand-written client bundle.
 ## Host
 
 - `host/plugin.js` — entry: `arch_*` tools, `/arch` command, Mermaid static routes, bundled skill registration.
+- `host/projects.js` — `.archmap/index.json` project registry: local and remote entries, validation, atomic writes.
+- `host/workspace.js` — resolves a local path or `remote:<id>` into `workspaceRoot` + per-project `stateDir`.
 - `host/graph.js` — graph schema/validation, store, rev, atomic writes, backup, anchor hashes.
 - `host/memory.js` — manifest, incremental sync, cosmetic signatures, stale marking, dossier docs.
 - `host/export.js` — deterministic Mermaid/SVG/Markdown exports.

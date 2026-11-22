@@ -1,7 +1,7 @@
 {
   "schema": 1,
-  "rev": 6,
-  "updatedAt": "2026-11-21T09:35:25.352Z",
+  "rev": 7,
+  "updatedAt": "2026-11-21T09:37:05.389Z",
   "layout": {
     "mode": "layered",
     "direction": "LR"
@@ -168,10 +168,10 @@
     },
     {
       "id": "e4",
-      "from": "n8",
-      "to": "n1",
-      "label": "guides tool use",
-      "kind": "dependency",
+      "from": "n1",
+      "to": "n8",
+      "label": "registers bundled skill",
+      "kind": "call",
       "status": "fresh"
     },
     {
@@ -204,14 +204,6 @@
       "to": "n7",
       "label": "serves Mermaid runtime",
       "kind": "data",
-      "status": "fresh"
-    },
-    {
-      "id": "e9",
-      "from": "n1",
-      "to": "n5",
-      "label": "opens panel",
-      "kind": "call",
       "status": "fresh"
     }
   ]

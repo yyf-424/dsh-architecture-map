@@ -676,7 +676,7 @@ npm test
 | 节点 | 开始日期 | 验证日期 | 验证命令/步骤 | 结果摘要 | 通过 | 备注 |
 |---|---|---|---|---|---|---|
 | W0 | 2026-11-22 | 2026-11-22 | `npm run check && npm test` | 7/7 pass；基线 `d501c41`，graph rev 7 / 8 nodes / 8 edges | ☑ | worktree `feature/remote-source` |
-| W1 | | | `node --test test/projects.test.mjs` | | ☐ | |
+| W1 | 2026-11-22 | 2026-11-22 | `node --test test/projects.test.mjs`；`npm run check && npm test` | 5/5 + 12/12 pass；本地 graph rev 7 / 8 nodes / 8 edges 不变；远程项目落到 `.archmap/projects/staging/` | ☑ | 远程 sync/commit 仍失败关闭，W8 接 |
 | W2 | | | `node --test test/content-local.test.mjs` | | ☐ | |
 | W3 | | | `node --test test/remote-ssh.test.mjs` | | ☐ | |
 | W4 | | | `node --test test/remote-content.test.mjs` | | ☐ | |
