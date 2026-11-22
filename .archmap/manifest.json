@@ -1,6 +1,6 @@
 {
   "schema": 1,
-  "generatedAt": "2026-11-22T17:31:44.659Z",
+  "generatedAt": "2026-11-22T17:33:15.874Z",
   "root": ".",
   "files": {
     ".github/workflows/ci.yml": {
@@ -199,9 +199,9 @@
       "signature": "91c874d4ec7c1d595ff89f60b765f3cd8d9f4351744aa0be2a2c60c8e5f314c9"
     },
     "docs/REMOTE-BUILD.md": {
-      "sha256": "9455f7ba317123fdce555d51be056749030dc516eb184334fb949756db02b792",
-      "size": 32481,
-      "signature": "e458360a42ca80a221fc1257ec81a372cb0a36d7e21aeeb23e2ef3c87c505611"
+      "sha256": "be244a0af26ee367694433addd4c6db05440a4bbf5e479d4e4181ea56b2e56b5",
+      "size": 32600,
+      "signature": "72db5bf9a939bb23fe82fdf28f2d9a316318bf8e713381cbed24fd9b149104f1"
     },
     "docs/REMOTE-PLAN.md": {
       "sha256": "2fe3b9548abef3434099bdcacec4560d0a02a5667040f5aa58673423ebbf8043",
@@ -334,9 +334,9 @@
       "signature": "5323256a5bdb1d48e20882513932d5cc27954495a0d2e61c53098d481a1a9c5a"
     },
     "docs/REMOTE-ACCEPTANCE.md": {
-      "sha256": "7428d255f10e3661d8ff8c7bfdf8aaeb57965c383bea8f9ed10516d9e6e2d1c8",
-      "size": 6953,
-      "signature": "68efa9a8ad1d04d8cc3636cb28497946d50de06c74299ba7554c9340b3b9851d"
+      "sha256": "cb84d2670b205c2ce759171a9d19a64057c79f39e059ec352792d99f679fa573",
+      "size": 8026,
+      "signature": "b8f3d123d8b954c530533edfb58a258d9a3b23ef0abbf6b918267ffbfce84f47"
     },
     "scripts/w12-smoke.mjs": {
       "sha256": "f321778b6f9fd3e45189105d67a592323ca8ac38a428495b6dc9493918bdc0ce",

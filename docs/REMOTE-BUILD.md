@@ -688,7 +688,7 @@ npm test
 | W9 | 2026-11-22 | 2026-11-22 | `node --check client.js`；`node --test test/client-sources.test.mjs`；`npm test` + 用户 GUI 复验 | 4/4 + 50/50 pass；本地/远程切换、状态行、缺 index 静默回退、持久化、坏 index 回退全部通过 | ☑ | 坏 index 保留技术解析错误文本，功能正确 |
 | W10 | 2026-11-22 | 2026-11-22 | `node --test test/remote-{indexer,maintainer,commands}.test.mjs`；`npm test` | 3+4+3 + 61/61 pass；baseline/change/backoff/state；命令 add/list/select/sync/update/grant/revoke/remove；授权/50 文件/10 分钟/单实例/失败矩阵；客户端选中远程自动 select | ☑ | 真远程 60s 刷新与自动子会话在 W12 验收 |
 | W11 | 2026-11-22 | 2026-11-22 | `node --test test/remote-{nongit,security}.test.mjs`；`npm run check && npm test` | 1+2 + 64/64 pass；非 git 指纹只用 path/size/mtime（日志无哈希/内容命令）；root 外符号链接、`..`、绝对路径全部拒绝；root 内符号链接仍可读 | ☑ | 真远程安全复验并入 W12 |
-| W12 | 2026-11-22 | 验收中 | [REMOTE-ACCEPTANCE.md](REMOTE-ACCEPTANCE.md) + `scripts/w12-smoke.mjs` + omen 真远程 | omen Linux：smoke PASS（git/non-git/seeed 只读，seeed/scratch 前后 clean）；host pipeline PASS（anchors/manifest/sync/stale/indexer/maintainer/state/consent）；发现并修复 readRange stderr 噪音、dirty git 文件二次编辑漏检；65/65 | ☐ | 待 GUI 授权卡/面板 stale/真实维护子会话 |
+| W12 | 2026-11-22 | 验收中 | [REMOTE-ACCEPTANCE.md](REMOTE-ACCEPTANCE.md) + `scripts/w12-smoke.mjs` + omen 真远程 | omen Linux：smoke PASS（git/non-git/seeed 只读，seeed/scratch clean）；host pipeline PASS（anchors/manifest/sync/stale/indexer/maintainer/state）；真实工具+授权 PASS（拒绝阻断、始终允许、read/grep、workspace 持久化）；security PASS（root 外 symlink PATH_ESCAPE）；non-git 变化 PASS；修复 readRange stderr 与 dirty git 漏检；65/65 | ☐ | 待 GUI 授权卡/面板 stale/真实维护子会话 |
 
 ---
 

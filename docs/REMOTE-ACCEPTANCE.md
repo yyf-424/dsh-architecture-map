@@ -244,3 +244,22 @@ ssh <host> 'ln -sf /etc/hostname /tmp/archmap-acceptance/leak.txt'
 ## 回传
 
 把每一步的结果、失败步骤的现象（截图/错误文本）发回来；如果有一步失败，W12 不通过，回到对应节点修复后重跑。
+
+
+---
+
+## 2026-11-22 omen 实测记录
+
+| 项 | 结果 |
+|---|---|
+| host | `omen` · Linux · `/home/dave` |
+| 测试目录 | `/home/dave/archmap-acceptance`（git）· `/home/dave/archmap-acceptance-nongit`（非 git） |
+| seeed 只读 | `/home/dave/seeed/B601_example` smoke PASS；`git status` 前后哈希一致 |
+| smoke | git / 非 git / seeed 全部 PASS |
+| host pipeline | anchors、manifest commit、clean sync、change sync、n2 stale、indexer、maintainer 交接、`remote-state.json`、consent 持久化 PASS |
+| 真实工具 | 拒绝 → `REMOTE_CONSENT_REQUIRED`；始终允许 → tree/read/grep；workspace consent 持久化 PASS |
+| 安全 | 指向 root 外的 symlink 在 describe/read/readRange/stat 全部 `PATH_ESCAPE`；hashMany 跳过 |
+| 非 git | metadata 指纹检测到真实修改 PASS（恢复内容后 mtime 变化仍会产生新指纹，这是预期） |
+| 修复 | readRange 的 SSH stderr 噪音；dirty git 文件二次编辑漏检 |
+| 测试 | 65/65 |
+| 待办 | DSH GUI 授权卡点击、面板 stale、真实自动维护子会话 |
