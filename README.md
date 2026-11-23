@@ -215,6 +215,7 @@ There is no separate "start" button or left-sidebar icon. The plugin adds a righ
 - Fork discussions inherit the parent request prefix, so their tool schemas may still show `bash`/`write` even though calls are denied.
 - A parent-initiated `send_message` to a discussion child produces DSH's native settlement notice (including the child's closing text) in the parent conversation. The initial `arch_discuss` is caller-only and the child's full transcript never enters the main log; use the child's sidebar chat for narrative follow-ups.
 - The canvas is hand-written SVG with a layered layout, not React Flow. A cyclic graph with no `position` pins falls back to a compact grid; pin a layout when the reading order matters.
+- Group metadata appears in the node subtitle/detail; the canvas does not draw group bands or resolve group titles yet (0.4).
 - Mermaid rendering is on by default (`auto`) but can be disabled with `renderMermaid: off`; a known `dsh-mermaid-plus` installation makes `auto` disable ours.
 - This is a 0.3.0 developer preview; the API and file schema can still change.
 - Remote repositories are a developer preview: register, read, sync, polling, commands and maintenance are wired and were verified on a real Linux host; auto maintenance on an idle parent and pending-counter clearing remain rough edges.

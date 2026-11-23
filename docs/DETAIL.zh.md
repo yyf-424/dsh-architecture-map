@@ -58,6 +58,7 @@
 ## 已知限制
 
 - 画布是手写 SVG，不是 React Flow。带环且没有 `position` pin 的图会退化为紧凑网格；在意阅读顺序时请 pin 布局。
+- 分组只以节点副标题/详情显示；画布不画分组带，也不解析分组标题（0.4）。
 - 拖动的节点位置只存在浏览器本地；`node.position` pin 存在图里。
 - 右侧栏跟随**会话 workspace**；工具参数里的显式 `workspace` 不同时，面板不会显示那张图。
 - fork 讨论会继承父对话 request prefix，工具列表里可能仍显示执行层已拒绝的 schema。

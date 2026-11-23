@@ -180,6 +180,7 @@ npm pack --dry-run
 - fork 讨论继承父对话 request prefix，工具列表里可能仍显示 `bash`/`write`，但执行层会拒绝。
 - 父对话主动 `send_message` 给讨论子会话时，DSH 会在主对话里投递 native settlement notice（含子会话 closing text）。初次 `arch_discuss` 是 caller-only，子会话完整 transcript 不会进主日志；需要继续聊请在子会话侧栏里发。
 - 画布是手写 SVG + 分层布局，不是 React Flow。带环且没有 `position` pin 的图会退化为紧凑网格；在意阅读顺序时请 pin 布局。
+- 分组只以节点副标题/详情显示；画布不画分组带，也不解析分组标题（0.4）。
 - Mermaid 默认 `auto` 开启；`renderMermaid: off` 可关；检测到已知的 `dsh-mermaid-plus` 时 `auto` 会关闭本插件渲染。
 - 这是 0.3.0 开发者预览，API 和文件 schema 仍可能变化。
 - 远程仓库是开发者预览：登记、读取、同步、轮询、命令和维护都已接上，并在真实 Linux 主机上验收；空闲父会话的自动维护和 pending 清零仍是粗糙边缘。

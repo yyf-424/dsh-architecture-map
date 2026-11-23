@@ -58,6 +58,7 @@ The model can also use the bundled `architecture-map` skill in a new session.
 ## Known limitations
 
 - The canvas is a hand-written SVG implementation, not React Flow. A cyclic graph without `position` pins falls back to a compact grid; pin a layout when the reading order matters.
+- Group metadata appears in the node subtitle/detail; the canvas does not draw group bands or resolve group titles yet (0.4).
 - Dragged node positions are local to the browser; `node.position` pins are stored in the graph.
 - The sidebar follows the **session workspace**; it does not show a graph from an explicit `workspace` argument when the two differ.
 - Fork discussions inherit the parent request prefix, so their tool list can still show schemas that are denied at execution.
