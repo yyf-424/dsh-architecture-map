@@ -4,6 +4,7 @@
 
 - Local node positions no longer freeze the whole layout when the graph revision changes: only dragged nodes are stored as `{x, y}` overrides, so undragged nodes follow the automatic layout after an edit.
 - `Reset layout` clears the local overrides instead of materializing the current layout into the position map.
+- The sidebar's Discuss/Lite buttons now pass the selected source to `/arch discuss`: a node in a remote source is resolved in `remote:<id>` instead of the session's local workspace, which previously produced `node "<id>" does not exist in <cwd>`.
 
 ### Docs
 

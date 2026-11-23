@@ -9,7 +9,7 @@ A live, addressable architecture graph for DeepSeek Harness. The model writes no
 - **Canonical graph** — `.archmap/graph.json` with a revision, schema validation, atomic writes and a one-step backup.
 - **Right-sidebar canvas** — layered SVG layout, pan/zoom/Fit, node dragging, reset layout and node details.
 - **Architecture memory** — a manifest of analyzed files, incremental `arch_sync`, code-vs-cosmetic detection, stale marking and a Markdown dossier (`overview`, `modules/<id>`, `notes/<id>`).
-- **Per-node discussions** — `arch_discuss` starts a fork (inherits completed turns) or lite (fresh from graph/dossier) child; the sidebar opens it; conclusions go to `notes/<id>`.
+- **Per-node discussions** — `arch_discuss` starts a fork (inherits completed turns) or lite (fresh from graph/dossier) child; the sidebar opens it; conclusions go to `notes/<id>`. The sidebar's Discuss/Lite buttons pass the selected local or remote source; a remote discussion requires remote content consent.
 - **Exports** — deterministic Mermaid, SVG and Markdown files under `.archmap/export/`.
 - **Built-in Mermaid** — assistant ` ```mermaid ` fences render with a vendored runtime served by the plugin; no CDN and no extra Mermaid plugin.
 - **Bundled skill** — `architecture-map` explains the sync → read → patch → dossier → commit loop.
@@ -73,4 +73,4 @@ The model can also use the bundled `architecture-map` skill in a new session.
 
 ## Status
 
-0.2.1 developer preview. `npm test` covers graph, layout override, memory, stale-hash, export, remote content/SSH, consent, sync, polling, commands and maintenance policy (66 tests); CI runs syntax checks, tests and `npm pack --dry-run`.
+0.2.1 developer preview. `npm test` covers graph, layout override, memory, stale-hash, export, remote content/SSH, consent, sync, polling, commands and maintenance policy (68 tests); CI runs syntax checks, tests and `npm pack --dry-run`.

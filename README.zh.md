@@ -51,7 +51,7 @@ Architecture map 把「项目架构」变成 harness 里**可寻址的一等对�
 - **增量架构记忆 + 格式改动识别**：`.archmap/manifest.json` 记录 hash 和归一化代码签名；`arch_sync` 只报告新增/修改/删除文件，区分代码改动和仅格式/注释改动，并列出受影响节点；`markStale:true` 会把这些节点标成 stale 并递增 graph rev，默认只报告不写图；anchor 还可以存文件的归一化内容签名，sync 会发现 hash 不匹配的节点，复盘后用 `arch_graph_patch` 的 `refreshAnchors:true` 刷新；`arch_manifest_commit` 记录已分析文件；`arch_doc_get` / `arch_doc_put` 读写 `overview`、`modules/<id>`、`notes/<id>`。
 - **确定性导出**：`arch_export` 把 Mermaid flowchart、独立 SVG 或 Markdown 档案摘要写到 `.archmap/export/`；不改变 graph rev，也不改源文件。
 - **内置 Mermaid 渲染**：assistant 消息里的 ` ```mermaid ` 块用 vendored Mermaid 12.2.0 渲染，runtime 由本插件 Host 路由提供，不依赖 CDN，也不依赖 `dsh-mermaid-plus`。流式时保留代码块，语法错误回退代码块 + 错误行；`renderMermaid:false` 可关闭。
-- **按节点子对话**：`arch_discuss` 为 `node:<id>` 或 `edge:<id>` 开子会话；`fork` 继承主对话已完成轮次，`lite` 只靠图和档案。结果只走 caller，不污染主对话；结论写进 `notes/<id>`。节点详情里还有 `Discuss (fork)` / `Lite` 按钮，通过 `subagentchat` resource 在右侧栏打开子会话。子会话受提示词约束；shell 和通用源码写调用在执行时会被拒绝（fork 可能仍显示继承的工具 schema）；改图仍需你确认。
+- **按节点子对话**：`arch_discuss` 为 `node:<id>` 或 `edge:<id>` 开子会话；`fork` 继承主对话已完成轮次，`lite` 只靠图和档案。结果只走 caller，不污染主对话；结论写进 `notes/<id>`。节点详情里还有 `Discuss (fork)` / `Lite` 按钮，通过 `subagentchat` resource 在右侧栏打开子会话；按钮会把当前选中的本地/远程来源传给 Host（远程讨论需要远程内容授权）。子会话受提示词约束；shell 和通用源码写调用在执行时会被拒绝（fork 可能仍显示继承的工具 schema）；改图仍需你确认。
 - **远程 Linux 仓库（开发者预览）**：`arch_remote_list/status/tree/read/grep` 通过 SSH 查看已登记仓库，不 clone；读内容前要授权，远程 `arch_sync`/`arch_manifest_commit` 只哈希已分析文件，变更轮询和 `/arch remote ...` 命令可用，面板可切换本地/远程来源，图和档案留在 `.archmap/projects/<id>/`，远程文件不被修改。
 
 ## 下一步计划

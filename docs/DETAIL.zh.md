@@ -9,7 +9,7 @@
 - **Canonical 图**：`.archmap/graph.json`，带 rev、schema 校验、原子写入和单步备份。
 - **右侧栏画布**：分层 SVG 布局、平移/缩放/Fit、节点拖拽、Reset layout、节点详情。
 - **架构记忆**：manifest、增量 `arch_sync`、代码/格式改动识别、stale 标记和 Markdown dossier（`overview`、`modules/<id>`、`notes/<id>`）。
-- **按节点讨论**：`arch_discuss` 开 fork（继承已完成轮次）或 lite（只靠图和档案）；侧栏打开子会话；结论写到 `notes/<id>`。
+- **按节点讨论**：`arch_discuss` 开 fork（继承已完成轮次）或 lite（只靠图和档案）；侧栏打开子会话；结论写到 `notes/<id>`。面板的 Discuss/Lite 会把当前选中的本地/远程来源传给 Host；远程讨论需要远程内容授权。
 - **导出**：确定性的 Mermaid、SVG、Markdown，落在 `.archmap/export/`。
 - **内置 Mermaid**：assistant 消息里的 ` ```mermaid ` 用本插件自带的 runtime 渲染，不访问 CDN，不依赖额外 Mermaid 插件。
 - **随包 skill**：`architecture-map` 指导 sync → 读变更 → 改图 → 档案 → commit 的循环。
@@ -73,4 +73,4 @@
 
 ## 状态
 
-0.2.1 开发者预览。`npm test` 覆盖图、布局覆盖层、记忆、stale-hash、导出、远程内容/SSH、授权、同步、轮询、命令和维护策略（66 个测试）；CI 跑语法检查、测试和 `npm pack --dry-run`。
+0.2.1 开发者预览。`npm test` 覆盖图、布局覆盖层、记忆、stale-hash、导出、远程内容/SSH、授权、同步、轮询、命令和维护策略（68 个测试）；CI 跑语法检查、测试和 `npm pack --dry-run`。
