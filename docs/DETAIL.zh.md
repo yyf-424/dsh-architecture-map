@@ -52,7 +52,7 @@
 - 无遥测、无外部网络请求；Mermaid 由插件自己的 Host 路由提供。
 - 图和档案写入有上限、原子落盘；`arch_graph_patch` / `arch_doc_put` 不修改源码。
 - 讨论子会话受提示词约束；shell 和通用源码写调用在执行层被拒绝（fork 可能仍显示继承的工具 schema）。
-- 远程访问使用用户自己的 OpenSSH 配置，只读，不 clone、不写远程仓库；读内容需要本次会话/始终允许授权；远程路径逃逸和 root 外符号链接会被拒绝。
+- 远程访问使用用户自己的 OpenSSH 配置，只读，不 clone、不写远程仓库；读内容需要显式授权：`/arch remote grant <id> session`（本次会话及子会话，仅内存）或 `/arch remote grant <id> always` / 不带范围（workspace，写进 `.archmap/index.json`，自动维护需要它）；`/arch remote revoke <id>` 两者都清。内容读取卡提供同样两个选择，面板来源条只显示写盘的 workspace 授权；远程路径逃逸和 root 外符号链接会被拒绝。
 - Mermaid 使用 `securityLevel: 'strict'`。
 
 ## 已知限制

@@ -1,5 +1,9 @@
 ## 0.2.1 — 2026-11-23
 
+### Added
+
+- Remote consent scopes: `/arch remote grant <id> session` grants only the current session (and its discussion children, in memory); `/arch remote grant <id> always` or no scope persists a workspace grant. `/arch remote revoke <id>` clears both. The content-read card keeps the same two choices.
+
 ### Fixed
 
 - Local node positions no longer freeze the whole layout when the graph revision changes: only dragged nodes are stored as `{x, y}` overrides, so undragged nodes follow the automatic layout after an edit.

@@ -132,6 +132,23 @@ The plugin can map a repository on a remote Linux host over your existing SSH co
 4. Open `/arch` and pick **Local** or **staging** in the source selector in the panel header. The status line shows host/root/vcs/consent; a remote project without a graph shows its own empty state.
 5. Picking a remote source starts polling. `/arch remote sync staging` checks immediately, `/arch remote update staging` starts a maintenance child, `/arch remote list` lists projects, and `/arch remote grant/revoke/remove` manage consent and registration.
 
+### Remote consent scopes
+
+The content-read card and the cardless `grant` command expose the same two scopes:
+
+| Input / choice | Scope | Lifetime | Stored | Auto maintenance |
+| --- | --- | --- | --- | --- |
+| `/arch remote grant <id>` | workspace | persistent | `.archmap/index.json` | yes |
+| `/arch remote grant <id> always` | workspace | persistent | `.archmap/index.json` | yes |
+| `/arch remote grant <id> session` | session + its children | until this session ends | in-memory only | no |
+| Card: “允许，本次会话” | session | until this session ends | in-memory only | no |
+| Card: “始终允许这个远程” | workspace | persistent | `.archmap/index.json` | yes |
+| `/arch remote revoke <id>` | revokes session + workspace | — | clears both | — |
+
+`grant` does not show a card because the typed command itself is the explicit user consent. The card only appears when a content read has no grant yet.
+
+There is **no single-read grant**; the smallest scope is the current session. A session grant is invisible in the panel source bar (that bar reads the persisted workspace consent), but it is active for the session and its discussion children. Auto maintenance requires a workspace grant.
+
 Auto maintenance runs only after a durable “always allow”, for at most 50 changed files, at most once per 10 minutes. Larger changes only mark affected nodes stale. Real remote end-to-end verification was completed on a Linux host; auto maintenance still skips an idle parent (use `/arch remote update` to force it), and a maintenance run does not yet clear the local pending counter.
 
 Remote reads are confined to the registered root: `..`, absolute escapes, and symlinks pointing outside are rejected. Git projects use HEAD plus `git status`, and hash changed/untracked paths so a second edit to an already-dirty file still moves the fingerprint; non-git projects use path/size/mtime metadata, and only analyzed files are hashed.

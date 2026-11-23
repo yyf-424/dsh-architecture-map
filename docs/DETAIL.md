@@ -52,7 +52,7 @@ The model can also use the bundled `architecture-map` skill in a new session.
 - No telemetry and no external network requests; Mermaid is served from the plugin's own Host route.
 - Graph/dossier writes are bounded and atomic; source files are never edited by `arch_graph_patch` or `arch_doc_put`.
 - Discussion children are prompt-constrained; shell and generic source-write calls are denied at execution (a fork may still display inherited tool schemas).
-- Remote access uses the user's OpenSSH config, is read-only, and never clones or writes the remote repository. Content reads need an explicit session/always grant; remote path escapes and symlinks outside the root are rejected.
+- Remote access uses the user's OpenSSH config, is read-only, and never clones or writes the remote repository. Content reads need an explicit grant: `/arch remote grant <id> session` (this session and its children, in memory) or `/arch remote grant <id> always` / no scope (workspace, persisted in `.archmap/index.json`, required for auto maintenance); `/arch remote revoke <id>` clears both. The content-read card offers the same two choices, and the panel source bar shows only the persisted workspace scope. Remote path escapes and symlinks outside the root are rejected.
 - Mermaid uses `securityLevel: 'strict'`.
 
 ## Known limitations

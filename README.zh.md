@@ -114,6 +114,23 @@ Architecture map 把「项目架构」变成 harness 里**可寻址的一等对�
 4. 打开 `/arch`，在面板顶部的来源选择器里切换 **本地 / staging**。状态条显示 host/root/vcs/授权；远程项目没有图时会显示对应的空状态。
 5. 选中远程来源会开始轮询。`/arch remote sync staging` 立即检查一次，`/arch remote update staging` 启维护子会话，`/arch remote list` 列项目，`/arch remote grant/revoke/remove` 管理授权和登记。
 
+### 远程授权范围
+
+内容读取卡和不弹卡的 `grant` 命令对应同一组范围：
+
+| 输入 / 选择 | 范围 | 有效期 | 存储 | 自动维护 |
+| --- | --- | --- | --- | --- |
+| `/arch remote grant <id>` | workspace | 持久 | `.archmap/index.json` | 可以 |
+| `/arch remote grant <id> always` | workspace | 持久 | `.archmap/index.json` | 可以 |
+| `/arch remote grant <id> session` | 本次会话（含子会话） | 会话结束 | 仅内存 | 不行 |
+| 授权卡「允许，本次会话」 | session | 会话结束 | 仅内存 | 不行 |
+| 授权卡「始终允许这个远程」 | workspace | 持久 | `.archmap/index.json` | 可以 |
+| `/arch remote revoke <id>` | 撤销 session + workspace | — | 两者都清 | — |
+
+`grant` 不弹卡，因为输入的这条命令本身就是你的显式授权；只有内容读取还没有任何授权时才会弹卡。
+
+**没有“单次读取”授权**，最小范围是本次会话。session 授权不会改变面板来源条（来源条读的是写盘的 workspace 授权），但对当前会话和它启动的讨论子会话有效。自动维护需要 workspace 授权。
+
 自动维护只在“始终允许”后运行，最多 50 个变更文件、最多每 10 分钟一次；超限只标 stale。真远程端到端验收已在 Linux 主机上完成；父会话空闲时自动维护会跳过（可用 `/arch remote update` 强制），维护后本地 pending 计数暂未清零。
 
 远程读取被限制在登记的 root 内：`..`、绝对路径逃逸和指向 root 外的符号链接都会被拒绝。git 项目用 HEAD + `git status`，并哈希已修改/未跟踪路径，保证脏文件再次编辑也能被检测到；非 git 项目用 path/size/mtime 元数据，只有已分析文件才会被哈希。
