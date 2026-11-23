@@ -272,6 +272,17 @@ const REMOTE_TEXT_OUTPUT = {
 }
 
 /**
+ * Parse the panel-facing `/arch discuss` input. The client appends the selected
+ * workspace for remote sources; a local source omits it and the handler falls
+ * back to the session working directory.
+ */
+export function parseArchDiscuss(input) {
+  const match = /^discuss\s+((?:node|edge):[a-z][a-z0-9_-]*)(?:\s+(fork|lite))?(?:\s+(\S+))?\s*$/.exec(String(input ?? '').trim())
+  if (!match) return null
+  return { target: match[1], mode: match[2], workspace: match[3] }
+}
+
+/**
  * Register the M0/M1 tools and the `/arch` command.
  * @param {import('@deepseek-ai/cordis').Context} ctx - Host plugin context.
  * @param {Record<string, unknown>} [config] - Plugin row configuration.
@@ -1093,18 +1104,18 @@ export function apply(ctx, config = {}) {
       if (extra === 'remote' || extra.startsWith('remote ')) {
         return await remoteCommands.handle(extra.slice('remote'.length).trim(), agent)
       }
-      const discuss = /^discuss\s+((?:node|edge):[a-z][a-z0-9_-]*)(?:\s+(fork|lite))?\s*$/.exec(extra)
+      const discuss = parseArchDiscuss(extra)
       if (discuss) {
         try {
-          const workspace = agent.session.header.cwd
+          const workspace = discuss.workspace ?? agent.session.header.cwd
           if (typeof workspace !== 'string' || workspace === '') {
             return { kind: 'error', text: 'the session has no working directory; pass an explicit workspace to arch_discuss' }
           }
           const started = await startDiscussion({
             agent,
             workspace,
-            target: discuss[1],
-            mode: discuss[2],
+            target: discuss.target,
+            mode: discuss.mode,
             signal,
             context: { agent },
           })
@@ -1118,7 +1129,7 @@ export function apply(ctx, config = {}) {
       }
       return {
         kind: 'error',
-        text: '用法：/arch 或 /arch open（打开面板）；/arch discuss node:<id> [fork|lite]（开节点讨论）；/arch remote add|list|select|sync|update|grant|revoke|remove ...（远程仓库）。要调用图工具，请直接发送“调用 arch_graph_get”。',
+        text: '用法：/arch 或 /arch open（打开面板）；/arch discuss node:<id> [fork|lite] [workspace]（开节点讨论）；/arch remote add|list|select|sync|update|grant|revoke|remove ...（远程仓库）。要调用图工具，请直接发送“调用 arch_graph_get”。',
       }
     },
   })

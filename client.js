@@ -254,6 +254,11 @@ window.__ModuleLoader__.load({
       return { ...base, x: override.x, y: override.y }
     }
 
+    /** The panel's Discuss/Lite path must carry the selected source, not the session cwd. */
+    function discussionCommand(id, mode, workspace) {
+      return `/arch discuss node:${id} ${mode}${workspace ? ` ${workspace}` : ''}`
+    }
+
     let mermaidRuntime
     let mermaidUid = 0
 
@@ -1049,7 +1054,8 @@ window.__ModuleLoader__.load({
           }
           setDiscussState({ status: 'starting', error: null })
           try {
-            const line = `/arch discuss node:${selected.id} ${mode}`
+            const workspace = source?.kind === 'remote' ? `remote:${source.id}` : undefined
+            const line = discussionCommand(selected.id, mode, workspace)
             const response = await ctx.remote.commands.execute(sessionId, line, [])
             if (!response.ok) throw new Error(`${response.error.code}: ${response.error.message}`)
             const outcome = response.value?.result

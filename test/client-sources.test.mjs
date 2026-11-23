@@ -132,3 +132,17 @@ test('overlayPosition replaces only x/y and ignores bad stored overrides', () =>
   assert.equal(overlayPosition(base, { x: Number.NaN, y: 5 }), base)
   assert.equal(overlayPosition(undefined, { x: 1, y: 2 }), undefined)
 })
+
+const discussFactory = new Function(`
+${extractFunction('discussionCommand')}
+return { discussionCommand }
+`)
+const { discussionCommand } = discussFactory()
+
+test('discussionCommand carries the selected remote workspace', () => {
+  assert.equal(discussionCommand('async-io', 'fork'), '/arch discuss node:async-io fork')
+  assert.equal(
+    discussionCommand('async-io', 'lite', 'remote:acf'),
+    '/arch discuss node:async-io lite remote:acf',
+  )
+})
