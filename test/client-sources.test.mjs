@@ -118,3 +118,17 @@ test('readAll reads the requested path, pages lines and preserves error codes', 
     error => error.code === 'FS_NOT_FOUND' && /missing/.test(error.message),
   )
 })
+
+const overlayFactory = new Function(`
+${extractFunction('overlayPosition')}
+return { overlayPosition }
+`)
+const { overlayPosition } = overlayFactory()
+
+test('overlayPosition replaces only x/y and ignores bad stored overrides', () => {
+  const base = { x: 20, y: 30, w: 196, h: 64 }
+  assert.deepEqual(overlayPosition(base, { x: 100, y: 200 }), { x: 100, y: 200, w: 196, h: 64 })
+  assert.equal(overlayPosition(base, undefined), base)
+  assert.equal(overlayPosition(base, { x: Number.NaN, y: 5 }), base)
+  assert.equal(overlayPosition(undefined, { x: 1, y: 2 }), undefined)
+})

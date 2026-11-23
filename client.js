@@ -244,6 +244,16 @@ window.__ModuleLoader__.load({
       return value.length <= max ? value : `${value.slice(0, max - 1)}…`
     }
 
+    /**
+     * A local drag only replaces the x/y of the automatic layout box; width,
+     * height and every undragged node still come from the layout.
+     */
+    function overlayPosition(base, override) {
+      if (!base) return undefined
+      if (!override || !Number.isFinite(override.x) || !Number.isFinite(override.y)) return base
+      return { ...base, x: override.x, y: override.y }
+    }
+
     let mermaidRuntime
     let mermaidUid = 0
 
@@ -737,7 +747,8 @@ window.__ModuleLoader__.load({
           ? edges.filter(edge => edge.from === selected.id || edge.to === selected.id)
           : []
         const layoutView = layout(graph)
-        const positionOf = id => positions[id] ?? layoutView.positions.get(id)
+        // positions only holds local drag overrides; the automatic layout stays the base.
+        const positionOf = id => overlayPosition(layoutView.positions.get(id), positions[id])
 
         const fitBoxes = boxes => {
           if (boxes.length === 0) return
@@ -755,30 +766,26 @@ window.__ModuleLoader__.load({
         }
 
         const fitGraph = target => {
-          const current = Object.values(positions)
-          fitBoxes(current.length > 0 ? current : [...layout(target).positions.values()])
+          const boxes = (Array.isArray(target?.nodes) ? target.nodes : [])
+            .map(node => positionOf(node.id))
+            .filter(Boolean)
+          fitBoxes(boxes.length > 0 ? boxes : [...layout(target).positions.values()])
         }
 
         const resetLayout = () => {
           if (!graph) return
-          const base = layout(graph)
-          setPositions(Object.fromEntries(base.positions))
+          setPositions({})
           clearSavedPositions(storageKey)
-          fitBoxes([...base.positions.values()])
+          fitBoxes([...layout(graph).positions.values()])
         }
 
         React.useEffect(() => {
           if (!graph || !storageKey) return
-          const base = layout(graph)
+          const ids = new Set(graph.nodes.map(node => node.id))
           const saved = readSavedPositions(storageKey)
-          setPositions(previous => {
-            const next = {}
-            for (const [id, box] of base.positions) {
-              const old = previous[id] ?? saved[id]
-              next[id] = old ? { ...box, x: old.x, y: old.y } : box
-            }
-            return next
-          })
+          setPositions(Object.fromEntries(
+            Object.entries(saved).filter(([id]) => ids.has(id)),
+          ))
         }, [graph?.rev, storageKey])
 
         React.useEffect(() => {
@@ -806,13 +813,10 @@ window.__ModuleLoader__.load({
             const dx = (moveEvent.clientX - startX) / view.zoom
             const dy = (moveEvent.clientY - startY) / view.zoom
             last = { x: originX + dx, y: originY + dy }
-            setPositions(previous => {
-              const current = previous[id] ?? box
-              return {
-                ...previous,
-                [id]: { ...current, ...last },
-              }
-            })
+            setPositions(previous => ({
+              ...previous,
+              [id]: last,
+            }))
           }
           const up = () => {
             window.removeEventListener('pointermove', move)
