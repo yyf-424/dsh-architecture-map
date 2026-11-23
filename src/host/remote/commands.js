@@ -168,12 +168,21 @@ export function createRemoteCommands(options = {}) {
   }
 
   async function grant(args, agent) {
-    const [id] = args
-    if (!id) return commandError('用法：/arch remote grant <id>')
+    const [id, rawScope] = args
+    if (!id) return commandError('用法：/arch remote grant <id> [session|always]')
+    const scope = (rawScope ?? 'always').toLowerCase()
+    if (scope !== 'session' && scope !== 'always') {
+      return commandError(`未知授权范围 "${rawScope}"；用法：/arch remote grant <id> [session|always]`)
+    }
     const ws = await remoteWorkspace(id, agent)
+    if (scope === 'session') {
+      consent.allowSession(ws, { agent })
+      indexer.track(ws, { agent }, { immediate: false })
+      return { kind: 'success', text: `${id}: 已写入本次会话内容授权（会话结束失效；不启用自动维护）。` }
+    }
     await consent.grantWorkspace(ws)
     indexer.track(ws, { agent }, { immediate: false })
-    return { kind: 'success', text: `${id}: 已写入 workspace 级内容授权。` }
+    return { kind: 'success', text: `${id}: 已写入 workspace 级内容授权（持久；后续会话和自动维护可用）。` }
   }
 
   async function revoke(args, agent) {
@@ -214,7 +223,7 @@ export function createRemoteCommands(options = {}) {
         case 'remove': return await remove(args, agent)
         case undefined:
         case '':
-          return commandError('用法：/arch remote add|list|select|sync|update|grant|revoke|remove ...')
+          return commandError('用法：/arch remote add|list|select|sync|update|grant <id> [session|always]|revoke|remove ...')
         default:
           return commandError(`未知子命令 "${sub}"`)
       }

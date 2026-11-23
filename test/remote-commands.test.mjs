@@ -30,6 +30,7 @@ async function fixture() {
   const untracked = []
   const maintain = []
   const grants = []
+  const sessionGrants = []
   const revokes = []
   const indexer = {
     intervalMs: 60_000,
@@ -51,10 +52,11 @@ async function fixture() {
   }
   const consent = {
     async grantWorkspace(ws) { grants.push(ws.id) },
+    allowSession(ws, context) { sessionGrants.push({ id: ws.id, sessionId: context?.agent?.session?.id }) },
     async revoke(ws) { revokes.push(ws.id); return { revoked: 'workspace' } },
   }
   const commands = createRemoteCommands({ config: { dir: '.archmap', ssh }, consent, indexer, maintainer })
-  return { hub, remote, logDir, log, ssh, agent, commands, tracked, untracked, maintain, grants, revokes }
+  return { hub, remote, logDir, log, ssh, agent, commands, tracked, untracked, maintain, grants, sessionGrants, revokes }
 }
 
 async function cleanup(item) {
@@ -103,7 +105,18 @@ test('add, list, select, sync, update, grant, revoke and remove', { skip: SKIP }
 
     const granted = await item.commands.handle('grant demo', item.agent)
     assert.equal(granted.kind, 'success')
+    assert.match(granted.text, /workspace 级/)
     assert.deepEqual(item.grants, ['demo'])
+
+    const sessionGranted = await item.commands.handle('grant demo session', item.agent)
+    assert.equal(sessionGranted.kind, 'success')
+    assert.match(sessionGranted.text, /本次会话/)
+    assert.deepEqual(item.sessionGrants, [{ id: 'demo', sessionId: 's1' }])
+    assert.deepEqual(item.grants, ['demo'])
+
+    const badScope = await item.commands.handle('grant demo once', item.agent)
+    assert.equal(badScope.kind, 'error')
+    assert.match(badScope.text, /未知授权范围/)
 
     const revoked = await item.commands.handle('revoke demo', item.agent)
     assert.equal(revoked.kind, 'success')

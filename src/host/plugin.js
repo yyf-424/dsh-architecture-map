@@ -1129,7 +1129,7 @@ export function apply(ctx, config = {}) {
       }
       return {
         kind: 'error',
-        text: '用法：/arch 或 /arch open（打开面板）；/arch discuss node:<id> [fork|lite] [workspace]（开节点讨论）；/arch remote add|list|select|sync|update|grant|revoke|remove ...（远程仓库）。要调用图工具，请直接发送“调用 arch_graph_get”。',
+        text: '用法：/arch 或 /arch open（打开面板）；/arch discuss node:<id> [fork|lite] [workspace]（开节点讨论）；/arch remote add|list|select|sync|update|grant <id> [session|always]|revoke|remove ...（远程仓库）。要调用图工具，请直接发送“调用 arch_graph_get”。',
       }
     },
   })
