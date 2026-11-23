@@ -58,7 +58,7 @@
 ## 已知限制
 
 - 画布是手写 SVG，不是 React Flow。
-- 节点位置只存在浏览器本地；共享位置还没做。
+- 拖动的节点位置只存在浏览器本地；共享位置还没做。带环的图会退化为紧凑网格；分层布局用于无环图。
 - 右侧栏跟随**会话 workspace**；工具参数里的显式 `workspace` 不同时，面板不会显示那张图。
 - fork 讨论会继承父对话 request prefix，工具列表里可能仍显示执行层已拒绝的 schema。
 - 父 agent 用 `send_message` 继续子会话时，DSH 会在主对话里投递 settlement notice（含子会话 closing text）；初次 `arch_discuss` 是 caller-only，子会话 transcript 不会复制进主日志。
@@ -73,4 +73,4 @@
 
 ## 状态
 
-0.2.0 开发者预览。`npm test` 覆盖图、记忆、stale-hash、导出、远程内容/SSH、授权、同步、轮询、命令和维护策略（65 个测试）；CI 跑语法检查、测试和 `npm pack --dry-run`。
+0.2.1 开发者预览。`npm test` 覆盖图、布局覆盖层、记忆、stale-hash、导出、远程内容/SSH、授权、同步、轮询、命令和维护策略（66 个测试）；CI 跑语法检查、测试和 `npm pack --dry-run`。

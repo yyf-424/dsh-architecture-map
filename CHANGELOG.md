@@ -1,3 +1,14 @@
+## 0.2.1 — 2026-11-23
+
+### Fixed
+
+- Local node positions no longer freeze the whole layout when the graph revision changes: only dragged nodes are stored as `{x, y}` overrides, so undragged nodes follow the automatic layout after an edit.
+- `Reset layout` clears the local overrides instead of materializing the current layout into the position map.
+
+### Docs
+
+- State that a cyclic graph falls back to a compact grid and that the layered layout is for acyclic graphs.
+
 ## 0.2.0 — 2026-11-22
 
 ### Added

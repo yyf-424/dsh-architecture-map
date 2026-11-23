@@ -4,7 +4,7 @@ English | [中文](README.zh.md)
 
 **中文名：架构地图** · An architecture workbench for DeepSeek Harness: a live semantic architecture graph, per-node side conversations, and incremental architecture memory.
 
-> Status: **0.2.0 developer preview.** The Host tools, sidebar canvas, architecture memory, per-node discussions, deterministic exports, built-in Mermaid rendering and read-only remote Linux repositories over SSH work today. Shared positions remain planned; remote auto-maintenance on an idle parent and pending-counter clearing are the known rough edges.
+> Status: **0.2.1 developer preview.** The Host tools, sidebar canvas, architecture memory, per-node discussions, deterministic exports, built-in Mermaid rendering and read-only remote Linux repositories over SSH work today. Shared positions remain planned; remote auto-maintenance on an idle parent and pending-counter clearing are the known rough edges.
 
 ---
 
@@ -47,7 +47,7 @@ A static feature preview is included. A recorded 30-second demo GIF is not part 
 
 - **Canonical architecture graph** — `.archmap/graph.json` with a revision number, schema validation, atomic writes and a one-step backup. The model reads and edits it through `arch_graph_get` / `arch_graph_patch`; `apply:false` previews without writing.
 - **Right-sidebar canvas** — reads the graph from the session workspace, renders nodes/edges as SVG with a layered (longest-path) layout, supports pan, wheel zoom, `Fit`, node dragging and `Reset layout`, and shows node details on click.
-- **Local layout memory** — dragged node positions are kept per workspace in browser storage, so a refresh or a new session on the same machine keeps the layout. `Reset layout` clears it. Shared positions are planned.
+- **Local layout memory** — only dragged node positions are kept, per workspace in browser storage; every other node keeps following the automatic layout, so a graph edit reflows it. `Reset layout` clears the local overrides. Shared positions are planned.
 - **Incremental architecture memory with cosmetic detection** — `.archmap/manifest.json` records content hashes plus a normalized code signature; `arch_sync` reports only added/changed/deleted files, distinguishes code changes from format/comment-only changes, and lists the nodes whose anchors are affected. `markStale:true` marks those nodes stale (and bumps the graph rev); the default is report-only. Anchors may also store the file's normalized content signature; sync reports a node whose anchor hash no longer matches, and `arch_graph_patch` fills missing hashes or refreshes them with `refreshAnchors:true` after review. `arch_manifest_commit` records analyzed files, and `arch_doc_get` / `arch_doc_put` read and write `overview`, `modules/<id>` and `notes/<id>`.
 - **Deterministic exports** — `arch_export` writes Mermaid flowchart source, a standalone SVG, or a Markdown dossier digest to `.archmap/export/`; graph revision and files stay unchanged.
 - **Built-in Mermaid rendering** — assistant ` ```mermaid ` fences render with a vendored Mermaid 12.2.0 runtime served from the plugin's own Host route. No CDN and no `dsh-mermaid-plus` dependency. Streaming keeps the code block; parse errors fall back to code plus an error line. `renderMermaid: false` disables it.
@@ -197,9 +197,9 @@ There is no separate "start" button or left-sidebar icon. The plugin adds a righ
 - Node positions are stored in the browser locally, not in `graph.json`.
 - Fork discussions inherit the parent request prefix, so their tool schemas may still show `bash`/`write` even though calls are denied.
 - A parent-initiated `send_message` to a discussion child produces DSH's native settlement notice (including the child's closing text) in the parent conversation. The initial `arch_discuss` is caller-only and the child's full transcript never enters the main log; use the child's sidebar chat for narrative follow-ups.
-- The canvas is hand-written SVG with a layered layout, not React Flow.
+- The canvas is hand-written SVG with a layered layout, not React Flow. A cyclic graph falls back to a compact grid; the layered (longest-path) layout is used for acyclic graphs.
 - Mermaid rendering is on by default (`auto`) but can be disabled with `renderMermaid: off`; a known `dsh-mermaid-plus` installation makes `auto` disable ours.
-- This is a 0.2.0 developer preview; the API and file schema can still change.
+- This is a 0.2.1 developer preview; the API and file schema can still change.
 - Remote repositories are a developer preview: register, read, sync, polling, commands and maintenance are wired and were verified on a real Linux host; auto maintenance on an idle parent and pending-counter clearing remain rough edges.
 
 ## FAQ

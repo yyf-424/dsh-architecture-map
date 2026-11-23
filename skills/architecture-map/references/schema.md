@@ -91,4 +91,4 @@ Exports never modify `graph.json` or the manifest.
 - Paths are realpath-checked and must stay inside the workspace.
 - Writes are atomic (temp file + rename); a failed write must be reported, never silently retried.
 - The UI polls the graph every 2s; a successful patch becomes visible within ~3s.
-- Node positions are a **local view preference** (browser localStorage), not part of `graph.json`.
+- Node positions are a **local view preference** (browser localStorage), not part of `graph.json`. Only dragged nodes are stored as overrides; the automatic layout stays the base, so a graph revision reflows undragged nodes. A cyclic graph falls back to a compact grid; the layered layout is for acyclic graphs.

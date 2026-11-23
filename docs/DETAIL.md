@@ -58,7 +58,7 @@ The model can also use the bundled `architecture-map` skill in a new session.
 ## Known limitations
 
 - The canvas is a hand-written SVG implementation, not React Flow.
-- Node positions are local to the browser; shared positions are not implemented yet.
+- Dragged node positions are local to the browser; shared positions are not implemented yet. A cyclic graph falls back to a compact grid; the layered layout is for acyclic graphs.
 - The sidebar follows the **session workspace**; it does not show a graph from an explicit `workspace` argument when the two differ.
 - Fork discussions inherit the parent request prefix, so their tool list can still show schemas that are denied at execution.
 - If the parent agent uses `send_message` to continue a child, DSH posts a native settlement notice (with the child's closing text) in the parent conversation. The initial `arch_discuss` result is caller-only; the child transcript is not copied into the main log.
@@ -73,4 +73,4 @@ The model can also use the bundled `architecture-map` skill in a new session.
 
 ## Status
 
-0.2.0 developer preview. `npm test` covers graph, memory, stale-hash, export, remote content/SSH, consent, sync, polling, commands and maintenance policy (65 tests); CI runs syntax checks, tests and `npm pack --dry-run`.
+0.2.1 developer preview. `npm test` covers graph, layout override, memory, stale-hash, export, remote content/SSH, consent, sync, polling, commands and maintenance policy (66 tests); CI runs syntax checks, tests and `npm pack --dry-run`.
