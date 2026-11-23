@@ -1,3 +1,16 @@
+## 0.3.0 — 2026-11-23
+
+### Added
+
+- Optional `node.position: {x, y}` in `graph.json`: a pinned top-left corner that the sidebar canvas and the SVG export honor. `arch_graph_patch` accepts `position` on `add_node`/`update_node`; `update_node` with `position: null` clears a pin; `arch_graph_get` shows the pin.
+- Edge labels on the sidebar canvas; forward edges route straight, return edges bow around the row, and same-row edges detour around a node that blocks the line. Dependency edges are dashed.
+- Width-aware node-title clipping so long CJK titles do not overflow the fixed node box.
+- The SVG export applies pinned positions and shares the canvas routing/labels; Mermaid and Markdown stay position-agnostic.
+
+### Changed
+
+- Layout precedence is local drag override > `node.position` pin > automatic layout. `Reset layout` clears local drags and returns to the pin/automatic layout.
+
 ## 0.2.1 — 2026-11-23
 
 ### Added

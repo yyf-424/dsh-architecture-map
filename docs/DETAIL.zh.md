@@ -7,10 +7,10 @@
 ## 功能
 
 - **Canonical 图**：`.archmap/graph.json`，带 rev、schema 校验、原子写入和单步备份。
-- **右侧栏画布**：分层 SVG 布局、平移/缩放/Fit、节点拖拽、Reset layout、节点详情。
+- **右侧栏画布**：分层 SVG 布局、边标签、`node.position` pin、平移/缩放/Fit、节点拖拽、Reset layout、节点详情。
 - **架构记忆**：manifest、增量 `arch_sync`、代码/格式改动识别、stale 标记和 Markdown dossier（`overview`、`modules/<id>`、`notes/<id>`）。
 - **按节点讨论**：`arch_discuss` 开 fork（继承已完成轮次）或 lite（只靠图和档案）；侧栏打开子会话；结论写到 `notes/<id>`。面板的 Discuss/Lite 会把当前选中的本地/远程来源传给 Host；远程讨论需要远程内容授权。
-- **导出**：确定性的 Mermaid、SVG、Markdown，落在 `.archmap/export/`。
+- **导出**：确定性的 Mermaid、SVG（跟随 position pin）、Markdown，落在 `.archmap/export/`。
 - **内置 Mermaid**：assistant 消息里的 ` ```mermaid ` 用本插件自带的 runtime 渲染，不访问 CDN，不依赖额外 Mermaid 插件。
 - **随包 skill**：`architecture-map` 指导 sync → 读变更 → 改图 → 档案 → commit 的循环。
 - **远程 Linux 仓库（开发者预览）**：通过 SSH 登记仓库，不 clone；面板可切换本地/远程来源，读内容前要授权；60 秒指纹轮询把受影响节点标 stale，图和档案留在本地。
@@ -48,7 +48,7 @@
 
 ## 数据与权限
 
-- 本地状态只读写 `<workspace>/.archmap/`（以及浏览器本地的节点位置偏好）。
+- 本地状态只读写 `<workspace>/.archmap/`（以及浏览器本地的拖拽覆盖）。
 - 无遥测、无外部网络请求；Mermaid 由插件自己的 Host 路由提供。
 - 图和档案写入有上限、原子落盘；`arch_graph_patch` / `arch_doc_put` 不修改源码。
 - 讨论子会话受提示词约束；shell 和通用源码写调用在执行层被拒绝（fork 可能仍显示继承的工具 schema）。
@@ -57,8 +57,8 @@
 
 ## 已知限制
 
-- 画布是手写 SVG，不是 React Flow。
-- 拖动的节点位置只存在浏览器本地；共享位置还没做。带环的图会退化为紧凑网格；分层布局用于无环图。
+- 画布是手写 SVG，不是 React Flow。带环且没有 `position` pin 的图会退化为紧凑网格；在意阅读顺序时请 pin 布局。
+- 拖动的节点位置只存在浏览器本地；`node.position` pin 存在图里。
 - 右侧栏跟随**会话 workspace**；工具参数里的显式 `workspace` 不同时，面板不会显示那张图。
 - fork 讨论会继承父对话 request prefix，工具列表里可能仍显示执行层已拒绝的 schema。
 - 父 agent 用 `send_message` 继续子会话时，DSH 会在主对话里投递 settlement notice（含子会话 closing text）；初次 `arch_discuss` 是 caller-only，子会话 transcript 不会复制进主日志。
@@ -73,4 +73,4 @@
 
 ## 状态
 
-0.2.1 开发者预览。`npm test` 覆盖图、布局覆盖层、记忆、stale-hash、导出、远程内容/SSH、授权、同步、轮询、命令和维护策略（68 个测试）；CI 跑语法检查、测试和 `npm pack --dry-run`。
+0.3.0 开发者预览。`npm test` 覆盖图校验与位置、布局 pin 与连线路由、记忆、stale-hash、导出、远程内容/SSH、授权、同步、轮询、命令和维护策略（77 个测试）；CI 跑语法检查、测试和 `npm pack --dry-run`。

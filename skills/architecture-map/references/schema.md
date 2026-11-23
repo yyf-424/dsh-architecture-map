@@ -30,6 +30,7 @@ All data lives under `<workspace>/.archmap/`. Do not invent another store.
       "group": "g-core",
       "summary": "User request enters the agent and dispatches tools.",
       "status": "fresh",
+      "position": { "x": 40, "y": 40 },
       "anchors": [{ "path": "src/host/plugin.js", "symbol": "apply" }]
     }
   ],
@@ -44,8 +45,9 @@ All data lives under `<workspace>/.archmap/`. Do not invent another store.
 - **status**: `fresh`, `stale`, `proposed`.
 - **anchor**: workspace-relative POSIX `path`, optional `symbol`, optional `hash` (the normalized content signature: comments/whitespace ignored for code); no `..`, absolute paths, backslashes or empty segments. `arch_graph_patch` fills a missing hash from disk and preserves an existing hash unless `refreshAnchors:true` is passed.
 - **group**: optional group id; groups have `id` and `title`.
+- **position**: optional `{x, y}` (finite numbers, ±1000000); the node's top-left corner in canvas coordinates. A pinned node keeps that spot; unpinned nodes are placed automatically.
 - **edge**: `from`/`to` must be existing node ids; `kind` common values `call`, `data`, `dependency`, `next`, `contains`.
-- `layout.mode` is advisory for the client; the current client uses its own grid + local positions.
+- `layout.mode` is advisory for the client; the current client uses its own layered/grid layout, `node.position` pins and browser-local drag overrides.
 
 `rev` increments on every successful write. Pass the latest `rev` as `baseRev`; a mismatch returns `STALE_REV`. `apply:false` validates and returns a diff without writing. `refreshAnchors:true` recomputes all anchor hashes after review; without it, only missing hashes are filled.
 
@@ -53,7 +55,7 @@ All data lives under `<workspace>/.archmap/`. Do not invent another store.
 
 ```
 add_node    { node }
-update_node { id, patch }
+update_node { id, patch }        # patch.position={x,y} pins; patch.position=null clears
 remove_node { id, cascade? }
 add_edge    { edge }
 update_edge { id, patch }
@@ -91,4 +93,4 @@ Exports never modify `graph.json` or the manifest.
 - Paths are realpath-checked and must stay inside the workspace.
 - Writes are atomic (temp file + rename); a failed write must be reported, never silently retried.
 - The UI polls the graph every 2s; a successful patch becomes visible within ~3s.
-- Node positions are a **local view preference** (browser localStorage), not part of `graph.json`. Only dragged nodes are stored as overrides; the automatic layout stays the base, so a graph revision reflows undragged nodes. A cyclic graph falls back to a compact grid; the layered layout is for acyclic graphs.
+- `position` is part of `graph.json` (shared pin). Dragging a node only writes a browser-local override; `Reset layout` drops the override and returns to the pin/automatic layout. A cyclic graph with no pins falls back to a compact grid, so pin positions when the reading order matters.

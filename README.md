@@ -4,7 +4,7 @@ English | [中文](README.zh.md)
 
 **中文名：架构地图** · An architecture workbench for DeepSeek Harness: a live semantic architecture graph, per-node side conversations, and incremental architecture memory.
 
-> Status: **0.2.1 developer preview.** The Host tools, sidebar canvas, architecture memory, per-node discussions, deterministic exports, built-in Mermaid rendering and read-only remote Linux repositories over SSH work today. Shared positions remain planned; remote auto-maintenance on an idle parent and pending-counter clearing are the known rough edges.
+> Status: **0.3.0 developer preview.** The Host tools, sidebar canvas, architecture memory, per-node discussions, deterministic exports, built-in Mermaid rendering and read-only remote Linux repositories over SSH work today. Node positions can be pinned in `graph.json` and rendered by the canvas; remote auto-maintenance on an idle parent and pending-counter clearing are the known rough edges.
 
 ---
 
@@ -46,17 +46,17 @@ A static feature preview is included. A recorded 30-second demo GIF is not part 
 ## Features (implemented today)
 
 - **Canonical architecture graph** — `.archmap/graph.json` with a revision number, schema validation, atomic writes and a one-step backup. The model reads and edits it through `arch_graph_get` / `arch_graph_patch`; `apply:false` previews without writing.
-- **Right-sidebar canvas** — reads the graph from the session workspace, renders nodes/edges as SVG with a layered (longest-path) layout, supports pan, wheel zoom, `Fit`, node dragging and `Reset layout`, and shows node details on click.
-- **Local layout memory** — only dragged node positions are kept, per workspace in browser storage; every other node keeps following the automatic layout, so a graph edit reflows it. `Reset layout` clears the local overrides. Shared positions are planned.
+- **Right-sidebar canvas** — reads the graph from the session workspace, renders nodes/edges as SVG with a layered (longest-path) layout, draws edge labels, honors per-node `position` pins, supports pan, wheel zoom, `Fit`, node dragging and `Reset layout`, and shows node details on click.
+- **Layout: pins + local drags** — a node's `position` in `graph.json` is a shared pin (set through `arch_graph_patch`); dragging a node keeps a browser-local override per workspace, so a refresh or a new session on the same machine keeps the view. `Reset layout` drops the local overrides and returns to the pinned/automatic layout.
 - **Incremental architecture memory with cosmetic detection** — `.archmap/manifest.json` records content hashes plus a normalized code signature; `arch_sync` reports only added/changed/deleted files, distinguishes code changes from format/comment-only changes, and lists the nodes whose anchors are affected. `markStale:true` marks those nodes stale (and bumps the graph rev); the default is report-only. Anchors may also store the file's normalized content signature; sync reports a node whose anchor hash no longer matches, and `arch_graph_patch` fills missing hashes or refreshes them with `refreshAnchors:true` after review. `arch_manifest_commit` records analyzed files, and `arch_doc_get` / `arch_doc_put` read and write `overview`, `modules/<id>` and `notes/<id>`.
-- **Deterministic exports** — `arch_export` writes Mermaid flowchart source, a standalone SVG, or a Markdown dossier digest to `.archmap/export/`; graph revision and files stay unchanged.
+- **Deterministic exports** — `arch_export` writes Mermaid flowchart source, a standalone SVG that honors pinned positions, or a Markdown dossier digest to `.archmap/export/`; graph revision and files stay unchanged.
 - **Built-in Mermaid rendering** — assistant ` ```mermaid ` fences render with a vendored Mermaid 12.2.0 runtime served from the plugin's own Host route. No CDN and no `dsh-mermaid-plus` dependency. Streaming keeps the code block; parse errors fall back to code plus an error line. `renderMermaid: false` disables it.
 - **Per-node side conversations** — `arch_discuss` starts a child for `node:<id>` or `edge:<id>`: `fork` inherits the main conversation's completed turns; `lite` starts fresh with the graph and dossier. Delivery is caller-only, so the main conversation is not polluted; conclusions go to `notes/<id>`. The node detail also has `Discuss (fork)` / `Lite` buttons that open the child in the right sidebar through the `subagentchat` resource; they pass the selected local or remote source to the host (a remote discussion needs remote content consent). Discussion children are prompt-constrained; shell and generic source-write calls are denied at execution (inherited tool schemas may remain visible in a fork). Graph changes still require approval.
 - **Remote Linux repositories (developer preview)** — `arch_remote_list/status/tree/read/grep` inspect a registered repository over SSH without cloning it. Content reads are consent-gated; remote `arch_sync`/`arch_manifest_commit` hash only analyzed files; change polling and `/arch remote ...` commands work; the panel switches local/remote sources; graph/dossier stay under `.archmap/projects/<id>/`; remote files are never modified.
 
 ## Planned next
 
-- Shared/persisted positions, direct export buttons in the panel, and a short animated demo (GIF).
+- Direct export buttons in the panel, and a short animated demo (GIF).
 - Remote maintenance polish: start from an idle parent and clear the local pending counter after a run.
 
 ## What it is not
@@ -102,7 +102,7 @@ code blocks and the 5.2 MB runtime is not loaded. The default `auto` disables ou
 All graph, manifest, dossier and export data lives in `<workspace>/.archmap/`. The plugin installation
 directory contains only code, skill, vendor, docs and locale. The plugin does not modify a user project's
 `.gitignore`; commit `.archmap/` to share the map, or ignore it for local-only data. Uninstalling the plugin
-does not delete `.archmap/`. Node positions are browser-local and are not part of the graph.
+does not delete `.archmap/`. `node.position` pins are part of the graph; dragged positions are browser-local overrides.
 
 ## Remote repositories (developer preview)
 
@@ -211,17 +211,26 @@ There is no separate "start" button or left-sidebar icon. The plugin adds a righ
 ## Limitations
 
 - The sidebar follows the **session workspace**; an explicit tool `workspace` can point at a different graph than the panel shows.
-- Node positions are stored in the browser locally, not in `graph.json`.
+- Dragged node positions are browser-local; only `node.position` pins are stored in `graph.json`.
 - Fork discussions inherit the parent request prefix, so their tool schemas may still show `bash`/`write` even though calls are denied.
 - A parent-initiated `send_message` to a discussion child produces DSH's native settlement notice (including the child's closing text) in the parent conversation. The initial `arch_discuss` is caller-only and the child's full transcript never enters the main log; use the child's sidebar chat for narrative follow-ups.
-- The canvas is hand-written SVG with a layered layout, not React Flow. A cyclic graph falls back to a compact grid; the layered (longest-path) layout is used for acyclic graphs.
+- The canvas is hand-written SVG with a layered layout, not React Flow. A cyclic graph with no `position` pins falls back to a compact grid; pin a layout when the reading order matters.
 - Mermaid rendering is on by default (`auto`) but can be disabled with `renderMermaid: off`; a known `dsh-mermaid-plus` installation makes `auto` disable ours.
-- This is a 0.2.1 developer preview; the API and file schema can still change.
+- This is a 0.3.0 developer preview; the API and file schema can still change.
 - Remote repositories are a developer preview: register, read, sync, polling, commands and maintenance are wired and were verified on a real Linux host; auto maintenance on an idle parent and pending-counter clearing remain rough edges.
 
 ## FAQ
 
-**Do I need `dsh-mermaid-plus`?** No. Mermaid 12.2.0 is vendored. With `dsh-mermaid-plus` enabled,
+**How do I pin a layout?** Give a node a top-left corner in the graph:
+
+```json
+{ "op": "update_node", "id": "api", "patch": { "position": { "x": 120, "y": 40 } } }
+```
+
+Unpinned nodes keep the automatic layout; `position: null` clears a pin. Dragging in the panel is a
+browser-local override on top of the pins, and `Reset layout` drops the override.
+
+**Do I need `dsh-mermaid-plus`? No. Mermaid 12.2.0 is vendored. With `dsh-mermaid-plus` enabled,
 `renderMermaid: auto` disables our renderer to avoid the shared `mermaid` fence key; `on` forces ours.
 
 **Why hand-written SVG instead of React Flow?** It keeps the client bundle self-contained and avoids a
@@ -251,7 +260,7 @@ session workspace by design. Open a session whose workspace is the graph you wan
 |---|---|
 | 0.1 | graph core and tools, sidebar canvas, node dragging, local position memory, `arch_sync` + manifest + dossier docs, cosmetic diff + stale marking, bundled architecture skill, `arch_discuss`, sidebar discussion buttons, `arch_export`, built-in Mermaid fence rendering |
 | 0.2 | read-only remote Linux repositories over SSH (source picker, consent, 60s polling, sync/commands, maintenance), release polish |
-| 0.3 | direct node→discussion bridge, shared/persisted positions, proposals, graph diff |
+| 0.3 | direct node→discussion bridge, position pins, edge labels/routing, export pins, proposals, graph diff |
 | 0.4 | edge discussions, group collapse, Mermaid import, Office export |
 | 0.5 | multiple graphs, PR links, shared team maps |
 | 0.6 | multiple remote repositories in parallel, remote sharing/export polish |

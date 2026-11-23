@@ -7,10 +7,10 @@ A live, addressable architecture graph for DeepSeek Harness. The model writes no
 ## What you get
 
 - **Canonical graph** — `.archmap/graph.json` with a revision, schema validation, atomic writes and a one-step backup.
-- **Right-sidebar canvas** — layered SVG layout, pan/zoom/Fit, node dragging, reset layout and node details.
+- **Right-sidebar canvas** — layered SVG layout with edge labels, `node.position` pins, pan/zoom/Fit, node dragging, reset layout and node details.
 - **Architecture memory** — a manifest of analyzed files, incremental `arch_sync`, code-vs-cosmetic detection, stale marking and a Markdown dossier (`overview`, `modules/<id>`, `notes/<id>`).
 - **Per-node discussions** — `arch_discuss` starts a fork (inherits completed turns) or lite (fresh from graph/dossier) child; the sidebar opens it; conclusions go to `notes/<id>`. The sidebar's Discuss/Lite buttons pass the selected local or remote source; a remote discussion requires remote content consent.
-- **Exports** — deterministic Mermaid, SVG and Markdown files under `.archmap/export/`.
+- **Exports** — deterministic Mermaid, SVG (pinned positions honored) and Markdown files under `.archmap/export/`.
 - **Built-in Mermaid** — assistant ` ```mermaid ` fences render with a vendored runtime served by the plugin; no CDN and no extra Mermaid plugin.
 - **Bundled skill** — `architecture-map` explains the sync → read → patch → dossier → commit loop.
 - **Remote Linux repositories (developer preview)** — register a repository over SSH without cloning; the panel switches local/remote sources, content reads are consent-gated, and a 60-second fingerprint poll marks affected nodes stale while the graph/dossier stay local.
@@ -48,7 +48,7 @@ The model can also use the bundled `architecture-map` skill in a new session.
 
 ## Data and permissions
 
-- Reads/writes local state only under `<workspace>/.archmap/` (plus the browser's local position preference).
+- Reads/writes local state only under `<workspace>/.archmap/` (plus the browser's local drag overrides).
 - No telemetry and no external network requests; Mermaid is served from the plugin's own Host route.
 - Graph/dossier writes are bounded and atomic; source files are never edited by `arch_graph_patch` or `arch_doc_put`.
 - Discussion children are prompt-constrained; shell and generic source-write calls are denied at execution (a fork may still display inherited tool schemas).
@@ -57,8 +57,8 @@ The model can also use the bundled `architecture-map` skill in a new session.
 
 ## Known limitations
 
-- The canvas is a hand-written SVG implementation, not React Flow.
-- Dragged node positions are local to the browser; shared positions are not implemented yet. A cyclic graph falls back to a compact grid; the layered layout is for acyclic graphs.
+- The canvas is a hand-written SVG implementation, not React Flow. A cyclic graph without `position` pins falls back to a compact grid; pin a layout when the reading order matters.
+- Dragged node positions are local to the browser; `node.position` pins are stored in the graph.
 - The sidebar follows the **session workspace**; it does not show a graph from an explicit `workspace` argument when the two differ.
 - Fork discussions inherit the parent request prefix, so their tool list can still show schemas that are denied at execution.
 - If the parent agent uses `send_message` to continue a child, DSH posts a native settlement notice (with the child's closing text) in the parent conversation. The initial `arch_discuss` result is caller-only; the child transcript is not copied into the main log.
@@ -73,4 +73,4 @@ The model can also use the bundled `architecture-map` skill in a new session.
 
 ## Status
 
-0.2.1 developer preview. `npm test` covers graph, layout override, memory, stale-hash, export, remote content/SSH, consent, sync, polling, commands and maintenance policy (68 tests); CI runs syntax checks, tests and `npm pack --dry-run`.
+0.3.0 developer preview. `npm test` covers graph validation and positions, layout pins and edge routing, memory, stale-hash, export, remote content/SSH, consent, sync, polling, commands and maintenance policy (77 tests); CI runs syntax checks, tests and `npm pack --dry-run`.

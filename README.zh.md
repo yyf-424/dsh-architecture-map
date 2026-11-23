@@ -4,7 +4,7 @@
 
 **DeepSeek Harness 的架构工作台：可交互的语义架构图、按节点开启的侧栏子对话、增量架构记忆。**
 
-> 状态：**0.2.1 开发者预览**。Host 工具、右侧栏画布、架构记忆、按节点子对话、确定性导出、内置 Mermaid 渲染和通过 SSH 只读查看远程 Linux 仓库都已可用；共享位置仍待实现，空闲父会话自动维护和 pending 清零是已知粗糙边缘。
+> 状态：**0.3.0 开发者预览**。Host 工具、右侧栏画布、架构记忆、按节点子对话、确定性导出、内置 Mermaid 渲染和通过 SSH 只读查看远程 Linux 仓库都已可用；节点位置可以 pin 进 `graph.json` 并由画布渲染；空闲父会话自动维护和 pending 清零是已知粗糙边缘。
 
 ---
 
@@ -46,17 +46,17 @@ Architecture map 把「项目架构」变成 harness 里**可寻址的一等对�
 ## 已实现
 
 - **Canonical 架构图**：`.archmap/graph.json`，带 rev、schema 校验、原子写入和单步备份。模型通过 `arch_graph_get` / `arch_graph_patch` 读写；`apply:false` 只预览不写入。
-- **右侧栏画布**：从当前会话 workspace 读取图，SVG 渲染节点/边，使用 longest-path 分层布局，支持平移、滚轮缩放、`Fit`、节点拖拽、`Reset layout`，点击节点看详情。
-- **位置本地记忆**：只保留拖动过的节点位置，按 workspace 存在浏览器本地；其余节点继续跟随自动布局，图变化后会重新分层。`Reset layout` 清掉本地覆盖。共享位置是后续计划。
+- **右侧栏画布**：从当前会话 workspace 读取图，SVG 渲染节点/边和边标签，使用 longest-path 分层布局，优先采用节点 `position` pin，支持平移、滚轮缩放、`Fit`、节点拖拽、`Reset layout`，点击节点看详情。
+- **位置：pin + 本地拖拽**：`graph.json` 里的 `position` 是共享布局（通过 `arch_graph_patch` 写入）；拖动节点只在浏览器本地按 workspace 覆盖，刷新或同机新会话会保留；`Reset layout` 清掉本地覆盖，回到 pin/自动布局。
 - **增量架构记忆 + 格式改动识别**：`.archmap/manifest.json` 记录 hash 和归一化代码签名；`arch_sync` 只报告新增/修改/删除文件，区分代码改动和仅格式/注释改动，并列出受影响节点；`markStale:true` 会把这些节点标成 stale 并递增 graph rev，默认只报告不写图；anchor 还可以存文件的归一化内容签名，sync 会发现 hash 不匹配的节点，复盘后用 `arch_graph_patch` 的 `refreshAnchors:true` 刷新；`arch_manifest_commit` 记录已分析文件；`arch_doc_get` / `arch_doc_put` 读写 `overview`、`modules/<id>`、`notes/<id>`。
-- **确定性导出**：`arch_export` 把 Mermaid flowchart、独立 SVG 或 Markdown 档案摘要写到 `.archmap/export/`；不改变 graph rev，也不改源文件。
+- **确定性导出**：`arch_export` 把 Mermaid flowchart、独立 SVG（跟随 `position` pin）或 Markdown 档案摘要写到 `.archmap/export/`；不改变 graph rev，也不改源文件。
 - **内置 Mermaid 渲染**：assistant 消息里的 ` ```mermaid ` 块用 vendored Mermaid 12.2.0 渲染，runtime 由本插件 Host 路由提供，不依赖 CDN，也不依赖 `dsh-mermaid-plus`。流式时保留代码块，语法错误回退代码块 + 错误行；`renderMermaid:false` 可关闭。
 - **按节点子对话**：`arch_discuss` 为 `node:<id>` 或 `edge:<id>` 开子会话；`fork` 继承主对话已完成轮次，`lite` 只靠图和档案。结果只走 caller，不污染主对话；结论写进 `notes/<id>`。节点详情里还有 `Discuss (fork)` / `Lite` 按钮，通过 `subagentchat` resource 在右侧栏打开子会话；按钮会把当前选中的本地/远程来源传给 Host（远程讨论需要远程内容授权）。子会话受提示词约束；shell 和通用源码写调用在执行时会被拒绝（fork 可能仍显示继承的工具 schema）；改图仍需你确认。
 - **远程 Linux 仓库（开发者预览）**：`arch_remote_list/status/tree/read/grep` 通过 SSH 查看已登记仓库，不 clone；读内容前要授权，远程 `arch_sync`/`arch_manifest_commit` 只哈希已分析文件，变更轮询和 `/arch remote ...` 命令可用，面板可切换本地/远程来源，图和档案留在 `.archmap/projects/<id>/`，远程文件不被修改。
 
 ## 下一步计划
 
-- 位置共享/写回图数据、右侧栏导出按钮、短视频演示（GIF）。
+- 右侧栏导出按钮、短视频演示（GIF）。
 - 远程维护打磨：空闲父会话自动启动，维护后清零本地 pending。
 
 ## 不是什么
@@ -84,7 +84,7 @@ Architecture map 把「项目架构」变成 harness 里**可寻址的一等对�
 
 架构图、manifest、档案和导出都在 `<workspace>/.archmap/`；插件安装目录只有代码、skill、vendor、文档和 locale。
 插件不会修改用户项目的 `.gitignore`；想共享就提交 `.archmap/`，想只留本地就自己忽略。卸载插件不会删除
-`.archmap/`。节点位置只存在浏览器本地，不属于图数据。
+`.archmap/`。`node.position` pin 属于图数据；拖动位置只是浏览器本地覆盖。
 
 ## 远程仓库（开发者预览）
 
@@ -176,12 +176,12 @@ npm pack --dry-run
 ## 限制
 
 - 右侧栏跟随**会话 workspace**；工具参数里的显式 `workspace` 可能和面板显示的图不同。
-- 节点位置只存在浏览器本地，不在 `graph.json`。
+- 拖动的节点位置只存在浏览器本地；只有 `node.position` pin 写进 `graph.json`。
 - fork 讨论继承父对话 request prefix，工具列表里可能仍显示 `bash`/`write`，但执行层会拒绝。
 - 父对话主动 `send_message` 给讨论子会话时，DSH 会在主对话里投递 native settlement notice（含子会话 closing text）。初次 `arch_discuss` 是 caller-only，子会话完整 transcript 不会进主日志；需要继续聊请在子会话侧栏里发。
-- 画布是手写 SVG + 分层布局，不是 React Flow。带环的图会退化为紧凑网格；分层布局用于无环图。
+- 画布是手写 SVG + 分层布局，不是 React Flow。带环且没有 `position` pin 的图会退化为紧凑网格；在意阅读顺序时请 pin 布局。
 - Mermaid 默认 `auto` 开启；`renderMermaid: off` 可关；检测到已知的 `dsh-mermaid-plus` 时 `auto` 会关闭本插件渲染。
-- 这是 0.2.1 开发者预览，API 和文件 schema 仍可能变化。
+- 这是 0.3.0 开发者预览，API 和文件 schema 仍可能变化。
 - 远程仓库是开发者预览：登记、读取、同步、轮询、命令和维护都已接上，并在真实 Linux 主机上验收；空闲父会话的自动维护和 pending 清零仍是粗糙边缘。
 
 ## 安装
@@ -202,6 +202,15 @@ npm pack --dry-run
 - 想单独验证 Host 半，让 agent 调用 `arch_hello`。
 
 ## 常见问题
+
+**怎么 pin 布局？** 给节点一个左上角坐标：
+
+```json
+{ "op": "update_node", "id": "api", "patch": { "position": { "x": 120, "y": 40 } } }
+```
+
+未 pin 的节点继续走自动布局；`position: null` 清除 pin。面板里拖动是叠加在 pin 之上的浏览器本地覆盖，
+`Reset layout` 只清本地覆盖。
 
 **需要 `dsh-mermaid-plus` 吗？** 不需要，Mermaid 12.2.0 已 vendored。如果启用了 `dsh-mermaid-plus`，
 `renderMermaid: auto` 会关闭本插件渲染，避免共用 `mermaid` fence key；`on` 强制开启本插件。
@@ -233,7 +242,7 @@ React Flow 仍可作为后续可选升级。
 |---|---|
 | 0.1 | 图核心与工具、右侧栏画布、节点拖拽、位置本地记忆、`arch_sync` + manifest + dossier、格式改动识别 + stale、内置 architecture skill、`arch_discuss`、右侧栏讨论按钮、`arch_export`、内置 Mermaid fence 渲染 |
 | 0.2 | 通过 SSH 只读查看远程 Linux 仓库（来源选择、授权、60 秒轮询、sync/命令、维护）+ 发布打磨 |
-| 0.3 | 节点直连讨论、位置共享/写回图、提案、图 diff |
+| 0.3 | 节点直连讨论、位置 pin、边标签/路由、导出 pin、提案、图 diff |
 | 0.4 | 边讨论、分组折叠、Mermaid 导入、Office 导出 |
 | 0.5 | 多图、PR 关联、团队共享 |
 | 0.6 | 多远程仓库并行、远程共享/导出打磨 |
