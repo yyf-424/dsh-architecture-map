@@ -449,7 +449,7 @@ export function apply(ctx, config = {}) {
         ops: {
           type: 'array',
           items: { type: 'object', additionalProperties: true },
-          description: 'Ordered operations. Shapes: {op:"add_node", node:{id,title,kind,summary?,anchors?:[{path,symbol?,hash?}]}}; {op:"update_node", id, patch:{...}}; {op:"remove_node", id, cascade?}; {op:"add_edge", edge:{id,from,to,label?,kind?}}; {op:"update_edge", id, patch:{...}}; {op:"remove_edge", id}; {op:"set_group", group:{id,title}}; {op:"remove_group", id}.',
+          description: 'Ordered operations. Shapes: {op:"add_node", node:{id,title,kind,summary?,anchors?:[{path,symbol?,hash?}],position?:{x,y}}}; {op:"update_node", id, patch:{...}} (patch.position={x,y} pins the top-left corner; patch.position=null clears it); {op:"remove_node", id, cascade?}; {op:"add_edge", edge:{id,from,to,label?,kind?}}; {op:"update_edge", id, patch:{...}}; {op:"remove_edge", id}; {op:"set_group", group:{id,title}}; {op:"remove_group", id}.',
         },
         apply: {
           type: 'boolean',

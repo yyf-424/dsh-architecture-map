@@ -244,6 +244,20 @@ window.__ModuleLoader__.load({
       return value.length <= max ? value : `${value.slice(0, max - 1)}…`
     }
 
+    /** Clip to a pixel budget (CJK counts as a full em, ASCII as ~0.58 em). */
+    function clipWidth(text, maxWidth, fontSize = 13) {
+      const value = String(text ?? '')
+      let width = 0
+      let out = ''
+      for (const char of value) {
+        const charWidth = char.charCodeAt(0) > 255 ? fontSize : fontSize * 0.58
+        if (width + charWidth > maxWidth - fontSize) return `${out}…`
+        out += char
+        width += charWidth
+      }
+      return out
+    }
+
     /**
      * A local drag only replaces the x/y of the automatic layout box; width,
      * height and every undragged node still come from the layout.
@@ -489,8 +503,9 @@ window.__ModuleLoader__.load({
     /**
      * Layered layout: longest-path levels for a DAG. Cyclic graphs fall back to
      * the grid so a bad edge cannot collapse the canvas into one column.
+     * Pinned `node.position` values are applied afterwards by `layout`.
      */
-    function layout(graph) {
+    function autoLayout(graph) {
       const nodes = Array.isArray(graph?.nodes) ? graph.nodes : []
       if (nodes.length === 0) return { positions: new Map(), width: 0, height: 96 }
       const ids = new Set(nodes.map(node => node.id))
@@ -552,6 +567,126 @@ window.__ModuleLoader__.load({
       return { positions, width, height }
     }
 
+    function pinnedPosition(node) {
+      const position = node?.position
+      if (!position || !Number.isFinite(position.x) || !Number.isFinite(position.y)) return null
+      return { x: position.x, y: position.y }
+    }
+
+    /**
+     * Automatic layout with optional manual pins. A node with a finite
+     * `position` keeps that top-left corner; everything else is placed by the
+     * layered/grid fallback. Local drags still override both in the panel.
+     */
+    function layout(graph) {
+      const view = autoLayout(graph)
+      const nodes = Array.isArray(graph?.nodes) ? graph.nodes : []
+      let width = view.width
+      let height = view.height
+      let pinned = 0
+      for (const node of nodes) {
+        const position = pinnedPosition(node)
+        if (!position) continue
+        const base = view.positions.get(node.id) ?? { x: 0, y: 0, w: 196, h: 64 }
+        const box = { ...base, x: position.x, y: position.y }
+        view.positions.set(node.id, box)
+        pinned += 1
+        width = Math.max(width, box.x + box.w + 24)
+        height = Math.max(height, box.y + box.h + 24)
+      }
+      return { positions: view.positions, width, height, pinned }
+    }
+
+    /**
+     * Straight or curved edge geometry. Forward edges leave the right side and
+     * enter the left side; backward edges leave the left side and enter the
+     * right side as return paths. Same-row forward edges detour around a node
+     * that blocks the straight line.
+     */
+    function edgeRoute(from, to, boxes = []) {
+      const fx = from.x + from.w / 2
+      const fy = from.y + from.h / 2
+      const tx = to.x + to.w / 2
+      const ty = to.y + to.h / 2
+      const dx = tx - fx
+      const dy = ty - fy
+      const horizontal = Math.abs(dx) >= (from.w + to.w) / 2 - 8
+      if (horizontal && dx >= 0) {
+        const start = { x: from.x + from.w, y: fy }
+        const end = { x: to.x, y: ty }
+        // Same-row edges can be blocked by a node between the two boxes. Route
+        // above or below the blocker instead of drawing through its title.
+        const blockers = Math.abs(dy) > 4 ? [] : boxes.filter(box => {
+          if (box === from || box === to) return false
+          return box.x < end.x
+            && box.x + box.w > start.x
+            && box.y < fy
+            && box.y + box.h > fy
+        })
+        if (blockers.length > 0) {
+          const top = Math.min(fy, ...blockers.map(box => box.y)) - 26
+          const bottom = Math.max(fy, ...blockers.map(box => box.y + box.h)) + 18
+          const lane = top >= 12 && fy - top <= bottom - fy ? top : bottom
+          const inner = 10
+          const d = [
+            `M ${start.x} ${start.y}`,
+            `L ${start.x + inner} ${start.y}`,
+            `L ${start.x + inner} ${lane}`,
+            `L ${end.x - inner} ${lane}`,
+            `L ${end.x - inner} ${end.y}`,
+            `L ${end.x} ${end.y}`,
+          ].join(' ')
+          return {
+            d,
+            label: { x: (start.x + end.x) / 2, y: lane - 7 },
+          }
+        }
+        return {
+          d: `M ${start.x} ${start.y} L ${end.x} ${end.y}`,
+          label: { x: (start.x + end.x) / 2, y: (start.y + end.y) / 2 - 7 },
+          gap: to.x - (from.x + from.w),
+          above: Math.max(12, Math.min(from.y, to.y) - 12),
+        }
+      }
+      if (horizontal) {
+        const start = { x: from.x, y: fy }
+        const end = { x: to.x + to.w, y: ty }
+        const bow = 70 + Math.min(60, Math.abs(dx) * 0.08)
+        // A diagonal return edge should pass between the two rows, not dip
+        // through whatever sits below the target row.
+        const controlY = Math.abs(dy) < 24
+          ? Math.max(start.y, end.y) + bow
+          : (start.y + end.y) / 2
+        const control = { x: (start.x + end.x) / 2, y: controlY }
+        return {
+          d: `M ${start.x} ${start.y} Q ${control.x} ${control.y} ${end.x} ${end.y}`,
+          label: {
+            x: 0.25 * start.x + 0.5 * control.x + 0.25 * end.x,
+            y: 0.25 * start.y + 0.5 * control.y + 0.25 * end.y,
+          },
+        }
+      }
+      const start = { x: fx, y: dy >= 0 ? from.y + from.h : from.y }
+      const end = { x: tx, y: dy >= 0 ? to.y : to.y + to.h }
+      return {
+        d: `M ${start.x} ${start.y} L ${end.x} ${end.y}`,
+        label: { x: (start.x + end.x) / 2, y: (start.y + end.y) / 2 - 7 },
+      }
+    }
+
+    function edgeLabelWidth(text) {
+      let width = 0
+      for (const char of text) width += char.charCodeAt(0) > 255 ? 10 : 6
+      return width + 10
+    }
+
+    function edgeStyle(kind) {
+      if (kind === 'dependency') return { width: 1.2, opacity: 0.45, dash: '4 3' }
+      if (kind === 'containment') return { width: 1.2, opacity: 0.4, dash: '1 4' }
+      if (kind === 'data') return { width: 1.3, opacity: 0.5 }
+      return { width: 1.4, opacity: 0.6 }
+    }
+
     function readAll(ctx, sessionId, filePath, signal) {
       return (async () => {
         let offset = 1
@@ -596,7 +731,7 @@ window.__ModuleLoader__.load({
         }),
         h('text', {
           x: x + 12, y: y + 24, fill: 'currentColor', fontSize: 13, fontWeight: 600,
-        }, clip(node.title ?? node.id, 22)),
+        }, clipWidth(node.title ?? node.id, 170)),
         h('text', {
           x: x + 12, y: y + 44, fill: 'currentColor', fontSize: 11, opacity: 0.65,
         }, `${node.kind ?? 'module'}${node.group ? ` · ${node.group}` : ''}${node.status === 'stale' ? ` · ${t('legend.stale')}` : ''}`),
@@ -752,7 +887,8 @@ window.__ModuleLoader__.load({
           ? edges.filter(edge => edge.from === selected.id || edge.to === selected.id)
           : []
         const layoutView = layout(graph)
-        // positions only holds local drag overrides; the automatic layout stays the base.
+        // Local drags are overrides on top of the graph's own (possibly pinned)
+        // positions. Keeping only x/y here means a graph repin still shows up.
         const positionOf = id => overlayPosition(layoutView.positions.get(id), positions[id])
 
         const fitBoxes = boxes => {
@@ -969,10 +1105,17 @@ window.__ModuleLoader__.load({
               type: 'button',
               style: styles.button,
               onClick: resetLayout,
-              title: 'Reset node positions to the automatic layout',
+              title: 'Clear local drags and return to the pinned or automatic layout',
             }, t('panel.reset')),
             h('span', { style: styles.meta }, `${Math.round(view.zoom * 100)}%`),
             h('span', { style: { ...styles.meta, opacity: 0.55 } }, t('panel.hint')))
+
+        const boxes = nodes.map(node => positionOf(node.id)).filter(Boolean)
+        const edgeViews = edges.flatMap(edge => {
+          const from = positionOf(edge.from)
+          const to = positionOf(edge.to)
+          return from && to ? [{ edge, route: edgeRoute(from, to, boxes) }] : []
+        })
 
         const canvas = nodes.length === 0
           ? h('div', { style: styles.empty },
@@ -1008,17 +1151,17 @@ window.__ModuleLoader__.load({
                 orient: 'auto-start-reverse',
               }, h('path', { d: 'M 0 0 L 10 5 L 0 10 z', fill: 'var(--dsw-alias-text-secondary, #888)' }))),
             h('g', { transform: `translate(${view.x} ${view.y}) scale(${view.zoom})` },
-              edges.map(edge => {
-                const from = positionOf(edge.from)
-                const to = positionOf(edge.to)
-                if (!from || !to) return null
-                return h('line', {
+              edgeViews.map(({ edge, route }) => {
+                const style = edgeStyle(edge.kind)
+                return h('path', {
                   key: `edge:${edge.id}`,
-                  x1: from.x + from.w, y1: from.y + from.h / 2,
-                  x2: to.x, y2: to.y + to.h / 2,
+                  d: route.d,
+                  fill: 'none',
                   stroke: 'var(--dsw-alias-text-secondary, #888)',
-                  strokeWidth: 1.2,
-                  strokeOpacity: 0.6,
+                  strokeWidth: style.width,
+                  strokeOpacity: style.opacity,
+                  strokeDasharray: style.dash,
+                  strokeLinecap: 'round',
                   markerEnd: 'url(#archmap-arrow)',
                 })
               }),
@@ -1031,6 +1174,30 @@ window.__ModuleLoader__.load({
                     onPointerDown: event => onNodePointerDown(event, node.id),
                   })
                   : null
+              }),
+              edgeViews.map(({ edge, route }) => {
+                const label = clip(edge.label, 24).trim()
+                if (!label) return null
+                const width = edgeLabelWidth(label)
+                const tight = route.gap !== undefined && width + 6 > route.gap
+                const labelY = tight ? route.above : route.label.y
+                return h('g', { key: `label:${edge.id}`, style: { pointerEvents: 'none' } },
+                  h('rect', {
+                    x: route.label.x - width / 2,
+                    y: labelY - 9,
+                    width,
+                    height: 15,
+                    rx: 3,
+                    fill: 'var(--dsw-alias-bg-primary, #ffffff)',
+                    opacity: 0.9,
+                  }),
+                  h('text', {
+                    x: route.label.x,
+                    y: labelY + 2,
+                    textAnchor: 'middle',
+                    fontSize: 10.5,
+                    fill: 'var(--dsw-alias-text-secondary, #888)',
+                  }, label))
               }),
             ),
           )

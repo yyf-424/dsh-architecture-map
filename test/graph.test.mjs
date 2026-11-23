@@ -105,3 +105,48 @@ test('accepts a 12-node / 19-edge graph shape', async () => {
     await rm(dir, { recursive: true, force: true })
   }
 })
+
+test('node positions are validated, patchable and clearable', async () => {
+  const dir = await fixture()
+  const store = createGraphStore({ dir: '.archmap' })
+  try {
+    await store.patch(dir, { baseRev: 0, ops: [
+      { op: 'add_node', node: { id: 'n1', title: 'A', position: { x: 120, y: 40 } } },
+    ] })
+    let graph = await store.readGraph(dir)
+    assert.deepEqual(graph.nodes[0].position, { x: 120, y: 40 })
+
+    await store.patch(dir, { baseRev: 1, ops: [
+      { op: 'update_node', id: 'n1', patch: { position: { x: 300.5, y: 88 } } },
+    ] })
+    graph = await store.readGraph(dir)
+    assert.deepEqual(graph.nodes[0].position, { x: 300.5, y: 88 })
+
+    await store.patch(dir, { baseRev: 2, ops: [
+      { op: 'update_node', id: 'n1', patch: { position: null } },
+    ] })
+    graph = await store.readGraph(dir)
+    assert.equal(graph.nodes[0].position, undefined)
+
+    await assert.rejects(
+      () => store.patch(dir, { baseRev: 3, ops: [
+        { op: 'update_node', id: 'n1', patch: { position: { x: 'left', y: 1 } } },
+      ] }),
+      /INVALID_GRAPH/,
+    )
+    await assert.rejects(
+      () => store.patch(dir, { baseRev: 3, ops: [
+        { op: 'update_node', id: 'n1', patch: { position: { x: 1, y: 2, w: 3 } } },
+      ] }),
+      /INVALID_GRAPH/,
+    )
+    await assert.rejects(
+      () => store.patch(dir, { baseRev: 3, ops: [
+        { op: 'update_node', id: 'n1', patch: { position: { x: 1e7, y: 0 } } },
+      ] }),
+      /LIMIT_EXCEEDED/,
+    )
+  } finally {
+    await rm(dir, { recursive: true, force: true })
+  }
+})

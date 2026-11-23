@@ -33,7 +33,8 @@ test('Mermaid, SVG and Markdown exports are deterministic and do not change the 
     assert.match(svgText, /^<svg /)
     assert.match(svgText, /<marker id="arrow"/)
     assert.match(svgText, /Entry &quot;API&quot;/)
-    assert.match(svgText, /<line /)
+    assert.match(svgText, /<path d="M .*marker-end="url\(#arrow\)"/)
+    assert.match(svgText, /<rect x="230\.0" y="7\.0" width="44" height="14"/)
 
     const markdown = await exporter.export(dir, { format: 'markdown' })
     const md = await readFile(path.join(dir, markdown.path), 'utf8')
@@ -45,6 +46,27 @@ test('Mermaid, SVG and Markdown exports are deterministic and do not change the 
     assert.equal((await stat(path.join(dir, mermaid.path))).isFile(), true)
     assert.equal((await graph.readGraph(dir)).rev, before.rev)
     await assert.rejects(() => exporter.export(dir, { format: 'pdf' }), /INVALID_FORMAT/)
+  } finally {
+    await rm(dir, { recursive: true, force: true })
+  }
+})
+
+test('SVG export honors pinned node positions', async () => {
+  const dir = await mkdtemp(path.join(tmpdir(), 'archmap-export-pin-test-'))
+  const graph = createGraphStore({ dir: '.archmap' })
+  const exporter = createExporter({ readGraph: graph.readGraph })
+  try {
+    await graph.patch(dir, { baseRev: 0, ops: [
+      { op: 'add_node', node: { id: 'left', title: 'Left', position: { x: 40, y: 60 } } },
+      { op: 'add_node', node: { id: 'right', title: 'Right', position: { x: 900, y: 420 } } },
+      { op: 'add_edge', edge: { id: 'e1', from: 'left', to: 'right', label: 'calls', kind: 'call' } },
+    ] })
+    const svg = await exporter.export(dir, { format: 'svg' })
+    const text = await readFile(path.join(dir, svg.path), 'utf8')
+    assert.match(text, /<rect x="40" y="60" width="210" height="84"/)
+    assert.match(text, /<rect x="900" y="420" width="210" height="84"/)
+    assert.match(text, /<svg [^>]*width="1138"/)
+    assert.match(text, /<svg [^>]*height="532"/)
   } finally {
     await rm(dir, { recursive: true, force: true })
   }

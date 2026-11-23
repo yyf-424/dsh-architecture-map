@@ -143,9 +143,86 @@ function gridLayout(graph) {
       h: NODE_H,
     })
   })
-  const width = PAD * 2 + cols * NODE_W + (cols - 1) * GAP_X
-  const height = PAD * 2 + rows * NODE_H + (rows - 1) * GAP_Y
-  return { positions, width, height }
+  let width = PAD * 2 + cols * NODE_W + (cols - 1) * GAP_X
+  let height = PAD * 2 + rows * NODE_H + (rows - 1) * GAP_Y
+  // A pinned position is a top-left corner in graph coordinates; the grid is
+  // only the fallback for nodes that do not carry one.
+  for (const node of nodes) {
+    const position = node.position
+    if (!position || !Number.isFinite(position.x) || !Number.isFinite(position.y)) continue
+    const box = positions.get(node.id)
+    box.x = position.x
+    box.y = position.y
+    width = Math.max(width, box.x + box.w + PAD)
+    height = Math.max(height, box.y + box.h + PAD)
+  }
+  return { positions, width: Math.ceil(width), height: Math.ceil(height) }
+}
+
+function edgeRoute(from, to, boxes = []) {
+  const fx = from.x + from.w / 2
+  const fy = from.y + from.h / 2
+  const tx = to.x + to.w / 2
+  const ty = to.y + to.h / 2
+  const dx = tx - fx
+  const dy = ty - fy
+  const horizontal = Math.abs(dx) >= (from.w + to.w) / 2 - 8
+  if (horizontal && dx >= 0) {
+    const start = { x: from.x + from.w, y: fy }
+    const end = { x: to.x, y: ty }
+    const blockers = Math.abs(dy) > 4 ? [] : boxes.filter(box => {
+      if (box === from || box === to) return false
+      return box.x < end.x
+        && box.x + box.w > start.x
+        && box.y < fy
+        && box.y + box.h > fy
+    })
+    if (blockers.length > 0) {
+      const top = Math.min(fy, ...blockers.map(box => box.y)) - 26
+      const bottom = Math.max(fy, ...blockers.map(box => box.y + box.h)) + 18
+      const lane = top >= 12 && fy - top <= bottom - fy ? top : bottom
+      const inner = 10
+      return {
+        d: [
+          `M ${start.x} ${start.y}`,
+          `L ${start.x + inner} ${start.y}`,
+          `L ${start.x + inner} ${lane}`,
+          `L ${end.x - inner} ${lane}`,
+          `L ${end.x - inner} ${end.y}`,
+          `L ${end.x} ${end.y}`,
+        ].join(' '),
+        label: { x: (start.x + end.x) / 2, y: lane - 6 },
+      }
+    }
+    return {
+      d: `M ${start.x} ${start.y} L ${end.x} ${end.y}`,
+      label: { x: (start.x + end.x) / 2, y: (start.y + end.y) / 2 - 6 },
+      gap: to.x - (from.x + from.w),
+      above: Math.max(12, Math.min(from.y, to.y) - 12),
+    }
+  }
+  if (horizontal) {
+    const start = { x: from.x, y: fy }
+    const end = { x: to.x + to.w, y: ty }
+    const bow = 70 + Math.min(60, Math.abs(dx) * 0.08)
+    const controlY = Math.abs(dy) < 24
+      ? Math.max(start.y, end.y) + bow
+      : (start.y + end.y) / 2
+    const control = { x: (start.x + end.x) / 2, y: controlY }
+    return {
+      d: `M ${start.x} ${start.y} Q ${control.x} ${control.y} ${end.x} ${end.y}`,
+      label: {
+        x: 0.25 * start.x + 0.5 * control.x + 0.25 * end.x,
+        y: 0.25 * start.y + 0.5 * control.y + 0.25 * end.y,
+      },
+    }
+  }
+  const start = { x: fx, y: dy >= 0 ? from.y + from.h : from.y }
+  const end = { x: tx, y: dy >= 0 ? to.y : to.y + to.h }
+  return {
+    d: `M ${start.x} ${start.y} L ${end.x} ${end.y}`,
+    label: { x: (start.x + end.x) / 2, y: (start.y + end.y) / 2 - 6 },
+  }
 }
 
 function svgSource(graph) {
@@ -166,17 +243,20 @@ function svgSource(graph) {
     '  </defs>',
     `  <rect width="${width}" height="${height}" fill="#ffffff"/>`,
   ]
+  const boxes = [...positions.values()]
   for (const edge of edges) {
     const from = positions.get(edge.from)
     const to = positions.get(edge.to)
     if (!from || !to) continue
-    const x1 = from.x + from.w
-    const y1 = from.y + from.h / 2
-    const x2 = to.x
-    const y2 = to.y + to.h / 2
-    lines.push(`  <line x1="${x1}" y1="${y1}" x2="${x2}" y2="${y2}" stroke="#7b8794" stroke-width="1.4" stroke-opacity="0.7" marker-end="url(#arrow)"/>`)
+    const route = edgeRoute(from, to, boxes)
+    lines.push(`  <path d="${route.d}" fill="none" stroke="#7b8794" stroke-width="1.4" stroke-opacity="0.7" stroke-linecap="round" marker-end="url(#arrow)"/>`)
     if (edge.label) {
-      lines.push(`  <text x="${(x1 + x2) / 2}" y="${(y1 + y2) / 2 - 5}" text-anchor="middle" font-family="sans-serif" font-size="10" fill="#52606d">${xml(edge.label)}</text>`)
+      const label = String(edge.label)
+      const labelWidth = [...label].reduce((sum, char) => sum + (char.charCodeAt(0) > 255 ? 10 : 6), 0) + 8
+      const tight = route.gap !== undefined && labelWidth + 6 > route.gap
+      const labelY = tight ? route.above : route.label.y
+      lines.push(`  <rect x="${(route.label.x - labelWidth / 2).toFixed(1)}" y="${(labelY - 9).toFixed(1)}" width="${labelWidth}" height="14" rx="3" fill="#ffffff" opacity="0.92"/>`)
+      lines.push(`  <text x="${route.label.x.toFixed(1)}" y="${(labelY + 2).toFixed(1)}" text-anchor="middle" font-family="sans-serif" font-size="10" fill="#52606d">${xml(label)}</text>`)
     }
   }
   for (const node of nodes) {

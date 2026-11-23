@@ -119,6 +119,110 @@ test('readAll reads the requested path, pages lines and preserves error codes', 
   )
 })
 
+const layoutFactory = new Function(`
+${extractFunction('gridLayout')}
+${extractFunction('autoLayout')}
+${extractFunction('pinnedPosition')}
+${extractFunction('layout')}
+return { layout }
+`)
+const layoutHelpers = layoutFactory()
+
+function node(id, extra = {}) {
+  return { id, title: id, kind: 'module', status: 'fresh', anchors: [], ...extra }
+}
+
+test('layout applies pinned positions on top of the automatic layout', () => {
+  const graph = {
+    nodes: [
+      node('a', { position: { x: 900, y: 500 } }),
+      node('b'),
+    ],
+    edges: [{ id: 'e1', from: 'a', to: 'b', kind: 'call' }],
+  }
+  const view = layoutHelpers.layout(graph)
+  const pinned = view.positions.get('a')
+  assert.equal(pinned.x, 900)
+  assert.equal(pinned.y, 500)
+  assert.equal(pinned.w, 196)
+  assert.equal(pinned.h, 64)
+  assert.equal(view.pinned, 1)
+  assert.ok(view.width >= 900 + 196 + 24)
+  assert.ok(view.height >= 500 + 64 + 24)
+})
+
+test('cyclic graphs stay on the grid, but a pin still wins', () => {
+  const graph = {
+    nodes: [node('a', { position: { x: 10, y: 20 } }), node('b'), node('c')],
+    edges: [
+      { id: 'e1', from: 'a', to: 'b', kind: 'call' },
+      { id: 'e2', from: 'b', to: 'c', kind: 'call' },
+      { id: 'e3', from: 'c', to: 'a', kind: 'call' },
+    ],
+  }
+  const view = layoutHelpers.layout(graph)
+  assert.deepEqual(
+    { x: view.positions.get('a').x, y: view.positions.get('a').y },
+    { x: 10, y: 20 },
+  )
+  assert.equal(view.pinned, 1)
+  assert.equal(view.positions.get('b').x, 254)
+  assert.equal(view.positions.get('c').x, 18)
+})
+
+test('non-finite or malformed pins are ignored', () => {
+  const graph = {
+    nodes: [node('a', { position: { x: Number.NaN, y: 5 } }), node('b')],
+    edges: [{ id: 'e1', from: 'a', to: 'b', kind: 'call' }],
+  }
+  const view = layoutHelpers.layout(graph)
+  assert.equal(view.pinned, 0)
+  assert.equal(Number.isFinite(view.positions.get('a').x), true)
+})
+
+const edgeFactory = new Function(`
+${extractFunction('edgeRoute')}
+return { edgeRoute }
+`)
+const { edgeRoute } = edgeFactory()
+
+test('edgeRoute detours above or below a node blocking the row', () => {
+  const from = { x: 0, y: 100, w: 196, h: 64 }
+  const to = { x: 700, y: 100, w: 196, h: 64 }
+  const blocker = { x: 300, y: 100, w: 196, h: 64 }
+  const route = edgeRoute(from, to, [from, to, blocker])
+  assert.match(route.d, /L 206 132 L 206 182 L 690 182 L 690 132/)
+  assert.equal(route.label.y, 175)
+})
+
+test('edgeRoute bows a return edge below the row', () => {
+  const from = { x: 700, y: 100, w: 196, h: 64 }
+  const to = { x: 0, y: 100, w: 196, h: 64 }
+  const route = edgeRoute(from, to, [from, to])
+  assert.match(route.d, / Q /)
+  assert.ok(route.label.y > 132)
+})
+
+test('edgeRoute keeps a diagonal return edge between the two rows', () => {
+  const from = { x: 900, y: 100, w: 196, h: 64 }
+  const to = { x: 0, y: 400, w: 196, h: 64 }
+  const route = edgeRoute(from, to, [from, to])
+  assert.equal(route.label.y, 282)
+})
+
+const clipFactory = new Function(`
+${extractFunction('clipWidth')}
+return { clipWidth }
+`)
+const { clipWidth } = clipFactory()
+
+test('clipWidth keeps short titles and ellipsizes long CJK titles', () => {
+  assert.equal(clipWidth('Runtime entry', 170), 'Runtime entry')
+  const long = clipWidth('安全门禁 · 入口与最终输出检查', 170)
+  assert.ok(long.endsWith('…'))
+  assert.ok(long.length < '安全门禁 · 入口与最终输出检查'.length)
+})
+
 const overlayFactory = new Function(`
 ${extractFunction('overlayPosition')}
 return { overlayPosition }

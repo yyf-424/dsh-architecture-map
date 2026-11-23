@@ -20,8 +20,9 @@ const NODE_KINDS = new Set(['entry', 'module', 'service', 'store', 'external', '
 const EDGE_KINDS = new Set(['call', 'data', 'dependency', 'containment'])
 const STATUSES = new Set(['fresh', 'stale', 'proposed'])
 
-const NODE_FIELDS = new Set(['id', 'title', 'kind', 'group', 'summary', 'anchors', 'status', 'style', 'notes'])
-const NODE_PATCH_FIELDS = new Set(['title', 'kind', 'group', 'summary', 'anchors', 'status', 'style', 'notes'])
+const NODE_FIELDS = new Set(['id', 'title', 'kind', 'group', 'summary', 'anchors', 'status', 'style', 'notes', 'position'])
+const NODE_PATCH_FIELDS = new Set(['title', 'kind', 'group', 'summary', 'anchors', 'status', 'style', 'notes', 'position'])
+const POSITION_FIELDS = new Set(['x', 'y'])
 const EDGE_FIELDS = new Set(['id', 'from', 'to', 'label', 'kind', 'status'])
 const EDGE_PATCH_FIELDS = new Set(['from', 'to', 'label', 'kind', 'status'])
 const GROUP_FIELDS = new Set(['id', 'title', 'kind'])
@@ -82,6 +83,21 @@ function assertKnownKeys(value, allowed, where) {
   }
 }
 
+function assertPosition(position, where) {
+  if (!isPlainObject(position)) {
+    fail('INVALID_GRAPH', `${where} must be an object { x, y } with finite numbers`)
+  }
+  assertKnownKeys(position, POSITION_FIELDS, where)
+  for (const axis of ['x', 'y']) {
+    if (!Number.isFinite(position[axis])) {
+      fail('INVALID_GRAPH', `${where}.${axis} must be a finite number`)
+    }
+    if (Math.abs(position[axis]) > 1000000) {
+      fail('LIMIT_EXCEEDED', `${where}.${axis} must be within ±1000000`)
+    }
+  }
+}
+
 function assertRelativeAnchor(anchor, where) {
   if (!isPlainObject(anchor)) fail('INVALID_GRAPH', `${where} must be an object { path, symbol?, hash? }`)
   if (typeof anchor.path !== 'string' || anchor.path.trim() === '') {
@@ -115,6 +131,7 @@ function normalizeNode(raw, where = 'node') {
     status: raw.status ?? 'fresh',
     ...(raw.style === undefined ? {} : { style: raw.style }),
     ...(raw.notes === undefined ? {} : { notes: raw.notes }),
+    ...(raw.position === undefined ? {} : { position: raw.position }),
   }
 }
 
@@ -225,6 +242,9 @@ export function validateGraph(graph, limits = DEFAULTS) {
     if (node.notes !== undefined && typeof node.notes !== 'string') {
       fail('INVALID_GRAPH', `node ${node.id}.notes must be a string when present`)
     }
+    if (node.position !== undefined) {
+      assertPosition(node.position, `node ${node.id}.position`)
+    }
   }
 
   for (const edge of graph.edges) {
@@ -291,6 +311,8 @@ export function applyOps(graph, ops, limits = DEFAULTS) {
         }
         assertKnownKeys(op.patch, NODE_PATCH_FIELDS, `${where}.patch`)
         Object.assign(node, op.patch)
+        // position:null clears a pin; other fields keep their normal merge.
+        if (op.patch.position === null) delete node.position
         break
       }
       case 'remove_node': {
@@ -443,6 +465,7 @@ function renderOverview(graph, limit, include) {
       const parts = [`  ${node.id} "${node.title}"`, node.kind]
       if (node.group !== undefined) parts.push(`group ${node.group}`)
       parts.push(node.status)
+      if (node.position) parts.push(`pin ${node.position.x},${node.position.y}`)
       lines.push(parts.join(' · '))
       if (include.includes('summary') && node.summary) lines.push(`    ${clip(node.summary, 160)}`)
     }
@@ -467,6 +490,7 @@ function renderNode(graph, node, options) {
     `rev ${graph.rev} · node ${node.id} "${node.title}"`,
     `kind: ${node.kind}${node.group ? ` · group: ${node.group}` : ''} · status: ${node.status}`,
   ]
+  if (node.position) lines.push(`pinned: ${node.position.x},${node.position.y}`)
   if (include.includes('summary') && node.summary) lines.push(`summary: ${clip(node.summary, 600)}`)
   if (include.includes('anchors') && node.anchors.length > 0) {
     lines.push('anchors:')
